@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "boo-win (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "boo-win (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
