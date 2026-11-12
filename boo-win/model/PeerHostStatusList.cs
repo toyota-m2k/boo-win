@@ -1,8 +1,6 @@
-﻿using BooWin.DI.implement.settings;
-using System;
+﻿using io.github.toyota32k.BooLib.Utils;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace BooWin.model;

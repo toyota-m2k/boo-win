@@ -71,10 +71,8 @@ public class EntryPageViewModel {
     }
 
     public void Save() {
-        _settingsService.UpdateHostList(HostList);
-        if (CurrentHost.Value != null) {
-            _settingsService.SetCurrentHost(CurrentHost.Value);
-        }
+        _settingsService.UpdateHostList(HostList, CurrentHost.Value);
+        _settingsService.Save();
         HostListModified = false;
     }
     
@@ -104,7 +102,7 @@ public class EntryPageViewModel {
 
     public void GotoPlayerPage() {
         if (CurrentHost.Value != null) {
-            _settingsService.SetCurrentHost(CurrentHost.Value);
+            Save();
             _pageService.GoToPlayerPage();
         }
     }

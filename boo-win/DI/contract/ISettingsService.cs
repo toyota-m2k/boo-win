@@ -15,7 +15,7 @@ public interface ISettingsService {
     PeerHostStatus? CurrentHost { get; }
     void SetCurrentHost(PeerHost? host);
     void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save = false);
-    void UpdateHostList(IEnumerable<PeerHost> newHostList);
+    void UpdateHostList(IEnumerable<PeerHost> newHostList, PeerHost? newHost);
 
     void Save();
 }

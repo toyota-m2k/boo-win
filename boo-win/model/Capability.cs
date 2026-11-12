@@ -1,9 +1,7 @@
 ﻿using BooWin.client;
+using io.github.toyota32k.BooLib.Utils;
 using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace BooWin.model; 
 public class Capability {

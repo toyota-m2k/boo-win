@@ -32,6 +32,7 @@ public class PlayerPageViewModel
     }
 
     public async Task<bool> Prepare() {
+        ItemListSource.Value = MediaItemList.Empty;
         var currentHost = _settingsService.CurrentHost;
         if (currentHost == null) {
             return false;

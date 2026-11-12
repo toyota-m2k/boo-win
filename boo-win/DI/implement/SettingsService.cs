@@ -1,7 +1,6 @@
 ﻿using BooWin.DI.contract;
-using BooWin.DI.implement.settings;
 using BooWin.model;
-using System;
+using io.github.toyota32k.BooLib.Utils;
 using System.Collections.Generic;
 
 namespace BooWin.DI.implement;
@@ -14,7 +13,7 @@ public class SettingsService : ISettingsService {
     public SettingsService(IAppConfigService appConfigService) {
         AppConfigService = appConfigService;
         JsonStore = new JSONSettngStore(AppConfigService.SettingsPath);
-        HostList = PeerHostStatusList.LoadFrom(JsonStore);
+        HostList = PeerHostStatusList.LoadFrom(store: JsonStore);
     }
 
     #region FFMpeg
@@ -80,8 +79,11 @@ public class SettingsService : ISettingsService {
     /**
      * ホストリストを新しいリストで更新する
      */
-    public void UpdateHostList(IEnumerable<PeerHost> newHostList) {
+    public void UpdateHostList(IEnumerable<PeerHost> newHostList, PeerHost? newHost) {
         HostList.UpdateList(newHostList);
+        if (newHost!=null) {
+            SetCurrentHost(newHost);
+        }
         HostList.SaveTo(JsonStore);
     }
 
