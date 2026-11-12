@@ -1,5 +1,7 @@
 ﻿using BooWin.DI.contract;
-using Microsoft.UI.Xaml;using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Reactive.Bindings;
 using System;
@@ -7,7 +9,7 @@ using System.Reactive.Linq;
 
 namespace BooWin.DI.implement;
 
-public class PageService  {
+public class PageService : IPageService {
     private Page? _currentPage = null;
     private Frame? _rootFrame = null;
     private ReactivePropertySlim<Type?> _currentPageType = new(null);
@@ -24,30 +26,30 @@ public class PageService  {
     }
 
     public PageService() {
-        //CanGoBack = _currentPageType
-        //    .Select(x => x != null && x != typeof(view.EntryPage))
-        //    .ToReadOnlyReactivePropertySlim();
+        CanGoBack = _currentPageType
+            .Select(x => x != null && x != typeof(view.page.EntryPage))
+            .ToReadOnlyReactivePropertySlim();
     }
 
     public void GoBack() {
-        //if (CanGoBack.Value) {
-        //    // ２ページしかないので、戻るなら、必ずEntryPage
-        //    GoToEntryPage();
-        //}
+        if (CanGoBack.Value) {
+            // ２ページしかないので、戻るなら、必ずEntryPage
+            GoToEntryPage();
+        }
     }
 
-    //public void GoToEntryPage() {
-    //    NavigateTo(typeof(view.EntryPage));
-    //}
+    public void GoToEntryPage() {
+        NavigateTo(typeof(view.page.EntryPage));
+    }
 
-    //public void GoToServerPage() {
-    //    NavigateTo(typeof(view.ServerPage));
-    //}
+    public void GoToPlayerPage() {
+        NavigateTo(typeof(view.page.PlayerPage));
+    }
 
     public void Startup(Frame rootFrame) {
         _rootFrame = rootFrame;
         rootFrame.Navigated += OnNavigated;
-        //GoToEntryPage();
+        GoToEntryPage();
     }
 
     private void OnNavigated(object sender, NavigationEventArgs e) {
@@ -76,4 +78,5 @@ public class PageService  {
         }
     }
 
+    public DispatcherQueue DispatcherQueue => _rootFrame?.DispatcherQueue ?? throw new InvalidOperationException("Root frame is not set. Call Startup() first.");
 }

@@ -9,20 +9,23 @@ using io.github.toyota32k.BooLib.Utils;
 using BooWin.DI.contract;
 
 namespace BooWin.view.viewmodel; 
-internal class DiscoverPeerDialogViewModel {
+public class DiscoverPeerDialogViewModel : IDisposable {
     IMainThreadService _mainThreadService;
 
     public DiscoverPeerDialogViewModel(IMainThreadService mainThreadService) {
         _mainThreadService = mainThreadService;
+        Selected = SelectedPeer.Select(peer => peer != null).ToReadOnlyReactiveProperty();
     }
 
     // Browser に渡す discovery 結果コレクション (参照は不変)。
     public ObservableCollection<PeerHost> DiscoveredPeers { get; } = new();
     public ReactivePropertySlim<bool> NoPeer { get; } = new(true);
     public ReactivePropertySlim<PeerHost?> SelectedPeer { get; } = new ();
-    public ReactiveCommand CancelDiscoveringCommand { get; } = new();
+    //public ReactiveCommand CancelDiscoveringCommand { get; } = new();
+    public ReadOnlyReactiveProperty<bool> Selected { get; }
 
-    private TaskCompletionSource<PeerHost?>? _tcs = null;
+    //private TaskCompletionSource<PeerHost?>? _tcs = null;
+    private MdnsBrowser? mBrowser = null;
 
     private int findPeerIndex(DiscoveredPeer peer) {
         for(int i=0; i<DiscoveredPeers.Count; i++) {
@@ -33,13 +36,13 @@ internal class DiscoverPeerDialogViewModel {
         return -1;
     }
 
-    public void Release() {
-        _tcs?.TrySetResult(null);
-        _tcs = null;
-    }
+    //public void Release() {
+    //    _tcs?.TrySetResult(null);
+    //    _tcs = null;
+    //}
 
-    public async Task<PeerHost?> Discover() {
-        if (_tcs != null) return await _tcs.Task;
+    public void Discover() {
+        //if (_tcs != null) return await _tcs.Task;
 
         var browser = new MdnsBrowser(info => {
             _mainThreadService.Run(() => {
@@ -60,19 +63,12 @@ internal class DiscoverPeerDialogViewModel {
                 NoPeer.Value = DiscoveredPeers.IsEmpty();
             });
         });
-        var tcs = new TaskCompletionSource<PeerHost?>();
-        _tcs = tcs;
-        using (browser)
-        using (SelectedPeer.Subscribe(peer => {
-            if (peer != null) {
-                tcs.TrySetResult(peer);
-            }
-        }))
-        using (CancelDiscoveringCommand.Subscribe(() => {
-            tcs.TrySetResult(null);
-        })) {
-            browser.Start();
-            return await tcs.Task;
-        }
+        mBrowser = browser;
+        browser.Start();
+    }
+
+    public void Dispose() {
+        mBrowser?.Dispose();
+        mBrowser = null;
     }
 }

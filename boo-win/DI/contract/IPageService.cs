@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Reactive.Bindings;
 
@@ -17,6 +18,6 @@ public interface IPageService {
     XamlRoot XamlRoot { get; }
 
     void GoToEntryPage();
-    void GoToServerPage();
-
+    void GoToPlayerPage();
+    DispatcherQueue? DispatcherQueue { get; }
 }

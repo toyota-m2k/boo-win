@@ -5,11 +5,17 @@ using System.Text.Json.Serialization;
 
 namespace BooWin.model;
 
-public class PeerHostStatus : PeerHost {
-    public string LastPlayingId { get; set; }
+public interface IHostStatus {
+    string? LastPlayingId { get; }
+    long LastPlayingPosition { get; }
+    IHostStatus UpdateStatus(string lastPlayingId, long lastPlayingPosition);
+}
+
+public class PeerHostStatus : PeerHost, IHostStatus {
+    public string? LastPlayingId { get; set; }
     public long LastPlayingPosition { get; set; }
 
-    public PeerHostStatus(PeerHost peer, string lastPlayingId, long lastPlayingPosition) : base(peer.Address, peer.ServiceName, peer.Hostname, peer.IsHttps, peer.Fingerprint) { 
+    public PeerHostStatus(PeerHost peer, string? lastPlayingId, long lastPlayingPosition) : base(peer.Address, peer.ServiceName, peer.Hostname, peer.IsHttps, peer.Fingerprint) { 
         LastPlayingId = lastPlayingId;
         LastPlayingPosition = lastPlayingPosition;      
     }
@@ -19,5 +25,9 @@ public class PeerHostStatus : PeerHost {
         string lastPlayingId, long lastPlayingPosition) : base(address, serviceName, hostname, isHttps, fingerprint) {
         LastPlayingId = lastPlayingId;
         LastPlayingPosition = lastPlayingPosition;
+    }
+
+    public IHostStatus UpdateStatus(string? lastPlayingId, long lastPlayingPosition) {
+        return new PeerHostStatus(this, lastPlayingId, lastPlayingPosition);
     }
 }

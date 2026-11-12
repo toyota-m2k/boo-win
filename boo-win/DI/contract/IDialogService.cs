@@ -23,7 +23,7 @@ public interface IDialogBuilder {
 
     // Yes/Noボタンのダイアログを表示する
     // PrimaryButton/SecondaryButton/CloseButtonは無視
-    Task<bool> ShowYesNo(bool okAsDefault = true);
+    Task<bool> ShowYesNo(bool yesAsDefault = true);
     
     // カスタムダイアログを表示する
     Task<ContentDialogResult> ShowAsync();
@@ -38,5 +38,5 @@ public interface IDialogService {
     Task<bool> ShowYesNo(string title, string message, bool yesAsDefault = true);
 
     Task<string?> ShowInputText(string title, string message="", string defaultText = "", string placeholder = "", bool acceptEmptyString=false);
-
+    Task<string?> ShowInputPassword(string title, string message = "", string defaultText = "", string placeholder = "", bool acceptEmptyString = false);
 }

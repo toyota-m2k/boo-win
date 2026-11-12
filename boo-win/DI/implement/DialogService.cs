@@ -172,4 +172,33 @@ public class DialogService : IDialogService {
         }
         return null;
     }
+    public async Task<string?> ShowInputPassword(string title, string message = "", string defaultText = "", string placeholder = "", bool acceptEmptyString = false) {
+        var textBox = new PasswordBox { Password = defaultText, PlaceholderText = placeholder };
+        object content = textBox;
+        if (!string.IsNullOrEmpty(message)) {
+            content = new StackPanel {
+                Children = {
+                    new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+                    textBox
+                }
+            };
+        }
+        var result = await Builder()
+            .Title(title)
+            .Content(content)
+            .PrimaryButton("OK", true, null)
+            .CloseButton("Cancel", false, null)
+            .Customize(dialog => {
+                if (!acceptEmptyString) {
+                    // 空文字では OK を押せないようにする
+                    dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
+                    textBox.PasswordChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
+                }
+            })
+            .ShowAsync();
+        if (result == ContentDialogResult.Primary) {
+            return textBox.Password;
+        }
+        return null;
+    }
 }

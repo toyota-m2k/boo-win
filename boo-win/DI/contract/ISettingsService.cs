@@ -1,5 +1,6 @@
 ﻿using BooWin.model;
 using System;
+using System.Collections.Generic;
 
 namespace BooWin.DI.contract;
 
@@ -9,10 +10,12 @@ public interface ISettingsService {
     string FFMpegPath { get; set; }
     string WorkingPath { get; set; }
 
-    // Server
-    PeerHost CurrentPeer { get; set; }
-
-    
+    // Hosts
+    IReadOnlyList<PeerHost> Hosts { get; }
+    PeerHostStatus? CurrentHost { get; }
+    void SetCurrentHost(PeerHost? host);
+    void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save = false);
+    void UpdateHostList(IEnumerable<PeerHost> newHostList);
 
     void Save();
 }

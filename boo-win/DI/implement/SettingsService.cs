@@ -1,17 +1,23 @@
 ﻿using BooWin.DI.contract;
 using BooWin.DI.implement.settings;
+using BooWin.model;
 using System;
+using System.Collections.Generic;
 
 namespace BooWin.DI.implement;
 
 public class SettingsService : ISettingsService {
     private readonly IAppConfigService AppConfigService;
     private readonly JSONSettngStore JsonStore;
+    private PeerHostStatusList HostList { get; set; }
 
     public SettingsService(IAppConfigService appConfigService) {
         AppConfigService = appConfigService;
         JsonStore = new JSONSettngStore(AppConfigService.SettingsPath);
+        HostList = PeerHostStatusList.LoadFrom(JsonStore);
     }
+
+    #region FFMpeg
 
     static readonly string KEY_USE_FFMPEG = "UseFFMpeg";
 
@@ -30,61 +36,58 @@ public class SettingsService : ISettingsService {
         set => JsonStore.Set(KEY_WORKING_PATH, value);
     }
 
-    static readonly string KEY_SERVER_NAME = "ServerName";
-    public string ServerName {
-        get => JsonStore.Get<string>(KEY_SERVER_NAME, DEFAULT_SERVER_NAME);
-        set => JsonStore.Set(KEY_SERVER_NAME, value);
+    #endregion
+
+    #region Hosts
+
+    /**
+     * 登録済みホストリスト
+     */
+    public IReadOnlyList<PeerHost> Hosts => HostList.Hosts;
+    
+    /**
+     * 現在選択中のホスト情報
+     */
+    public PeerHostStatus? CurrentHost {
+        get => HostList.CurrentHost;
     }
 
-    //public string EnsureServerName {
-    //    get {
-    //        var serverName = this.ServerName;
-    //        if (string.IsNullOrWhiteSpace(serverName)) {
-    //            serverName = AppConfigService.AppName;
-    //        }
-    //        return serverName;
-    //    }
-    //}
+    public void SetCurrentHost(PeerHost? host) {
+        if (host == null) {
+            HostList.CurrentIndex = -1;
+        }
+        else {
+            var index = HostList.Hosts.FindIndex(h => h.Address.Equals(host.Address));
+            if (index != -1) {
+                HostList.CurrentIndex = index;
+            }
+        }
+    }
 
-    //static readonly string KEY_SERVER_PORT = "ServerPort";
-    //static readonly int DEFAULT_SERVER_PORT = 3030;
-    //public int ServerPort { 
-    //    get => int.TryParse(DBService.KVStore[KEY_SERVER_PORT], out var port) ? port : DEFAULT_SERVER_PORT; 
-    //    set => DBService.KVStore[KEY_SERVER_PORT] = value.ToString();
-    //}
+    /**
+     * 現在選択中のホストの再生状態を更新する
+     */
+    public void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save=false) {
+        if (CurrentHost != null) {
+            var updated = CurrentHost.UpdateStatus(lastPlayingId, lastPlayingPosition);
+            HostList.AddOrUpdate((PeerHostStatus)updated);
+            if (save) {
+                HostList.SaveTo(JsonStore);
+            }
+        }
+    }
 
-    //static readonly string KEY_SSL_SERVER_PORT = "SSLServerPort";
-    //static readonly int DEFAULT_SSL_SERVER_PORT = 3031;
-    //public int SSLServerPort {
-    //    get => int.TryParse(DBService.KVStore[KEY_SSL_SERVER_PORT], out var port) ? port : DEFAULT_SSL_SERVER_PORT;
-    //    set => DBService.KVStore[KEY_SSL_SERVER_PORT] = value.ToString();
-    //}
+    /**
+     * ホストリストを新しいリストで更新する
+     */
+    public void UpdateHostList(IEnumerable<PeerHost> newHostList) {
+        HostList.UpdateList(newHostList);
+        HostList.SaveTo(JsonStore);
+    }
 
-    //static readonly string KEY_ENABLE_SSL = "EnableSSL";
-    //public bool EnableSSL { 
-    //    get => DBService.KVStore[KEY_ENABLE_SSL] == "true"; 
-    //    set => DBService.KVStore[KEY_ENABLE_SSL] = value ? "true" : "false";
-    //}
+    #endregion
 
-    //static readonly string KEY_ENABLE_MDNS_ADVERTISING = "EnableMDNSAdvertising";
-    //public bool EnableMDNSAdvertising {
-    //    get => DBService.KVStore[KEY_ENABLE_MDNS_ADVERTISING] == "true";
-    //    set => DBService.KVStore[KEY_ENABLE_MDNS_ADVERTISING] = value ? "true" : "false";
-    //}
-
-    //static readonly string KEY_PFX_FILE_PATH = "PFXFilePath";
-    //public string PFXFilePath {
-    //    get => DBService.KVStore[KEY_PFX_FILE_PATH] ?? string.Empty;
-    //    set => DBService.KVStore[KEY_PFX_FILE_PATH] = value;
-    //}
-
-    //static readonly string KEY_PFX_PASSWORD = "PFXPassword";
-    //public string PFXPassword {
-    //    get => DBService.KVStore[KEY_PFX_PASSWORD] ?? string.Empty;
-    //    set => DBService.KVStore[KEY_PFX_PASSWORD] = value;
-    //}
-
-    //public void Save() {
-    //    DBService.KVStore.SaveChanges();
-    //}
+    public void Save() {
+        JsonStore.Save();
+    }
 }

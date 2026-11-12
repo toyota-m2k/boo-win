@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="BooWin.view.dialog.EditHostDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BooWin.view.dialog"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="{x:Bind ViewModel.Title}"
+    >
+    <ContentDialog.Resources>
+        <ResourceDictionary Source="../Converters.xaml"/>
+    </ContentDialog.Resources>
+    <StackPanel Orientation="Vertical">
+        <TextBlock Text="Name"/>
+        <TextBox 
+            Text="{x:Bind ViewModel.ServiceName.Value, Mode=TwoWay}"/>
+        <TextBlock Text="Address"/>
+        <TextBox 
+            InputScope="Url" 
+            Text="{x:Bind ViewModel.Address.Value, Mode=TwoWay}" 
+            IsReadOnly="{x:Bind ViewModel.ForEdit}"
+            BeforeTextChanging="CheckAddress"
+            />
+        <TextBlock Text="Port"/>
+        <TextBox 
+            InputScope="Number" 
+            Text="{x:Bind ViewModel.Port.Value, Mode=TwoWay}" 
+            IsReadOnly="{x:Bind ViewModel.ForEdit}"/>
+        <CheckBox
+            Content="Use SSL"
+            IsChecked="{x:Bind ViewModel.IsHttps.Value, Mode=TwoWay}"
+            IsEnabled="{x:Bind ViewModel.ForEdit, Converter={StaticResource NegBoolConverter}, Mode=OneWay}"/>
+    </StackPanel>
+</ContentDialog>

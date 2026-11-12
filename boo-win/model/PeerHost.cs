@@ -1,4 +1,6 @@
-﻿using io.github.toyota32k.BooLib.Server.mdns;
+﻿using BooWin.client;
+using BooWin.DI.contract;
+using io.github.toyota32k.BooLib.Server.mdns;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -74,10 +76,12 @@ public class PeerHost {
     }
 
     public string Scheme => IsHttps ? "https" : "http";
-    public string BaseUrl => $"{Scheme}://{Address}/";
+    public string BaseUrl => $"{Scheme}://{Address}";
 
-    public string MakeUrl(string path) {
-        return $"{BaseUrl}{path.TrimStart('/')}";
+    
+
+    public BooApi CreateApi(IHttpClientFactory httpClientFactory, IDialogService dialogService) {
+        return new BooApi(this, httpClientFactory, dialogService);
     }
 
     [JsonConstructor]
