@@ -17,13 +17,12 @@ public class  Category {
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int SortIndex { get; set; } = 0;
     [JsonPropertyName("color")]
-    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-    public int ARGB { get; set; } = 0;
+    public string ColorName { get; set; } = "";
     [JsonPropertyName("svg")]
     public string SvgPath { get; set; } = "";
 
-    [JsonIgnore]
-    public Color Color => Color.FromArgb(ARGB);
+    //[JsonIgnore]
+    //public Color Color => Color.FromArgb(ARGB);
 }
 
 public class CategorySupport {

@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Reactive.Bindings;
+using System.Threading;
 
 namespace BooWin.DI.contract;
 
@@ -20,4 +21,5 @@ public interface IPageService {
     void GoToEntryPage();
     void GoToPlayerPage();
     DispatcherQueue? DispatcherQueue { get; }
+    SynchronizationContext UIContext { get; }
 }

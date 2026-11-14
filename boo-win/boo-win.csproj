@@ -24,12 +24,17 @@
 	    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     </PropertyGroup>
     <ItemGroup>
+      <None Remove="view\AVControlPanel.xaml" />
       <None Remove="view\dialog\DiscoverPeerDialog.xaml" />
       <None Remove="view\dialog\EditHostDialog.xaml" />
       <None Remove="view\EntryPage.xaml" />
       <None Remove="view\page\EditorPage.xaml" />
       <None Remove="view\page\EntryPage.xaml" />
       <None Remove="view\page\PlayerPage.xaml" />
+      <None Remove="view\parts\ChapterRangeView.xaml" />
+      <None Remove="view\parts\ChapterView.xaml" />
+      <None Remove="view\parts\PlayerSlider.xaml" />
+      <None Remove="view\PlayerView.xaml" />
     </ItemGroup>
 
   <ItemGroup>
@@ -58,6 +63,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageReference Include="ReactiveProperty" Version="9.10.0" />
@@ -67,6 +73,26 @@
     <ProjectReference Include="..\external\win-boo-lib\Media\Media.csproj" />
     <ProjectReference Include="..\external\win-boo-lib\Server\Server.csproj" />
     <ProjectReference Include="..\external\win-boo-lib\Utils\Utils.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\AVControlPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\PlayerView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\parts\ChapterRangeView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\parts\PlayerSlider.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="view\Converters.xaml">
@@ -100,6 +126,11 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="view\dialog\DiscoverPeerDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\parts\ChapterView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

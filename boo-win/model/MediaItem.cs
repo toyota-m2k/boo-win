@@ -41,6 +41,12 @@ public class MediaItem : IMediaItem {
     public string Name { get; set; } = "";
     [JsonPropertyName("size")]
     public long Size { get; set; }
+
+    [JsonPropertyName("start")]
+    public long Start { get; set; }
+    [JsonPropertyName("end")]
+    public long End { get; set; }
+
     [JsonPropertyName("type")]
     public string Type { get; set; } = "";  
     [JsonPropertyName("media")]

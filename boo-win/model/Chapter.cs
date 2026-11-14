@@ -13,7 +13,10 @@ public class Chapter {
     [JsonPropertyName("label")]
     public string? Label { get; set; }
     [JsonPropertyName("skip")]
-    public long Skip { get; set; }
+    public bool Skip { get; set; }
+
+    [JsonIgnore]
+    public bool Enabled => !Skip;
 
     public static List<Chapter> ListFromJson(string? jsonString) {
         if (jsonString != null) {
@@ -31,4 +34,16 @@ public class Chapter {
         }
         return new List<Chapter>();
     }
+
+    public Chapter? CopyChapterIfModifed(string? label, bool? skip) {
+        if ((label==null || label == this.Label) && (skip==null || skip==this.Skip)) {
+            return null;    // 変更なし
+        }
+        return new Chapter {
+            Position = this.Position,
+            Label = label ?? this.Label,
+            Skip = skip ?? this.Skip
+        };
+    }
+
 }

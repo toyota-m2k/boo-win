@@ -286,3 +286,8 @@ public class LogLevelToColorConverter : IValueConverter {
         throw new NotImplementedException();
     }
 }
+
+public static class Conv {
+    public static double ToDouble(long v) => v;
+    public static long ToLong(double v) => (long)v;
+}

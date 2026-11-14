@@ -37,6 +37,6 @@ public interface IDialogService {
     Task<bool> ShowOkCancel(string title, string message, bool okAsDefault = true);
     Task<bool> ShowYesNo(string title, string message, bool yesAsDefault = true);
 
-    Task<string?> ShowInputText(string title, string message="", string defaultText = "", string placeholder = "", bool acceptEmptyString=false);
-    Task<string?> ShowInputPassword(string title, string message = "", string defaultText = "", string placeholder = "", bool acceptEmptyString = false);
+    Task<string?> ShowInputText(string title, string message="", string initialText = "", string placeholder = "", bool acceptEmptyString=false);
+    Task<string?> ShowInputPassword(string title, string message = "", string initialText = "", string placeholder = "", bool acceptEmptyString = false);
 }

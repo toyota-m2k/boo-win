@@ -16,20 +16,53 @@ public class PlayerPageViewModel
     private readonly ISettingsService _settingsService;
     private readonly IClientService _clientService;
     private readonly IPageService _pageService;
+    private readonly IDialogService _dialogService;
+
+    public PlayerViewModel PlayerModel { get; }
 
     public PlayerPageViewModel(
         ISettingsService settingsService, 
         IClientService clientService,
-        IPageService pageService) {
+        IPageService pageService,
+        IDialogService dialogService) {
         _settingsService = settingsService;
         _clientService = clientService;
         _pageService = pageService;
+        _dialogService = dialogService;
 
         ItemList = ItemListSource.Select(it => it.Items).ToReadOnlyReactiveProperty();
         BackToEntryPageCommand.Subscribe(() => {
             _pageService.GoToEntryPage();
         });
+
+        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService);
+        SelectedItem.Subscribe(item => {
+            PlayerModel.SetSource(item);
+        });
+
+        PlayerModel.NextItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
+            var item = SelectedItem.Value;
+            if (item == null) return;
+            var list = ItemListSource.Value.Items;
+            if (list == null || list.Count == 0) return;
+            var index = list.FindIndex(it => it.Id == item.Id);
+            if (index>=0 && index+1 < list.Count) {
+                SelectedItem.Value = list[index+1];
+            }
+        });
+
+        PlayerModel.PrevItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
+            var item = SelectedItem.Value;
+            if (item == null) return;
+            var list = ItemListSource.Value.Items;
+            if (list == null || list.Count == 0) return;
+            var index = list.FindIndex(it => it.Id == item.Id);
+            if (index > 0) {
+                SelectedItem.Value = list[index - 1];
+            }
+        });
     }
+
 
     public async Task<bool> Prepare() {
         ItemListSource.Value = MediaItemList.Empty;

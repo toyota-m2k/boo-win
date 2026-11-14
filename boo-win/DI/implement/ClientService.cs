@@ -139,6 +139,17 @@ public class ClientService : IClientService {
         return _api.GetMediaItemListAsync(listMode, mediaTypes, since, ratingThreshold, marks, category, searchText);
     }
 
+    public async Task<List<Chapter>> LoadChapterAsync(MediaItem item) {
+        if (_api == null) {
+            throw new InvalidOperationException("API is not available. CurrentHost is not set.");
+        }
+        var chapterList = await _api.GetChapterAsync(item) ?? new List<Chapter>();
+        if (item.Start>0 || item.End>0) {
+
+        }
+        return chapterList;
+    }
+
     public async Task<bool> CheckHostAvailabilityAsync(PeerHost host) {
         using (var api = host.CreateApi(_httpClientFactory, _dialogService)) {
             if (api == null) {

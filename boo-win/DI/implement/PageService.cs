@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml.Navigation;
 using Reactive.Bindings;
 using System;
 using System.Reactive.Linq;
+using System.Threading;
+using Windows.UI.WebUI;
 
 namespace BooWin.DI.implement;
 
@@ -79,4 +81,13 @@ public class PageService : IPageService {
     }
 
     public DispatcherQueue DispatcherQueue => _rootFrame?.DispatcherQueue ?? throw new InvalidOperationException("Root frame is not set. Call Startup() first.");
+    private SynchronizationContext? _uiContext = null;
+    public SynchronizationContext UIContext {
+        get {
+            if (_uiContext == null) {
+                _uiContext = new DispatcherQueueSynchronizationContext(DispatcherQueue);
+            }
+            return _uiContext;
+        }
+    }
 }

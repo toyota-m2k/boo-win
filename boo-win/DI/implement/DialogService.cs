@@ -143,8 +143,8 @@ public class DialogService : IDialogService {
             .ShowYesNo(yesAsDefault);
     }
 
-    public async Task<string?> ShowInputText(string title, string message="", string defaultText = "", string placeholder = "", bool acceptEmptyString=false) {
-        var textBox = new TextBox { Text = defaultText, AcceptsReturn = false, PlaceholderText = placeholder };
+    public async Task<string?> ShowInputText(string title, string message="", string initialText = "", string placeholder = "", bool acceptEmptyString=false) {
+        var textBox = new TextBox { Text = initialText, AcceptsReturn = false, PlaceholderText = placeholder };
         object content = textBox;
         if (!string.IsNullOrEmpty(message)) {
             content = new StackPanel {
@@ -172,8 +172,8 @@ public class DialogService : IDialogService {
         }
         return null;
     }
-    public async Task<string?> ShowInputPassword(string title, string message = "", string defaultText = "", string placeholder = "", bool acceptEmptyString = false) {
-        var textBox = new PasswordBox { Password = defaultText, PlaceholderText = placeholder };
+    public async Task<string?> ShowInputPassword(string title, string message = "", string initialText = "", string placeholder = "", bool acceptEmptyString = false) {
+        var textBox = new PasswordBox { Password = initialText, PlaceholderText = placeholder };
         object content = textBox;
         if (!string.IsNullOrEmpty(message)) {
             content = new StackPanel {
