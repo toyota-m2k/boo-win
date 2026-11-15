@@ -119,6 +119,7 @@ public sealed partial class AVControlPanel : UserControl
     }
 
     // Stopper
+    // コントロールパネル上のクリックが、下のPlayerViewに伝播するのを防ぐ
     private void OnContainerTapped(object sender, TappedRoutedEventArgs e) {
         e.Handled = true;
     }

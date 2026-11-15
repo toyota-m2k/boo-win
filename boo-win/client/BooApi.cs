@@ -54,7 +54,7 @@ public class BooApi : IDisposable {
             if (_capability != null) {
                 return _capability;
             }
-            var url = $"{Host.BaseUrl}/capability";
+            var url = $"{Host.BaseUrl}/capability?v=3";
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get capability from {Host.Address}. StatusCode: {response.StatusCode}");
