@@ -67,6 +67,8 @@ public sealed partial class PlayerView : UserControl {
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e) {
+        ViewModel?.SaveCurrentStatus();
+
         Unbind();
         mPlayerElement.SetMediaPlayer(null);
         mInternalPlayer?.Dispose();

@@ -51,6 +51,7 @@ public class PlayerViewModel {
     public ReactiveCommand PrevItemCommand { get; } = new();
     public ReactiveCommand<long> PlayerSeekToCommand { get; } = new();
 
+    public long LastPlayingPosition { get; set; } = 0;
 
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
     public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
@@ -70,17 +71,20 @@ public class PlayerViewModel {
     private IClientService _clientService;
     private IDialogService _dialogService;
     public IPageService _pageService;
+    public ISettingsService _settingsService;
 
     public SynchronizationContext UIContext => _pageService.UIContext;
 
     public PlayerViewModel(
         IClientService clientService, 
         IDialogService dialogService, 
-        IPageService pageService
+        IPageService pageService,
+        ISettingsService settingsService
         ) {
         _clientService = clientService;
         _dialogService = dialogService;
         _pageService = pageService;
+        _settingsService = settingsService;
 
         ChapterModel = new ChapterListViewModel(dialogService);
         IsPlaying = PlayerState.Select(s => s == MediaPlayerState.PLAYING).ToReadOnlyReactiveProperty();
@@ -145,6 +149,10 @@ public class PlayerViewModel {
     public void OnNaturalDurationChanged(MediaPlaybackSession sender, object args) {
         var dur = sender.NaturalDuration;
         NaturalDuration.Value = (long)Math.Round(dur.TotalMilliseconds);
+        if (LastPlayingPosition > 0) {
+            PlayerSeekToCommand.Execute(LastPlayingPosition);
+            LastPlayingPosition = 0;
+        }
     }
 
     /**
@@ -185,5 +193,11 @@ public class PlayerViewModel {
         if (ContinuousPlayback.Value) {
             NextItemCommand.Execute();
         }
+    }
+
+    public void SaveCurrentStatus() {
+        var item = SourceMediaItem.Value;
+        if (item == null) return;
+        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value);
     }
 }

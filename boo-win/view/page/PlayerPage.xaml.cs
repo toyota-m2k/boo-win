@@ -28,6 +28,13 @@ public sealed partial class PlayerPage : Page {
         ViewModel = App.GetService<PlayerPageViewModel>();
         InitializeComponent();
     }
+
+    private void OnEscapeInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+        if (ViewModel.IsPlayerOnly.Value) {
+            ViewModel.IsPlayerOnly.Value = false;
+            args.Handled = true;
+        }
+    }
     protected override void OnNavigatedFrom(NavigationEventArgs e) {
         base.OnNavigatedFrom(e);
         ViewModel.SaveCurrentStatus();

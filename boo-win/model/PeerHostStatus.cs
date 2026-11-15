@@ -17,7 +17,7 @@ public class PeerHostStatus : PeerHost, IHostStatus {
 
     public PeerHostStatus(PeerHost peer, string? lastPlayingId, long lastPlayingPosition) : base(peer.Address, peer.ServiceName, peer.Hostname, peer.IsHttps, peer.Fingerprint) { 
         LastPlayingId = lastPlayingId;
-        LastPlayingPosition = lastPlayingPosition;      
+        LastPlayingPosition = lastPlayingPosition;    
     }
 
     [JsonConstructor]

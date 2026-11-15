@@ -35,7 +35,7 @@ public class PlayerPageViewModel
             _pageService.GoToEntryPage();
         });
 
-        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService);
+        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
         SelectedItem.Subscribe(item => {
             PlayerModel.SetSource(item);
         });
@@ -65,6 +65,7 @@ public class PlayerPageViewModel
 
 
     public async Task<bool> Prepare() {
+        PlayerModel.SetSource(null);
         ItemListSource.Value = MediaItemList.Empty;
         var currentHost = _settingsService.CurrentHost;
         if (currentHost == null) {
@@ -74,6 +75,14 @@ public class PlayerPageViewModel
         await _clientService.SetCurrentHostAsync(currentHost);
         ItemListSource.Value = await _clientService.GetMediaItemListAsync();
 
+        var lastPlayingId = currentHost.LastPlayingId;
+        if (lastPlayingId!=null) {
+            var item = ItemListSource.Value.Items.Find(it => it.Id == lastPlayingId);
+            if (item != null) {
+                SelectedItem.Value = item;
+                PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
+            }
+        }
         return true;
     }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new ();
@@ -83,6 +92,9 @@ public class PlayerPageViewModel
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
 
     public ReactiveCommand BackToEntryPageCommand { get; } = new();
+
+    public ReactiveProperty<bool> IsPlayerOnly { get; } = new(false);
+    public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
     public void SaveCurrentStatus() {
         var item = SelectedItem.Value;

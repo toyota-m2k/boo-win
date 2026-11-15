@@ -11,7 +11,30 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="Escape" Invoked="OnEscapeInvoked"/>
+    </Page.KeyboardAccelerators>
+
     <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="LayoutModes">
+                <VisualState x:Name="PlayerOnly">
+                    <VisualState.StateTriggers>
+                        <StateTrigger IsActive="{x:Bind ViewModel.IsPlayerOnly.Value, Mode=OneWay}"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ToolbarPanel.Visibility" Value="Collapsed"/>
+                        <Setter Target="PlaylistPanel.Visibility" Value="Collapsed"/>
+                        <Setter Target="Splitter.Visibility" Value="Collapsed"/>
+                        <Setter Target="PlayerPanel.(Grid.Column)" Value="0"/>
+                        <Setter Target="PlayerPanel.(Grid.ColumnSpan)" Value="3"/>
+                        <Setter Target="PlaylistColumn.MinWidth" Value="0"/>
+                        <Setter Target="PlayerColumn.MinWidth" Value="0"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -19,15 +42,18 @@
 
         <!-- Toolbar -->
         <Grid x:Name="ToolbarPanel" Grid.Row="0">
-            <Button Content="Back" Command="{x:Bind ViewModel.BackToEntryPageCommand}"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Back" Command="{x:Bind ViewModel.BackToEntryPageCommand}"/>
+                <Button Content="Player Only" Click="{x:Bind ViewModel.TogglePlayerOnly}" ToolTipService.ToolTip="Esc で解除"/>
+            </StackPanel>
         </Grid>
 
         <!-- Playlist / Splitter / Player -->
         <Grid x:Name="BodyGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="100"/>
+                <ColumnDefinition x:Name="PlaylistColumn" Width="300" MinWidth="100"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" MinWidth="100"/>
+                <ColumnDefinition x:Name="PlayerColumn" Width="*" MinWidth="100"/>
             </Grid.ColumnDefinitions>
 
             <!-- Playlist -->
@@ -51,7 +77,7 @@
             </Grid>
 
             <!-- Splitter -->
-            <toolkit:GridSplitter Grid.Column="1" Width="6"
+            <toolkit:GridSplitter x:Name="Splitter" Grid.Column="1"
                                   ResizeBehavior="BasedOnAlignment"
                                   ResizeDirection="Columns"/>
 
