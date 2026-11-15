@@ -26,6 +26,6 @@ public interface IClientService {
     );
     string GetItemUrl(MediaItem item, string cmdName="item");
     Task<List<Chapter>> LoadChapterAsync(MediaItem item);
-
+    
     Task<bool> CheckHostAvailabilityAsync(PeerHost host);
 }

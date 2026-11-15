@@ -39,7 +39,8 @@ public class ChapterListViewModel
     public ReactiveProperty<IList<Chapter>> ChapterList { get; } = new ReactiveProperty<IList<Chapter>>(new List<Chapter>());
     public ReactiveProperty<Chapter?> CurrentChapter { get; } = new();
     public ReadOnlyReactiveProperty<string> ChapterLabel { get; }
-    private SortedList<long, Chapter> mChapters = new SortedList<long, Chapter>();
+    //private SortedList<long, Chapter> mChapters = new SortedList<long, Chapter>();
+    private ChapterListEditor mChapters = new ChapterListEditor();
     public ReadOnlyReactiveProperty<bool> CanUndo { get; }
     public ReadOnlyReactiveProperty<bool> CanRedo { get; }
     public ReactiveCommand UndoCommand { get; } = new();
@@ -71,7 +72,7 @@ public class ChapterListViewModel
     }
 
     private void OnUpdateChapterList() {
-        var list = mChapters.Values.ToList();
+        var list = mChapters.ToList();
         ClearRangeCache();
         ChapterList.Value = list;
         // 履歴の最後の要素と同じなら、履歴に追加しない
@@ -83,81 +84,38 @@ public class ChapterListViewModel
     }
 
     public void Clear(List<Chapter>? newChapter) {
-        mChapters.Clear();
-        mChapterHistory.Clear();
-        mHistoryIndex = -1;
-        lock (mChapters) {
-            if (newChapter != null) {
-                foreach (var chapter in newChapter) {
-                    mChapters.Add(chapter.Position, chapter);
-                }
-            }
+        lock(mChapters) {
+            mChapters.Set(newChapter);
+            OnUpdateChapterList();      // 通知するときに履歴にも積まれるので、続いてクリアする。
+            mChapterHistory.Clear();
+            mHistoryIndex = -1;
         }
-        OnUpdateChapterList();
     }
 
     public bool AddChapter(Chapter chapter) {
         lock (mChapters) {
-            if (!CanAddChapter(chapter.Position)) {
+            if(!mChapters.AddChapter(chapter)) {
                 return false;
             }
-            mChapters[chapter.Position] = chapter;
             OnUpdateChapterList();
             return true;
         }
     }
-    public bool AddChapter(long position) {
-        lock (mChapters) {
-            if (!CanAddChapter(position)) {
-                return false;
-            }
-            var chapter = new Chapter() { Position = position };
-            mChapters[chapter.Position] = chapter;
-            OnUpdateChapterList();
-            return true;
-        }
+    public bool AddChapter(long position, bool skip=false) {
+        return AddChapter(new Chapter() { Position = position, Skip=skip });
     }
 
     public bool RemoveChapter(long position) {
-        lock (mChapters) {
-            var chapter = GetChapterAt(position);
-            if (chapter!=null) {
-                return RemoveChapter(chapter);
-            }
-            return false;
+        var chapter = mChapters.GetChapterAt(position);
+        if (chapter != null) {
+            return RemoveChapter(chapter);
         }
+        return false;
     }
+
     public bool RemoveChapter(Chapter chapter) {
         lock (mChapters) {
-            if (chapter.Position != 0) {
-                if (mChapters.Remove(chapter.Position)) {
-                    OnUpdateChapterList();
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-    public bool UpdateChapter(long position, string? label, bool? skip) {
-        lock (mChapters) {
-            var chapter = GetChapterAt(position);
-            if (chapter != null) {
-                return UpdateChapter(chapter, label, skip);
-            }
-            return false;
-        }
-    }
-
-
-    public bool UpdateChapter(Chapter chapter, string? label, bool? skip) {
-        lock (mChapters) {
-            if (!mChapters.ContainsKey(chapter.Position)) {
-                return false;
-            }
-            Chapter? newChapter = chapter.CopyChapterIfModifed(label, skip);
-            if (newChapter!=null) {
-                mChapters[chapter.Position] = newChapter;
+            if (mChapters.RemoveChapter(chapter)) {
                 OnUpdateChapterList();
                 return true;
             }
@@ -165,32 +123,47 @@ public class ChapterListViewModel
         }
     }
 
+    public bool UpdateChapter(long position, string? label, bool? skip) {
+        return UpdateChapter(mChapters.GetChapterAt(position), label, skip);
+    }
 
-    private bool CanAddChapter(long position) {
-        if (0L < position && position < MIN_CHAPTER_SPAN) {
-            // 0Lは許可する（pseudo chapter）が、0～100msは許可しない
+
+    public bool UpdateChapter(Chapter? chapter, string? label, bool? skip) {
+        if (chapter == null) {
             return false;
         }
-
-        int prevIndex = -1;
-        int nextIndex = -1;
-        int hit = GetNeighbourIndexOf(mChapters, position, out prevIndex, out nextIndex);
-        if (hit >= 0) {
+        lock (mChapters) {
+            if (mChapters.UpdateChapter(chapter, label, skip)) {
+                OnUpdateChapterList();
+                return true;
+            }
             return false;
         }
-        else {
-            if (prevIndex >= 0) {
-                if (Math.Abs(mChapters.Values[prevIndex].Position - position) < MIN_CHAPTER_SPAN) {
-                    return false;
-                }
-            }
-            if (nextIndex >= 0) {
-                if (Math.Abs(mChapters.Values[nextIndex].Position - position) < MIN_CHAPTER_SPAN) {
-                    return false;
-                }
-            }
+    }
+
+    public async void RenameChapter(Chapter chapter) {
+        var name = await _dialogService.ShowInputText(title: "Chapter Name", message: "Enter new chapter name:", initialText: chapter.Label ?? "", placeholder: "Chapter Name", acceptEmptyString: true);
+        if (name != null) {
+            UpdateChapter(chapter.Position, name, null);
         }
-        return true;
+    }
+    public async void RenameChapter(long position) {
+        var chapter = mChapters.GetChapterAt(position);
+        if (chapter != null) {
+            RenameChapter(chapter);
+        }
+    }
+
+    public void ToggleSkipChapter(Chapter chapter) {
+        UpdateChapter(chapter.Position, null, !chapter.Skip);
+    }
+    public void ToggleSkipChapter(long position) {
+        var chapter = mChapters.GetChapterAt(position);
+        if (chapter != null) {
+            UpdateChapter(chapter.Position, null, !chapter.Skip);
+        } else {
+            AddChapter(0, skip: true);
+        }
     }
 
     public void Undo() {
@@ -198,10 +171,7 @@ public class ChapterListViewModel
             if (mHistoryIndex > 0) {
                 mHistoryIndex--;
                 var list = mChapterHistory[mHistoryIndex];
-                mChapters.Clear();
-                foreach (var chapter in list) {
-                    mChapters.Add(chapter.Position, chapter);
-                }
+                mChapters.Set(list);
                 ClearRangeCache();  // Skip属性が変化したかチェックすべきだが、そこまで厳密にやることもないだろう。
                 ChapterList.Value = list;
             }
@@ -213,36 +183,10 @@ public class ChapterListViewModel
             if (mHistoryIndex < mChapterHistory.Count - 1) {
                 mHistoryIndex++;
                 var list = mChapterHistory[mHistoryIndex];
-                mChapters.Clear();
-                foreach (var chapter in list) {
-                    mChapters.Add(chapter.Position, chapter);
-                }
+                mChapters.Set(list);
                 ClearRangeCache();
                 ChapterList.Value = list;
             }
-        }
-    }
-
-    public async void RenameChapter(Chapter chapter) {
-        var name = await _dialogService.ShowInputText(title:"Chapter Name", message:"Enter new chapter name:", initialText:chapter.Label ?? "", placeholder:"Chapter Name", acceptEmptyString:true);
-        if (name != null) {
-            UpdateChapter(chapter.Position, name, null);
-        }
-    }
-    public async void RenameChapter(long position) {
-        var chapter = GetChapterAt(position);
-        if (chapter != null) {
-            RenameChapter(chapter);
-        }
-    }
-
-    public void ToggleSkipChapter(Chapter chapter) {
-        UpdateChapter(chapter.Position, null, !chapter.Skip);
-    }
-    public void ToggleSkipChapter(long position) {
-        var chapter = GetChapterAt(position);
-        if (chapter != null) {
-            UpdateChapter(chapter.Position, null, !chapter.Skip);
         }
     }
 
@@ -251,122 +195,83 @@ public class ChapterListViewModel
     #region Find Chapter
 
 
-    /**
-     * 指定位置(current)近傍のインデックスを取得
-     * 
-     * @param prev (out) currentの前（なければ-1）
-     * @param next (out) currentの次（なければ-1）
-     * @return true: currentがヒット（prevとnextにひとつ前/後のindexがセットされる）
-     *         false: ヒットしていない
-     */
-    public static int GetNeighbourIndexOf<T>(SortedList<long, T> list, long current, out int prev, out int next) {
-        prev = next = -1;
-        int count = list.Count, s = 0, e = count - 1, m;
-        if (e < 0) {
-            return -1;
-        }
+    ///**
+    // * 指定位置(current)近傍のインデックスを取得
+    // * 
+    // * @param prev (out) currentの前（なければ-1）
+    // * @param next (out) currentの次（なければ-1）
+    // * @return true: currentがヒット（prevとnextにひとつ前/後のindexがセットされる）
+    // *         false: ヒットしていない
+    // */
+    //public static int GetNeighbourIndexOf<T>(SortedList<long, T> list, long current, out int prev, out int next) {
+    //    prev = next = -1;
+    //    int count = list.Count, s = 0, e = count - 1, m;
+    //    if (e < 0) {
+    //        return -1;
+    //    }
 
-        var markers = list.Keys;
-        if (markers[e] < current) {
-            prev = e;
-            return -1;
-        }
+    //    var markers = list.Keys;
+    //    if (markers[e] < current) {
+    //        prev = e;
+    //        return -1;
+    //    }
 
-        while (s < e) {
-            m = (s + e) / 2;
-            long v = markers[m];
-            if (v == current) {
-                prev = m - 1;
-                if (m < count - 1) {
-                    next = m + 1;
-                }
-                return m;
-            }
-            else if (v < current) {
-                s = m + 1;
-            }
-            else // current < markers[m]
-            {
-                e = m;
-            }
-        }
-        next = s;
-        prev = s - 1;
-        return -1;
-    }
+    //    while (s < e) {
+    //        m = (s + e) / 2;
+    //        long v = markers[m];
+    //        if (v == current) {
+    //            prev = m - 1;
+    //            if (m < count - 1) {
+    //                next = m + 1;
+    //            }
+    //            return m;
+    //        }
+    //        else if (v < current) {
+    //            s = m + 1;
+    //        }
+    //        else // current < markers[m]
+    //        {
+    //            e = m;
+    //        }
+    //    }
+    //    next = s;
+    //    prev = s - 1;
+    //    return -1;
+    //}
 
-    public int FindChapter(long posMs, out int prev, out int next) {
-        lock (mChapters) {
-            return GetNeighbourIndexOf(mChapters, posMs, out prev, out next);
-        }
-    }
+    //public int FindChapter(long posMs, out int prev, out int next) {
+    //    lock (mChapters) {
+    //        return GetNeighbourIndexOf(mChapters, posMs, out prev, out next);
+    //    }
+    //}
 
     public Chapter? NextChapter(long current) {
         lock (mChapters) {
-            FindChapter(current, out var prev, out var next);
-            if (next < 0) {
-                return null;
-            }
-            return mChapters.Values[next];
+            return mChapters.NextChapter(current);
         }
     }
 
     public Chapter? PrevChapter(long current) {
         lock (mChapters) {
-            FindChapter(current, out var prev, out var next);
-            if (prev < 0) {
-                return null;
-            }
-            return mChapters.Values[prev];
+            return mChapters.PrevChapter(current);
         }
     }
 
     public Chapter? NextEnabledChapter(long current) {
         lock (mChapters) {
-            FindChapter(current, out var prev, out var next);
-            if (next < 0) {
-                return null;
-            }
-            for (int i = next; i < mChapters.Count; i++) {
-                var nextChapter = mChapters.Values[i];
-                if (nextChapter.Enabled) {
-                    return nextChapter;
-                }
-            }
-            return null;
+            return mChapters.NextEnabledChapter(current);
         }
     }
 
     public Chapter? PrevEnabledChapter(long current, bool isPlaying) {
         lock (mChapters) {
-            FindChapter(current, out var prev, out var next);
-            if (prev < 0) {
-                return null;
-            }
-            if (isPlaying && Math.Abs(mChapters.Values[prev].Position - current) < 300L) {
-                // 再生中に戻るボタンが押され、且つ、prev chapter の先頭からのオフセットが300ms未満なら、prev chapterの先頭を基準にprevChapterを返す
-                return PrevEnabledChapter(mChapters.Values[prev].Position, false);
-            }
-            for (int i = prev; i >= 0; i--) {
-                var prevChapter = mChapters.Values[i];
-                if (prevChapter.Enabled) {
-                    return prevChapter;
-                }
-            }
-            return null;
+            return mChapters.PrevEnabledChapter(current, isPlaying);
         }
     }
 
     public Chapter? GetChapterAt(long current) {
         lock (mChapters) {
-            var hit = FindChapter(current, out var prev, out var next);
-            if (hit >= 0) {
-                return mChapters.Values[hit];
-            }
-            if (prev >= 0) {
-                return mChapters.Values[prev];
-            }
-            return null;
+            return mChapters.GetChapterAt(current);
         }
     }
 
@@ -384,46 +289,47 @@ public class ChapterListViewModel
 
     #region Chapter Ranges
 
-    private IEnumerable<Chapter> ChapterListWithHeadChapter() {
-        if (mChapters.Count == 0 || mChapters.Values.First().Position > 0L) {
-            yield return new Chapter { Position = 0L, Skip = false };
-        }
-        foreach (var chapter in mChapters.Values) {
-            yield return chapter;
-        }
-    }
+    //private IEnumerable<Chapter> ChapterListWithHeadChapter() {
+    //    if (mChapters.Count == 0 || mChapters.Values.First().Position > 0L) {
+    //        yield return new Chapter { Position = 0L, Skip = false };
+    //    }
+    //    foreach (var chapter in mChapters.Values) {
+    //        yield return chapter;
+    //    }
+    //}
 
-    private IEnumerable<TimeRange> GetEnabledRanges() {
-        var skipping = false;
-        var checking = 0L;
-        foreach (var r in ChapterListWithHeadChapter()) {
-            if (skipping != r.Skip) {
-                if (r.Skip) {
-                    // enabled --> disabled at r.position
-                    skipping = true;
-                    if (checking < r.Position) {
-                        yield return new TimeRange(checking, r.Position);
-                        checking = r.Position;
-                    }
-                }
-                else {
-                    // disabled --> enabled at r.position
-                    skipping = false;
-                    checking = r.Position;
-                }
-            }
-        }
-        if (!skipping) {
-            yield return new TimeRange(checking);
-        }
-    }
+    //private IEnumerable<TimeRange> GetEnabledRanges() {
+    //    var skipping = false;
+    //    var checking = 0L;
+    //    foreach (var r in ChapterListWithHeadChapter()) {
+    //        if (skipping != r.Skip) {
+    //            if (r.Skip) {
+    //                // enabled --> disabled at r.position
+    //                skipping = true;
+    //                if (checking < r.Position) {
+    //                    yield return new TimeRange(checking, r.Position);
+    //                    checking = r.Position;
+    //                }
+    //            }
+    //            else {
+    //                // disabled --> enabled at r.position
+    //                skipping = false;
+    //                checking = r.Position;
+    //            }
+    //        }
+    //    }
+    //    if (!skipping) {
+    //        yield return new TimeRange(checking);
+    //    }
+    //}
 
-    private IEnumerable<TimeRange> GetDisabledRanges() {
-        return ReverseRange(EnabledRanges);
-    }
+    //private IEnumerable<TimeRange> GetDisabledRanges() {
+    //    return ReverseRange(EnabledRanges);
+    //}
 
     private List<TimeRange>? mEnabledRangeCache = null;
     private List<TimeRange>? mDisabledRangeCache = null;
+
     private void ClearRangeCache() {
         mEnabledRangeCache = null;
         mDisabledRangeCache = null;
@@ -435,7 +341,7 @@ public class ChapterListViewModel
                 if (mEnabledRangeCache != null) {
                     return mEnabledRangeCache;
                 }
-                mEnabledRangeCache = GetEnabledRanges().ToList();
+                mEnabledRangeCache = mChapters.GetEnabledRanges().ToList();
                 return mEnabledRangeCache;
             }
         }
@@ -447,7 +353,7 @@ public class ChapterListViewModel
                 if (mDisabledRangeCache != null) {
                     return mDisabledRangeCache;
                 }
-                mDisabledRangeCache = GetDisabledRanges().ToList();
+                mDisabledRangeCache = ReverseRange(EnabledRanges).ToList();
                 return mDisabledRangeCache;
             }
         }

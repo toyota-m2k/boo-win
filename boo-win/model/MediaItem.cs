@@ -9,6 +9,9 @@ public interface IMediaItem {
     string Id { get; }
     string Name { get; }
     long Size { get; }
+    long Duration { get; }
+    long Start { get; }
+    long End { get; }
     string Type { get; }
     string Media { get; }
     string Label { get; }
@@ -37,14 +40,24 @@ public class MediaItem : IMediaItem {
     [JsonPropertyName("id")]
     [JsonConverter(typeof(NumberOrStringConverter))]
     public string Id { get; set; } = "";
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
+
     [JsonPropertyName("size")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public long Size { get; set; }
 
+    [JsonPropertyName("duration")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public long Duration { get; set; }
+
     [JsonPropertyName("start")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public long Start { get; set; }
+
     [JsonPropertyName("end")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public long End { get; set; }
 
     [JsonPropertyName("type")]
@@ -54,10 +67,13 @@ public class MediaItem : IMediaItem {
     [JsonPropertyName("label")]
     public string Label { get; set; } = "";
     [JsonPropertyName("date")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public long DateInUnixTime { get; set; }
     [JsonPropertyName("rating")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int Rating { get; set; } = 0;
     [JsonPropertyName("mark")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int Mark { get; set; } = 0;
     [JsonPropertyName("categoryName")]
     public string CategoryName { get; set; } = "";

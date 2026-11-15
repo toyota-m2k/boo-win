@@ -5,9 +5,16 @@ using System.Linq;
 using System.Text;
 
 namespace BooWin.model; 
-public class ChapterList {
+public class ChapterListEditor {
     private SortedList<long, Chapter> mChapters = new SortedList<long, Chapter>();
     public const long MIN_CHAPTER_SPAN = 100L;
+
+    public List<Chapter> ToList() {
+        return mChapters.Values.ToList();
+    }   
+
+    public int Count => mChapters.Count;
+    public Chapter this[int index] => mChapters.Values[index];
 
     public static IEnumerable<TimeRange> ReverseRange(IEnumerable<TimeRange> ranges) {
         long checking = 0L;
@@ -54,41 +61,12 @@ public class ChapterList {
         return true;
     }
 
-
-    public bool AddChapter(long position) {
-        if (!CanAddChapter(position)) {
-            return false;
-        }
-        mChapters[position] = new Chapter() { Position = position };
-        return true;
-    }
-
-    public bool RemoveChapter(long position) {
-        var chapter = GetChapterAt(position);
-        if (chapter != null) {
-            return RemoveChapter(chapter);
-        }
-        return false; // not found
-    }
-
     public bool RemoveChapter(Chapter chapter) {
-        if (chapter.Position != 0) {
-            // 先頭チャプターは削除禁止
-            if (mChapters.Remove(chapter.Position)) {
-                return true;
-            }
+        if (mChapters.Remove(chapter.Position)) {
+            return true;
         }
         return false;
     }
-
-    public bool UpdateChapter(long position, string? label, bool? skip) {
-        var chapter = GetChapterAt(position);
-        if (chapter != null) {
-            return UpdateChapter(chapter, label, skip);
-        }
-        return false;
-    }
-
 
     public bool UpdateChapter(Chapter chapter, string? label, bool? skip) {
         if (!mChapters.ContainsKey(chapter.Position)) {
@@ -100,6 +78,15 @@ public class ChapterList {
             return true;
         }
         return false;   // no difference
+    }
+
+    public bool AddOrUpdateChapter(Chapter chapter) {
+        if (mChapters.ContainsKey(chapter.Position)) {
+            return UpdateChapter(chapter, chapter.Label, chapter.Skip);
+        }
+        else {
+            return AddChapter(chapter);
+        }
     }
 
 
@@ -152,6 +139,7 @@ public class ChapterList {
     //}
 
     #endregion
+
     #region Find Chapter
 
 
@@ -281,7 +269,7 @@ public class ChapterList {
         }
     }
 
-    private IEnumerable<TimeRange> GetEnabledRanges() {
+    public IEnumerable<TimeRange> GetEnabledRanges() {
         var skipping = false;
         var checking = 0L;
         foreach (var r in ChapterListWithHeadChapter()) {
@@ -342,4 +330,54 @@ public class ChapterList {
     //}
 
     #endregion
+
+    private static bool checkStartEndDuration(long start, long end) {
+        if (start < 0 || end < 0) {
+            return false;
+        }
+        if (end > 0) {
+            if (start >= end) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * item毎に start/end を指定する旧型式を、chapters に一本化する。
+     */
+    public static List<Chapter> MergeChaptersAndStartEnd(List<Chapter> chapters, long start, long end) {
+        if (!checkStartEndDuration(start, end)) {
+            return chapters;
+        }
+        var editor = new ChapterListEditor();
+        editor.Set(chapters);
+
+        if (start>0) {
+            var orgChapterAtStart = editor.GetChapterAt(start);
+            editor.AddOrUpdateChapter(new Chapter { Position = 0, Skip = true });
+            for (int i = 1; i < editor.Count; i++) {
+                var chapter = editor[i];
+                if (start < chapter.Position) {
+                    break;
+                }
+                editor.UpdateChapter(chapter, null, true);
+            }
+            editor.AddChapter(new Chapter { Position = start, Skip = orgChapterAtStart?.Skip ?? false });
+        }
+
+        if (end > 0) {
+            for (int i = editor.Count - 1; i >= 0; i--) {
+                var chapter = editor[i];
+                if (chapter.Position < end) {
+                    break;
+                }
+                editor.UpdateChapter(chapter, null, true); 
+            }
+            editor.AddChapter(new Chapter { Position = end, Skip = true });
+        }
+
+        return editor.ToList();
+    }
+
 }

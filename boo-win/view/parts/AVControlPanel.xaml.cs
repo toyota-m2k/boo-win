@@ -72,7 +72,12 @@ public sealed partial class AVControlPanel : UserControl
         if (vm!=null) {
             mBinding.Add(
                 vm.PlayerPosition.Subscribe(pos => {
-                    mChapterSlider.Value = pos;
+                    mUpdatingSliderFromPlayer = true;
+                    try {
+                        mChapterSlider.Value = pos;
+                    } finally {
+                        mUpdatingSliderFromPlayer = false;
+                    }
                 })
             );
         }
@@ -118,9 +123,11 @@ public sealed partial class AVControlPanel : UserControl
         e.Handled = true;
     }
 
+    private bool mUpdatingSliderFromPlayer = false;
+
     private void OnSliderChanged(object sender, RangeBaseValueChangedEventArgs e) {
         var viewModel = ViewModel;
-        if (viewModel==null || viewModel.IsPlaying.Value == true) {
+        if (viewModel==null || mUpdatingSliderFromPlayer) {
             return;
         }
 
@@ -187,5 +194,4 @@ public sealed partial class AVControlPanel : UserControl
         }
         mPauseTemporary = false;
     }
-
 }

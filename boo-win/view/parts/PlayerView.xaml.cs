@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Reactive.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using Windows.Media.Playback;
 
@@ -139,8 +140,8 @@ public sealed partial class PlayerView : UserControl {
         }),
         vm.PlayerSeekToCommand.Subscribe(pos => {
             if (mSession != null) {
-                pos = Math.Max(0, Math.Min(pos, mSession.NaturalDuration.Ticks));
-                mSession.Position = new TimeSpan(pos);
+                pos = Math.Max(0, Math.Min(pos, (long)Math.Round(mSession.NaturalDuration.TotalMilliseconds)));
+                mSession.Position = TimeSpan.FromMilliseconds(pos);
                 vm.PlayerPosition.Value = pos;
                 var chapter = vm.ChapterModel.GetChapterAt(pos);
                 vm.ChapterModel.CurrentChapter.Value = chapter;
@@ -148,7 +149,7 @@ public sealed partial class PlayerView : UserControl {
         }));
         vm.ChapterModel.ChapterList.Subscribe((_) => {
             if (mSession != null) {
-                var pos = mSession.Position.Ticks;
+                var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
                 var chapter = vm.ChapterModel.GetChapterAt(pos);
                 vm.ChapterModel.CurrentChapter.Value = null;
                 vm.ChapterModel.CurrentChapter.Value = chapter;
@@ -159,13 +160,13 @@ public sealed partial class PlayerView : UserControl {
     private void UpdatePlayingPosition() {
         var viewModel = ViewModel;
         if (viewModel != null && mSession != null && mInternalPlayer != null) {
-            var pos = mSession.Position.Ticks;
+            var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
             var chapter = viewModel.ChapterModel.GetChapterAt(pos);
             if (chapter!=null && !chapter.Enabled) {
                 chapter = viewModel.ChapterModel.NextEnabledChapter(pos);
                 if (chapter != null) {
                     pos = chapter.Position;
-                    mSession.Position = new TimeSpan(pos);
+                    mSession.Position = TimeSpan.FromMilliseconds(pos);
                 }
                 else {
                     mInternalPlayer.Pause();
@@ -173,6 +174,17 @@ public sealed partial class PlayerView : UserControl {
             }
             viewModel.PlayerPosition.Value = pos;
             viewModel.ChapterModel.CurrentChapter.Value = chapter;
+        }
+    }
+
+    private void OnPlayerTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e) {
+        var viewModel = ViewModel;
+        if (viewModel == null) return;
+        if (viewModel.IsPlaying.Value) {
+            viewModel.PauseCommand.Execute();
+        }
+        else {
+            viewModel.PlayCommand.Execute();
         }
     }
 }

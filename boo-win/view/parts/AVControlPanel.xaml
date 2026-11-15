@@ -14,7 +14,10 @@
         <ResourceDictionary Source="../Converters.xaml"/>
     </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical">
+    <StackPanel Orientation="Vertical"
+                Background="#40FFFFFF"
+            Tapped="OnContainerTapped"
+                >
         <StackPanel Orientation="Horizontal">
         <!-- buttons -->
             <StackPanel Orientation="Horizontal">
@@ -41,7 +44,6 @@
         </StackPanel>
         <local:ChapterView
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
-            Tapped="OnContainerTapped"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             ChapterContextMenuRequested="CV_ChapterContextMenu"
             ChapterSelected="CV_ChapterSelected"

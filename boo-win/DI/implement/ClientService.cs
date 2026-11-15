@@ -144,10 +144,7 @@ public class ClientService : IClientService {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
         var chapterList = await _api.GetChapterAsync(item) ?? new List<Chapter>();
-        if (item.Start>0 || item.End>0) {
-
-        }
-        return chapterList;
+        return ChapterListEditor.MergeChaptersAndStartEnd(chapterList, item.Start, item.End);
     }
 
     public async Task<bool> CheckHostAvailabilityAsync(PeerHost host) {

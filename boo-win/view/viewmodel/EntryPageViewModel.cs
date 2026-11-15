@@ -115,10 +115,8 @@ public class EntryPageViewModel {
                 previousTask = null;
             }
         }
-        if (host == null) {
-            IsHostAvailable.Value = false;
-        }
-        else {
+        IsHostAvailable.Value = false;
+        if (host != null) {
             var tcs = new CancellationTokenSource();
             lock (this) {
                 previousTask = tcs;

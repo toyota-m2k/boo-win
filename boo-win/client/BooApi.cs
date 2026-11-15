@@ -285,7 +285,7 @@ public class BooApi : IDisposable {
             string? category = null,
             string? searchText = null
             ) {
-        var url = MakeUrlAsync("list");
+        var url = MakeUrlAsync("list?s=1");
         var dic = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(AuthToken)) {
             dic["auth"] = AuthToken;

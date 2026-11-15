@@ -1,5 +1,6 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using FFMpegCore;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Reactive.Bindings;
@@ -9,6 +10,7 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Windows.Media.Playback;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -52,11 +54,17 @@ public class PlayerViewModel {
 
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
     public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
-    public void SetSource(MediaItem? item) {
+    public async void SetSource(MediaItem? item) {
         PlayerState.Value = MediaPlayerState.NONE;
         MediaEnded.Value = false;
         MediaError.Value = false;
         mSourceMediaItem.Value = item;
+        //if (item!=null) {
+        //    var chapters = await _clientService.LoadChapterAsync(item);
+        //    if (item ==mSourceMediaItem.Value) {
+        //        ChapterModel.Clear(chapters);
+        //    }
+        //}
     }
 
     private IClientService _clientService;
@@ -89,16 +97,29 @@ public class PlayerViewModel {
         }).ToReadOnlyReactiveProperty<string>();
 
         ChapterModel.NextChapterCommand.Subscribe(() => {
-            var chapter = ChapterModel.NextChapter(PlayerPosition.Value);
-            if (chapter!=null) {
-                PlayerSeekToCommand.Execute(chapter.Position);
+            long position = 0;
+            if (IsPlaying.Value) {
+                var chapter = ChapterModel.NextEnabledChapter(PlayerPosition.Value);
+                position = chapter?.Position ?? ChapterModel.LastEnabledPosition(NaturalDuration.Value);
+            } else {
+                var chapter = ChapterModel.NextChapter(PlayerPosition.Value);
+                position = chapter?.Position ?? NaturalDuration.Value;
             }
+            position = Math.Clamp(position, 0, NaturalDuration.Value);
+            PlayerSeekToCommand.Execute(position);
         });
         ChapterModel.PrevChapterCommand.Subscribe(() => {
-            var chapter = ChapterModel.PrevChapter(PlayerPosition.Value);
-            if (chapter != null) {
-                PlayerSeekToCommand.Execute(chapter.Position);
+            long position = 0;
+            if (IsPlaying.Value) {
+                var chapter = ChapterModel.PrevEnabledChapter(PlayerPosition.Value, true);
+                position = chapter?.Position ?? ChapterModel.FirstEnabledPosition();
             }
+            else {
+                var chapter = ChapterModel.PrevChapter(PlayerPosition.Value);
+                position = chapter?.Position ?? 0;
+            }
+            position = Math.Clamp(position, 0, NaturalDuration.Value);
+            PlayerSeekToCommand.Execute(position);
         });
 
         ChapterModel.AddChapterCommand.Subscribe(() => {
@@ -123,7 +144,7 @@ public class PlayerViewModel {
 
     public void OnNaturalDurationChanged(MediaPlaybackSession sender, object args) {
         var dur = sender.NaturalDuration;
-        NaturalDuration.Value = dur.Ticks;
+        NaturalDuration.Value = (long)Math.Round(dur.TotalMilliseconds);
     }
 
     /**

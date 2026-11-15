@@ -10,7 +10,7 @@
     Unloaded="OnUnloaded"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid Tapped="OnPlayerTapped">
         <MediaPlayerElement 
                 x:Name="mPlayerElement" 
                 Stretch="Uniform"
