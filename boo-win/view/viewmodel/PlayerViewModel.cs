@@ -126,7 +126,7 @@ public class PlayerViewModel {
         Seekable = PlayerState.CombineLatest(NaturalDuration, (state, duration) => (state != MediaPlayerState.NONE && duration > 0)).ToReadOnlyReactiveProperty();
         PositionString = PlayerPosition.CombineLatest(NaturalDuration, (pos, dur) => {
             var duration = TimeSpan.FromMilliseconds(dur);
-            var current = TimeSpan.FromMilliseconds(pos);
+                var current = TimeSpan.FromMilliseconds(pos);
             return (duration.Hours>0) ? $"{current.Hours:D2}:{current.Minutes:D2}:{current.Seconds:D2}" : $"{current.Minutes:D2}:{current.Seconds:D2}";
         }).ToReadOnlyReactiveProperty<string>();
         DurationString = NaturalDuration.Select(dur => {
@@ -190,8 +190,10 @@ public class PlayerViewModel {
         var dur = sender.NaturalDuration;
         NaturalDuration.Value = (long)Math.Round(dur.TotalMilliseconds);
         if (LastPlayingPosition > 0) {
-            PlayerSeekToCommand.Execute(LastPlayingPosition);
-            LastPlayingPosition = 0;
+            _pageService.DispatcherQueue?.TryEnqueue(() => {
+                PlayerSeekToCommand.Execute(LastPlayingPosition);
+                LastPlayingPosition = 0;
+            });
         }
     }
 
@@ -238,6 +240,6 @@ public class PlayerViewModel {
     public void SaveCurrentStatus() {
         var item = SourceMediaItem.Value;
         if (item == null) return;
-        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value);
+        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
     }
 }

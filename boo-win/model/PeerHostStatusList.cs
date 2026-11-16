@@ -46,8 +46,9 @@ public class PeerHostStatusList {
     public int AddOrUpdate(PeerHostStatus? hostStatus) {
         if (hostStatus == null) return -1;
         var existing = Hosts.FindIndex(h => h != null && h.Address.Equals(hostStatus.Address));
-        if (existing != -1) {
+        if (existing >= 0) {
             Hosts[existing] = hostStatus;
+            IsDirty = true;
             return existing;
         } else {
             IsDirty = true;

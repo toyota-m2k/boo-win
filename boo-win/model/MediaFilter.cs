@@ -33,7 +33,7 @@ public class MediaFilter : IMediaFilter {
 
 
     public bool Filter(IMediaItem item) {
-        if (Category != BuiltInCategory.All) {
+        if (Category!=null && Category != BuiltInCategory.All) {
             if (Category== BuiltInCategory.Unspecified && !string.IsNullOrWhiteSpace(item.CategoryName) ||
                 Category != BuiltInCategory.Unspecified && item.CategoryName != Category.Name) {
                 return false;
@@ -78,11 +78,11 @@ public class MediaFilter : IMediaFilter {
     public bool IsEmpty =>
         Category == BuiltInCategory.All && (Ratings == null || Ratings.IsEmpty()) && (Marks == null || Marks.IsEmpty()) && (TargetTypes == null||TargetTypes.IsEmpty()) && !EnableStartDate && !EnableEndDate && string.IsNullOrWhiteSpace(SearchText);
 
-    class EmptyFilter : IMediaFilter {
-        public bool IsEmpty => true;
-        public bool Filter(IMediaItem item) => true;
-    }
-    public static IMediaFilter Empty { get; } = new EmptyFilter();
+    //class EmptyFilter : IMediaFilter {
+    //    public bool IsEmpty => true;
+    //    public bool Filter(IMediaItem item) => true;
+    //}
+    //public static IMediaFilter Empty { get; } = new EmptyFilter();
 
 
     private static bool IsEqualList<T>(IList<T>? a, IList<T>? b) {

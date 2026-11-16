@@ -66,7 +66,7 @@ public class SettingsService : ISettingsService {
     /**
      * 現在選択中のホストの再生状態を更新する
      */
-    public void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save=false) {
+    public void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save=true) {
         if (CurrentHost != null) {
             var updated = CurrentHost.UpdateStatus(lastPlayingId, lastPlayingPosition);
             HostList.AddOrUpdate((PeerHostStatus)updated);

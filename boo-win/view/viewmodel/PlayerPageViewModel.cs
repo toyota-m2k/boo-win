@@ -1,5 +1,6 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using Microsoft.UI.Dispatching;
 using Microsoft.Windows.System.Power;
 using Reactive.Bindings;
 using System;
@@ -85,20 +86,23 @@ public class PlayerPageViewModel
         await _clientService.SetCurrentHostAsync(currentHost);
         ItemListSource.Value = await _clientService.GetMediaItemListAsync();
 
-        var lastPlayingId = currentHost.LastPlayingId;
-        if (lastPlayingId!=null) {
-            var item = ItemListSource.Value.Items.Find(it => it.Id == lastPlayingId);
-            if (item != null) {
-                SelectedItem.Value = item;
-                PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
-            }
-        }
         FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
         FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
+        FilterModel.SelectedCategory.Value = FilterModel.CategoryList.Value[0];
         FilterModel.IsCategorySupported.Value = _clientService.CategorySupport.IsSupported;
         FilterModel.IsRatingSupported.Value = _clientService.RatingSupport.IsSupported;
         FilterModel.IsMarkSupported.Value = _clientService.MarkSupport.IsSupported;
 
+        _pageService.DispatcherQueue?.TryEnqueue(() => {
+            var lastPlayingId = currentHost.LastPlayingId;
+            if (lastPlayingId != null) {
+                var item = ItemListSource.Value.Items.Find(it => it.Id == lastPlayingId);
+                if (item != null) {
+                    PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
+                    SelectedItem.Value = item;
+                }
+            }
+        });
         return true;
     }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new ();
@@ -110,11 +114,13 @@ public class PlayerPageViewModel
     public ReactiveCommand BackToEntryPageCommand { get; } = new();
 
     public ReactiveProperty<bool> IsPlayerOnly { get; } = new(false);
+    public ReactiveProperty<bool> IsPropertiesVisible { get; } = new(false);
+
     public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
     public void SaveCurrentStatus() {
         var item = SelectedItem.Value;
         if (item == null) return;
-        _settingsService.UpdateCurrentHostStatus(item.Id, 0);
+        _settingsService.UpdateCurrentHostStatus(item.Id, 0, save: true);
     }
 }
