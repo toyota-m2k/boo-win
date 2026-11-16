@@ -1,6 +1,7 @@
 using BooWin.DI.contract;
 using BooWin.model;
 using BooWin.view.viewmodel;
+using CommunityToolkit.WinUI.Animations;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -76,7 +77,9 @@ public sealed partial class PlayerView : UserControl {
         mSession = null;
     }
 
-
+    /**
+     * MediaPlayerとViewModelの接続を解除する。
+     */
     private void Unbind() {
         mTrackingTimer?.Stop();
         mTrackingTimer = null;
@@ -84,7 +87,9 @@ public sealed partial class PlayerView : UserControl {
         mBinding = new DisposableCollection();
     }
 
-    /// MediaPlayer と ViewModel が両方そろったときだけ接続する
+    /**
+     * MediaPlayer と ViewModel を接続する。
+     */
     private void Rebind() {
         Unbind();
         var vm = ViewModel;
@@ -98,7 +103,7 @@ public sealed partial class PlayerView : UserControl {
         mTrackingTimer.Tick += (s, e) => {
             UpdatePlayingPosition();
         };
-        //DispatcherQueueSynchronizationContext.Current
+
         var uiContext = SynchronizationContext.Current;
         mBinding
             .Add(GenericDisposable.Create(
@@ -116,16 +121,16 @@ public sealed partial class PlayerView : UserControl {
             }),
 
             vm.SourceMediaItem.Subscribe(item => {
-            if (item != null) {
-                player.AutoPlay = true;
-                player.SetUriSource(new Uri(_clientService.GetItemUrl(item)));
-                LoadChapter(item);
-            }
-            else {
-                player.Pause();
-                player.Source = null;
-            }
-        }),
+                if (item != null) {
+                    player.AutoPlay = true;
+                    player.SetUriSource(new Uri(_clientService.GetItemUrl(item)));
+                    LoadChapter(item);
+                }
+                else {
+                    player.Pause();
+                    player.Source = null;
+                }
+            }),
         vm.IsPlaying.ObserveOn(vm.UIContext).Subscribe(isPlaying => {
             if (isPlaying) {
                 mTrackingTimer?.Start();
@@ -148,7 +153,7 @@ public sealed partial class PlayerView : UserControl {
                 var chapter = vm.ChapterModel.GetChapterAt(pos);
                 vm.ChapterModel.CurrentChapter.Value = chapter;
             }
-        }));
+        }),
         vm.ChapterModel.ChapterList.Subscribe((_) => {
             if (mSession != null) {
                 var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
@@ -156,7 +161,8 @@ public sealed partial class PlayerView : UserControl {
                 vm.ChapterModel.CurrentChapter.Value = null;
                 vm.ChapterModel.CurrentChapter.Value = chapter;
             }
-        });
+        }) );
+
     }
 
     private void UpdatePlayingPosition() {
@@ -189,6 +195,29 @@ public sealed partial class PlayerView : UserControl {
             viewModel.PlayCommand.Execute();
         }
     }
+
+    #region Show/Hide Control Panel
+
+    private void OnControlPanelMouseEnter(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.OnControlPanelMouseEnter();
+        e.Handled = true;
+    }
+
+    private void OnControlPanelMouseLeave(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.OnControlPanelMouseLeave();
+        e.Handled = true;
+    }
+
+    private void OnPointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.ActivateControlPanel();
+        e.Handled = true;
+    }
+
+    private void OnControlPanelMouseMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        e.Handled = true;
+    }
+
+    #endregion
 }
 
 

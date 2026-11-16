@@ -6,18 +6,34 @@
     xmlns:local="using:BooWin.view.parts"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:animations="using:CommunityToolkit.WinUI.Animations"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     mc:Ignorable="d">
 
-    <Grid Tapped="OnPlayerTapped">
+    <Grid 
+        Tapped="OnPlayerTapped"
+        PointerMoved="OnPointerMoved"
+        >
         <MediaPlayerElement 
                 x:Name="mPlayerElement" 
                 Stretch="Uniform"
                 AreTransportControlsEnabled="False"
                 />
         <local:AVControlPanel
+            PointerEntered="OnControlPanelMouseEnter"
+            PointerExited="OnControlPanelMouseLeave"
+            PointerMoved="OnControlPanelMouseMoved"
             VerticalAlignment="Bottom"
-            ViewModel="{x:Bind ViewModel, Mode=OneWay}"/>
+            ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.IsControlPanelVisible.Value, Mode=OneWay}"
+            >
+            <animations:Implicit.ShowAnimations>
+                <animations:OpacityAnimation From="0" To="1" Duration="0:0:0.25"/>
+            </animations:Implicit.ShowAnimations>
+            <animations:Implicit.HideAnimations>
+                <animations:OpacityAnimation From="1" To="0" Duration="0:0:0.25"/>
+            </animations:Implicit.HideAnimations>
+        </local:AVControlPanel>
     </Grid>
 </UserControl>

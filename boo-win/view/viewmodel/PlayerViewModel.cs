@@ -51,6 +51,40 @@ public class PlayerViewModel {
     public ReactiveCommand PrevItemCommand { get; } = new();
     public ReactiveCommand<long> PlayerSeekToCommand { get; } = new();
 
+    #region Show/Hide Control Panel
+    
+    // ピン止め有効・無効
+    public ReactiveProperty<bool> ControlPanelPinned { get; } = new(false);
+    
+    // マウス操作によるアクティブ化
+    //  - ControlPanel上にMouseが乗っている間は true
+    //  - MouseMoved から３秒間 true
+    public ReactiveProperty<bool> ControlPanelActivatedByMouse { get; } = new(false);
+    public ReadOnlyReactiveProperty<bool> IsControlPanelVisible { get; }
+    private DispatcherTimer mControlPanelTimer;
+    private bool mMouseInControlPanel = false;
+    public void OnControlPanelMouseEnter() {
+        mControlPanelTimer.Stop();
+        mMouseInControlPanel = true;
+        ControlPanelActivatedByMouse.Value = true;
+    }
+    public void ActivateControlPanel() {
+        mControlPanelTimer.Stop();
+        ControlPanelActivatedByMouse.Value = true;
+        if (!mMouseInControlPanel) {
+            mControlPanelTimer.Start();
+        }
+    }
+    public void OnControlPanelMouseLeave() {
+        mMouseInControlPanel = false;
+        mControlPanelTimer.Start();
+    }
+    private void OnControlPanelTimerTick(object? sender, object e) {
+        mControlPanelTimer.Stop();
+        ControlPanelActivatedByMouse.Value = false;
+    }
+    #endregion
+
     public long LastPlayingPosition { get; set; } = 0;
 
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
@@ -91,12 +125,12 @@ public class PlayerViewModel {
         MediaReady = PlayerState.Select(s => s != MediaPlayerState.NONE).ToReadOnlyReactiveProperty();
         Seekable = PlayerState.CombineLatest(NaturalDuration, (state, duration) => (state != MediaPlayerState.NONE && duration > 0)).ToReadOnlyReactiveProperty();
         PositionString = PlayerPosition.CombineLatest(NaturalDuration, (pos, dur) => {
-            var duration = TimeSpan.FromTicks(dur);
-            var current = TimeSpan.FromTicks(pos);
+            var duration = TimeSpan.FromMicroseconds(dur);
+            var current = TimeSpan.FromMicroseconds(pos);
             return (duration.Hours>0) ? $"{current.Hours:D2}:{current.Minutes:D2}:{current.Seconds:D2}" : $"{current.Minutes:D2}:{current.Seconds:D2}";
         }).ToReadOnlyReactiveProperty<string>();
         DurationString = NaturalDuration.Select(dur => {
-            var duration = TimeSpan.FromTicks(dur);
+            var duration = TimeSpan.FromMicroseconds(dur);
             return (duration.Hours > 0) ? $"{duration.Hours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}" : $"{duration.Minutes:D2}:{duration.Seconds:D2}";
         }).ToReadOnlyReactiveProperty<string>();
 
@@ -142,7 +176,13 @@ public class PlayerViewModel {
             var pos = PlayerPosition.Value;
             ChapterModel.RenameChapter(pos);
         });
-        
+
+        IsControlPanelVisible = Observable.CombineLatest(
+            PlayerState, ControlPanelPinned, ControlPanelActivatedByMouse, (state, pinned, activated) => state!=MediaPlayerState.NONE && (state== MediaPlayerState.PAUSED || pinned || activated)
+        ).ToReadOnlyReactiveProperty();
+
+        mControlPanelTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        mControlPanelTimer.Tick += OnControlPanelTimerTick;
     }
 
 

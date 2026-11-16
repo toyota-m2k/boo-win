@@ -9,9 +9,14 @@
     xmlns:model="using:BooWin.model"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
 
     <Page.KeyboardAccelerators>
+        <!-- 
+        全画面モードをESCで終了するためのkey accelerator
+        これを使うと、Escというツールチップが出るので、KeyboardAcceleratorPlacementMode="Hidden" で抑制する。
+        -->
         <KeyboardAccelerator Key="Escape" Invoked="OnEscapeInvoked"/>
     </Page.KeyboardAccelerators>
 

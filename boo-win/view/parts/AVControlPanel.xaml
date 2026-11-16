@@ -14,11 +14,17 @@
         <ResourceDictionary Source="../Converters.xaml"/>
     </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical"
-                Background="#40FFFFFF"
-            Tapped="OnContainerTapped"
-                >
-        <StackPanel Orientation="Horizontal">
+    <Grid 
+        Background="#40FFFFFF"
+        Tapped="OnContainerTapped"
+        >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
         <!-- buttons -->
             <StackPanel Orientation="Horizontal">
                 <Button Content="Play" Command="{x:Bind ViewModel.PlayCommand, Mode=OneWay}" 
@@ -42,7 +48,11 @@
                 <Button Content="Redo" Command="{x:Bind ViewModel.ChapterModel.RedoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.ChapterModel.CanRedo.Value, Mode=OneWay}"/>
             </StackPanel>
         </StackPanel>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <ToggleButton Content="Pin" IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}" />
+        </StackPanel>
         <local:ChapterView
+            Grid.Row="1"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             ChapterContextMenuRequested="CV_ChapterContextMenu"
@@ -50,6 +60,7 @@
             />
         <!-- Chapter Slider -->
         <local:PlayerSlider
+            Grid.Row="2"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             Height="50"
             x:Name="mChapterSlider" 
@@ -64,7 +75,7 @@
             DragCompleted="OnSliderDragCompleted"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             />
-        <Grid Margin="10,0,10,0" Background="White">
+        <Grid Grid.Row="3" Margin="10,0,10,0" Background="White">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="AUTO"/>
@@ -79,5 +90,5 @@
             </TextBlock>
         </Grid>
 
-    </StackPanel>
+    </Grid>
 </UserControl>
