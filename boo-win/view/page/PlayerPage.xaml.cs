@@ -43,4 +43,8 @@ public sealed partial class PlayerPage : Page {
         base.OnNavigatedTo(e);
         _ = ViewModel.Prepare();
     }
+
+    private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e) {
+        categoryFlyout.Hide();
+    }
 }

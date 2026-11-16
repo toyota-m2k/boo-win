@@ -19,6 +19,37 @@
         -->
         <KeyboardAccelerator Key="Escape" Invoked="OnEscapeInvoked"/>
     </Page.KeyboardAccelerators>
+    <Page.Resources>
+        <ResourceDictionary>
+            <Style x:Key="CardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16,12"/>
+            </Style>
+            <Style x:Key="CardHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="FilterGroupStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource LayerFillColorDefaultBrush}"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="8,2,4,2"/>
+            </Style>
+            <Style x:Key="FilterToggleStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="4"/>
+            </Style>
+            <Style x:Key="FilterCheckBoxStyle" TargetType="CheckBox" BasedOn="{StaticResource DefaultCheckBoxStyle}">
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
 
     <Grid>
         <VisualStateManager.VisualStateGroups>
@@ -45,13 +76,115 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <Grid x:Name="ToolbarPanel" Grid.Row="0">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="Back" Command="{x:Bind ViewModel.BackToEntryPageCommand}"/>
-                <Button Content="Player Only" Click="{x:Bind ViewModel.TogglePlayerOnly}" ToolTipService.ToolTip="Esc で解除"/>
-            </StackPanel>
-        </Grid>
+        <!-- filter bar -->
+        <Border x:Name="ToolbarPanel" Grid.Row="0" Style="{StaticResource CardStyle}" Padding="12,8">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+
+                    <Button Content="Back" Command="{x:Bind ViewModel.BackToEntryPageCommand}"/>
+                    <Button Content="Player Only" Click="{x:Bind ViewModel.TogglePlayerOnly}" ToolTipService.ToolTip="Esc で解除"/>
+
+                    <!-- Channel -->
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsCategorySupported.Value, Mode=OneWay}">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                        <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource CardHeaderStyle}"/>
+                        <DropDownButton Content="{x:Bind ViewModel.FilterModel.SelectedCategory.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6">
+                            <DropDownButton.Flyout>
+                                <Flyout x:Name="categoryFlyout" Placement="BottomEdgeAlignedLeft">
+                                    <ListView ItemsSource="{x:Bind ViewModel.FilterModel.CategoryList.Value, Mode=OneWay}" SelectionMode="Single" MaxHeight="400"
+                                                  SelectedItem="{x:Bind ViewModel.FilterModel.SelectedCategory.Value, Mode=TwoWay}"
+                                                  SelectionChanged="OnCategorySelectionChanged">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate x:DataType="model:ICategory">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Flyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                    </StackPanel>
+
+                    <AppBarSeparator VerticalAlignment="Center"/>
+
+                    <!-- Type -->
+                    <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <CheckBox Content="Type" Style="{StaticResource FilterCheckBoxStyle}"
+                                          IsChecked="{x:Bind ViewModel.FilterModel.TypeFilterEnabled.Value, Mode=TwoWay}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="2"
+                                            Visibility="{x:Bind ViewModel.FilterModel.TypeFilterEnabled.Value, Mode=OneWay}">
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" ToolTipService.ToolTip="Video"
+                                                  IsChecked="{x:Bind ViewModel.FilterModel.TypeVideoChecked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xE714;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" ToolTipService.ToolTip="Audio"
+                                                  IsChecked="{x:Bind ViewModel.FilterModel.TypeAudioChecked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xE8D6;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" ToolTipService.ToolTip="Photo"
+                                                  IsChecked="{x:Bind ViewModel.FilterModel.TypePhotoChecked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xEB9F;" FontSize="13"/>
+                                </ToggleButton>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Rating -->
+                    <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsRatingSupported.Value, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <CheckBox Content="Rating" Style="{StaticResource FilterCheckBoxStyle}"
+                                          IsChecked="{x:Bind ViewModel.FilterModel.RatingFilterEnabled.Value, Mode=TwoWay}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="2"
+                                            Visibility="{x:Bind ViewModel.FilterModel.RatingFilterEnabled.Value, Mode=OneWay}">
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Rating1Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xF146;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Rating2Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xF147;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Rating3Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xF148;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Rating4Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xF149;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Rating5Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xF14A;" FontSize="13"/>
+                                </ToggleButton>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Mark -->
+                    <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsMarkSupported.Value, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <CheckBox Content="Mark" Style="{StaticResource FilterCheckBoxStyle}"
+                                          IsChecked="{x:Bind ViewModel.FilterModel.MarkFilterEnabled.Value, Mode=TwoWay}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="2"
+                                            Visibility="{x:Bind ViewModel.FilterModel.MarkFilterEnabled.Value, Mode=OneWay}">
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Mark0Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xE739;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Mark1Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xE734;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Mark2Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xE81B;" FontSize="13"/>
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource FilterToggleStyle}" IsChecked="{x:Bind ViewModel.FilterModel.Mark3Checked.Value, Mode=TwoWay}">
+                                    <FontIcon Glyph="&#xEB51;" FontSize="13"/>
+                                </ToggleButton>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
 
         <!-- Playlist / Splitter / Player -->
         <Grid x:Name="BodyGrid" Grid.Row="1">

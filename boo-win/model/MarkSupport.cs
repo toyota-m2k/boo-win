@@ -22,25 +22,28 @@ public class MarkSupport {
 
     public bool IsSupported => Marks.Count > 0;
 
-    private MarkSupport(List<Mark>? marks=null) {
+    public bool AllowReadWrite { get; set; } = false;
+
+    private MarkSupport(List<Mark>? marks=null, bool allowReadWrite=false) {
         Marks = marks ?? new List<Mark>();
+        AllowReadWrite = allowReadWrite;
     }
 
     public static MarkSupport Empty => new MarkSupport(null);
 
-    public static MarkSupport FromJson(string jsonString) {
+    public static MarkSupport FromJson(string jsonString, bool allowReadWrite) {
         var json = JsonUtil.Parse(jsonString);
         if (json != null) {
             try {
                 var marks = json["marks"]?.Deserialize<List<Mark>>(JsonUtil.SerializeCaseInsensitive);
                 if (marks != null) {
-                    return new MarkSupport(marks);
+                    return new MarkSupport(marks, allowReadWrite);
                 }
             }
             catch (Exception e) {
                 BooApi.Logger.Error(e);
             }
         }
-        return new MarkSupport();
+        return Empty;
     }
 }

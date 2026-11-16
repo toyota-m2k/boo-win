@@ -125,12 +125,12 @@ public class PlayerViewModel {
         MediaReady = PlayerState.Select(s => s != MediaPlayerState.NONE).ToReadOnlyReactiveProperty();
         Seekable = PlayerState.CombineLatest(NaturalDuration, (state, duration) => (state != MediaPlayerState.NONE && duration > 0)).ToReadOnlyReactiveProperty();
         PositionString = PlayerPosition.CombineLatest(NaturalDuration, (pos, dur) => {
-            var duration = TimeSpan.FromMicroseconds(dur);
-            var current = TimeSpan.FromMicroseconds(pos);
+            var duration = TimeSpan.FromMilliseconds(dur);
+            var current = TimeSpan.FromMilliseconds(pos);
             return (duration.Hours>0) ? $"{current.Hours:D2}:{current.Minutes:D2}:{current.Seconds:D2}" : $"{current.Minutes:D2}:{current.Seconds:D2}";
         }).ToReadOnlyReactiveProperty<string>();
         DurationString = NaturalDuration.Select(dur => {
-            var duration = TimeSpan.FromMicroseconds(dur);
+            var duration = TimeSpan.FromMilliseconds(dur);
             return (duration.Hours > 0) ? $"{duration.Hours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}" : $"{duration.Minutes:D2}:{duration.Seconds:D2}";
         }).ToReadOnlyReactiveProperty<string>();
 

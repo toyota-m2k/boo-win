@@ -20,6 +20,7 @@ public interface IMediaItem {
     int Mark { get; }
     string CategoryName { get; }
     DateTimeOffset Date { get; }
+    MediaType MediaType { get; }
 }
 
 public class NumberOrStringConverter : JsonConverter<string> {

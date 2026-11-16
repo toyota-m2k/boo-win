@@ -15,6 +15,7 @@ public class Capability {
     public bool Chapter { get; }
     public bool HasView { get; }
     public string Types { get; }
+    public string CategoryLabel { get; }
     public bool Authentication { get; }
 
     private Capability(
@@ -27,6 +28,7 @@ public class Capability {
         bool chapter,
         bool hasView,
         string types,
+        string categoryLabel,
         bool authentication
         ) {
         ServerName = serverName;
@@ -38,6 +40,7 @@ public class Capability {
         Chapter = chapter;
         HasView = hasView;
         Types = types;
+        CategoryLabel = categoryLabel;
         Authentication = authentication;
     }
 
@@ -68,8 +71,9 @@ public class Capability {
             var chapter = json.GetBool("chapter");
             var hasView = json.GetBool("hasView");
             var types = json.GetString("types", "vap");
+            var categoryLabel = json.GetString("categoryLabel", "Category");
             var authentication = json.GetBool("authentication");
-            return new Capability(serverName, version, root, category, rating, mark, chapter, hasView, types, authentication);
+            return new Capability(serverName, version, root, category, rating, mark, chapter, hasView, types, categoryLabel, authentication);
         } catch(Exception e) {
             BooApi.Logger.Error(e);
             return null;

@@ -82,7 +82,8 @@ public class BooApi : IDisposable {
 
     public async Task<CategorySupport> GetCategorySupportAsync() {
         try {
-            if ((_capability?.Category ?? 0) <0) {
+            var capCategory = _capability?.Category ?? 0;
+            if (capCategory <= 0) {
                 return CategorySupport.Empty;
             }
             var url = MakeUrlAsync("categories");
@@ -92,7 +93,7 @@ public class BooApi : IDisposable {
                 return CategorySupport.Empty;
             }
             var json = await response.Content.ReadAsStringAsync();
-            var categorySupport = CategorySupport.FromJson(json);
+            var categorySupport = CategorySupport.FromJson(json, capCategory>1);
             return categorySupport;
         }
         catch (Exception ex) {
@@ -103,7 +104,8 @@ public class BooApi : IDisposable {
 
     public async Task<RatingSupport> GetRatingSupportAsync() {
         try {
-            if ((_capability?.Rating ?? 0) < 0) {
+            var capRating = _capability?.Rating ?? 0;
+            if (capRating <= 0) {
                 return RatingSupport.Empty;
             }
             var url = MakeUrlAsync("ratings");
@@ -113,7 +115,7 @@ public class BooApi : IDisposable {
                 return RatingSupport.Empty;
             }
             var json = await response.Content.ReadAsStringAsync();
-            var ratingSupport = RatingSupport.FromJson(json);
+            var ratingSupport = RatingSupport.FromJson(json, capRating>1);
             return ratingSupport;
         }
         catch (Exception ex) {
@@ -124,7 +126,8 @@ public class BooApi : IDisposable {
 
     public async Task<MarkSupport> GetMarkSupportAsync() {
         try {
-            if ((_capability?.Mark?? 0) < 0) {
+            var capMark = _capability?.Mark ?? 0;
+            if (capMark <= 0) {
                 return MarkSupport.Empty;
             }
             var url = MakeUrlAsync("marks");
@@ -134,7 +137,7 @@ public class BooApi : IDisposable {
                 return MarkSupport.Empty;
             }
             var json = await response.Content.ReadAsStringAsync();
-            var markSupport = MarkSupport.FromJson(json);
+            var markSupport = MarkSupport.FromJson(json, capMark>1);
             return markSupport;
         }
         catch (Exception ex) {

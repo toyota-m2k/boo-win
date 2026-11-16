@@ -5,6 +5,7 @@ using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +20,8 @@ public class PlayerPageViewModel
     private readonly IDialogService _dialogService;
 
     public PlayerViewModel PlayerModel { get; }
+    public FilterViewModel FilterModel { get; }
+
 
     public PlayerPageViewModel(
         ISettingsService settingsService, 
@@ -30,12 +33,18 @@ public class PlayerPageViewModel
         _pageService = pageService;
         _dialogService = dialogService;
 
-        ItemList = ItemListSource.Select(it => it.Items).ToReadOnlyReactiveProperty();
+        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
+        FilterModel = new FilterViewModel(_clientService);
+
+        ItemList = ItemListSource
+            .CombineLatest(FilterModel.Filter, (list, filter) => {
+                return list.Items.Where(it => filter.Filter(it)).ToList();
+            }).ToReadOnlyReactiveProperty();
+
         BackToEntryPageCommand.Subscribe(() => {
             _pageService.GoToEntryPage();
         });
 
-        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
         SelectedItem.Subscribe(item => {
             PlayerModel.SetSource(item);
         });
@@ -61,6 +70,7 @@ public class PlayerPageViewModel
                 SelectedItem.Value = list[index - 1];
             }
         });
+
     }
 
 
@@ -83,6 +93,12 @@ public class PlayerPageViewModel
                 PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
             }
         }
+        FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
+        FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
+        FilterModel.IsCategorySupported.Value = _clientService.CategorySupport.IsSupported;
+        FilterModel.IsRatingSupported.Value = _clientService.RatingSupport.IsSupported;
+        FilterModel.IsMarkSupported.Value = _clientService.MarkSupport.IsSupported;
+
         return true;
     }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new ();
