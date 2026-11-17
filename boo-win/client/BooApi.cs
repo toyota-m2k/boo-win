@@ -27,6 +27,8 @@ public class BooApi : IDisposable {
 
     private IHttpClient _httpClient { get; }
 
+    public bool IsHttps => Host.IsHttps;
+
     public BooApi(PeerHost peer, IHttpClientFactory httpClientFactory, IDialogService dialogService) {
         Host = peer;
         _dialogService = dialogService;

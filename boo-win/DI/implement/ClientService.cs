@@ -20,6 +20,7 @@ public class ClientService : IClientService {
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IDialogService _dialogService;
+    private readonly LoopbackProxy _proxy = new();
 
     private PeerHost? _currentHost = null;
     public PeerHost CurrentHost {
@@ -36,6 +37,7 @@ public class ClientService : IClientService {
     public void Reset() {
         _api?.Dispose();
         _api = null;
+        _proxy.SetPeer(null, null);
         _currentHost = null;
         _capability = null;
         _categorySupport = null;
@@ -50,6 +52,9 @@ public class ClientService : IClientService {
         _api = host.CreateApi(_httpClientFactory, _dialogService);
         if (_api == null) {
             return false;
+        }
+        if (host.IsHttps) {
+            _proxy.SetPeer(host, _httpClientFactory);
         }
         return await Task.Run(async () => {
             try {
@@ -112,7 +117,9 @@ public class ClientService : IClientService {
         if (_api == null) {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
-        return _api.GetItemUrl(item, cmdName);
+        var url = _api.GetItemUrl(item, cmdName);
+        // MediaPlayer / BitmapImage は Fingerprint 検証ができないため、HTTPS はローカル中継経由にする
+        return _api.IsHttps ? _proxy.Wrap(url) : url;
     }
 
     //public string GetVideoUrl(MediaItem item) {
