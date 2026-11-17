@@ -108,10 +108,12 @@ class DialogBuilder : IDialogBuilder {
 
 public class DialogService : IDialogService {
     private IPageService _pageService;
+    private IMainThreadService _mainThreadService;
     private XamlRoot _xamlRoot => _pageService.XamlRoot;
 
-    public DialogService(IPageService pageService) {
+    public DialogService(IPageService pageService, IMainThreadService mainThreadService) {
         _pageService = pageService;
+        _mainThreadService = mainThreadService;
     }
 
     public IDialogBuilder Builder(ContentDialog? dlg=null) {
@@ -120,85 +122,95 @@ public class DialogService : IDialogService {
     }
 
     public async Task ShowMessage(string title, string message) {
-        var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-        await Builder(null)
-            .Title(title)
-            .Content(textBox)
-            .ShowConfirm();
+        await _mainThreadService.Run(async () => {
+            var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            await Builder(null)
+                .Title(title)
+                .Content(textBox)
+                .ShowConfirm();
+        });
     }
 
     public async Task<bool> ShowOkCancel(string title, string message, bool okAsDefault = true) {
-        var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-        return await Builder()
-            .Title(title)
-            .Content(textBox)
-            .ShowOkCancel(okAsDefault);
+        return await _mainThreadService.Run(async () => {
+            var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            return await Builder()
+                .Title(title)
+                .Content(textBox)
+                .ShowOkCancel(okAsDefault);
+        });
     }
 
     public async Task<bool> ShowYesNo(string title, string message, bool yesAsDefault = true) {
-        var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
-        return await Builder()
-            .Title(title)
-            .Content(textBox)
-            .ShowYesNo(yesAsDefault);
+        return await _mainThreadService.Run(async () => {
+            var textBox = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap };
+            return await Builder()
+                .Title(title)
+                .Content(textBox)
+                .ShowYesNo(yesAsDefault);
+        });
     }
 
     public async Task<string?> ShowInputText(string title, string message="", string initialText = "", string placeholder = "", bool acceptEmptyString=false) {
-        var textBox = new TextBox { Text = initialText, AcceptsReturn = false, PlaceholderText = placeholder };
-        object content = textBox;
-        if (!string.IsNullOrEmpty(message)) {
-            content = new StackPanel {
-                Children = {
+        return await _mainThreadService.Run(async () => {
+            var textBox = new TextBox { Text = initialText, AcceptsReturn = false, PlaceholderText = placeholder };
+            object content = textBox;
+            if (!string.IsNullOrEmpty(message)) {
+                content = new StackPanel {
+                    Children = {
                     new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
                     textBox
                 }
-            };
-        }
-        var result = await Builder()
-            .Title(title)
-            .Content(content)
-            .PrimaryButton("OK", true, null)
-            .CloseButton("Cancel", false, null)
-            .Customize(dialog => {
-                if (!acceptEmptyString) {
-                    // 空文字では OK を押せないようにする
-                    dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
-                    textBox.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
-                }
-            })
-            .ShowAsync();
-        if (result == ContentDialogResult.Primary) {
-            return textBox.Text;
-        }
-        return null;
+                };
+            }
+            var result = await Builder()
+                .Title(title)
+                .Content(content)
+                .PrimaryButton("OK", true, null)
+                .CloseButton("Cancel", false, null)
+                .Customize(dialog => {
+                    if (!acceptEmptyString) {
+                        // 空文字では OK を押せないようにする
+                        dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
+                        textBox.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Text);
+                    }
+                })
+                .ShowAsync();
+            if (result == ContentDialogResult.Primary) {
+                return textBox.Text;
+            }
+            return null;
+        });
     }
     public async Task<string?> ShowInputPassword(string title, string message = "", string initialText = "", string placeholder = "", bool acceptEmptyString = false) {
-        var textBox = new PasswordBox { Password = initialText, PlaceholderText = placeholder };
-        object content = textBox;
-        if (!string.IsNullOrEmpty(message)) {
-            content = new StackPanel {
-                Children = {
+        return await _mainThreadService.Run(async () => {
+            var textBox = new PasswordBox { Password = initialText, PlaceholderText = placeholder };
+            object content = textBox;
+            if (!string.IsNullOrEmpty(message)) {
+                content = new StackPanel {
+                    Children = {
                     new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
                     textBox
                 }
-            };
-        }
-        var result = await Builder()
-            .Title(title)
-            .Content(content)
-            .PrimaryButton("OK", true, null)
-            .CloseButton("Cancel", false, null)
-            .Customize(dialog => {
-                if (!acceptEmptyString) {
-                    // 空文字では OK を押せないようにする
-                    dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
-                    textBox.PasswordChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
-                }
-            })
-            .ShowAsync();
-        if (result == ContentDialogResult.Primary) {
-            return textBox.Password;
-        }
-        return null;
+                };
+            }
+            var result = await Builder()
+                .Title(title)
+                .Content(content)
+                .PrimaryButton("OK", true, null)
+                .CloseButton("Cancel", false, null)
+                .Customize(dialog => {
+                    if (!acceptEmptyString) {
+                        // 空文字では OK を押せないようにする
+                        dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
+                        textBox.PasswordChanged += (_, _) => dialog.IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(textBox.Password);
+                    }
+                })
+                .ShowAsync();
+            if (result == ContentDialogResult.Primary) {
+                return textBox.Password;
+            }
+            return null;
+        });
     }
 }

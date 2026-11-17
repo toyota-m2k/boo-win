@@ -363,7 +363,7 @@ public class BooApi : IDisposable {
         if (cap == null) {
             throw new InvalidOperationException("no capability");
         }
-        if (category==null && rating == null && mark == null) {
+        if (category==null && rating == null && mark == null && name==null && label==null) {
             return true;    // 何も変更しないので成功扱い
         }
         var dic = new Dictionary<string, string>() {
@@ -387,7 +387,8 @@ public class BooApi : IDisposable {
         if (label != null) {
             dic["label"] = label;
         }
-        var url = MakeUrl($"props");
+        var cmd = cap.PropCmd > 0 ? "props" : "reputation";
+        var url = MakeUrl(cmd);
         
         var response = await _httpClient.PutAsync(url, new StringContent(JsonSerializer.Serialize(dic), Encoding.UTF8, CT_JSON));
         return response.IsSuccessStatusCode;

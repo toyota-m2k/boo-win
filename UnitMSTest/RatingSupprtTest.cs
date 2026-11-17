@@ -12,7 +12,7 @@ public class RatingSupprtTest
             {""rating"":3,""label"":""Normal"",""svg"":""M 15 15V 13.5A 1.5,1.5,0,0,0,13.5,12 1.5,1.5,0,0,0,15,10.5V 9C 15 7.89 14.1 7 13 7H 9V 9H 13V 11H 11V 13H 13V 15H 9V 17H 13A 2,2,0,0,0,15,15""},
             {""rating"":4,""label"":""High"",""svg"":""M 9 7V 13H 13V 17H 15V 7H 13V 11H 11V 7H 9Z""},
             {""rating"":5,""label"":""Highest"",""svg"":""M 9 7V 13H 13V 15H 9V 17H 13A 2,2,0,0,0,15,15V 13A 2,2,0,0,0,13,11H 11V 9H 15V 7H 9Z""}]}";
-        var ratingSupport = BooWin.model.RatingSupport.FromJson(jsonString);
+        var ratingSupport = BooWin.model.RatingSupport.FromJson(jsonString, true);
 
         Assert.HasCount(5, ratingSupport.Ratings);
         Assert.AreEqual(3, ratingSupport.DefaultRating);

@@ -174,6 +174,7 @@ public class PlayerPageViewModel
         var item = SelectedItem.Value;
         if (item == null) return;
         _settingsService.UpdateCurrentHostStatus(item.Id, 0, save: true);
+        SelectedItem.Value = null;
     }
 
     private void OnUpdateItemProperties(ItemPropertyViewModel.IChanges changes) {

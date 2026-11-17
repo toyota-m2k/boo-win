@@ -13,7 +13,7 @@ public class ItemPropertyViewModel {
     public ReactiveProperty<bool> IsMarkEditable { get; } = new(false);
     public ReactiveProperty<bool> IsCategoryEditable { get; } = new(false);
 
-    public ReactiveProperty<int> Rating { get; } = new (0);
+    public ReactiveProperty<int> Rating { get; } = new (3);
     public ReactiveProperty<int> Mark { get; } = new(0);
     public ReactiveProperty<ICategory> Category { get; } = new(model.Category.Unspecified);
     public ReactiveProperty<string> Name { get; } = new(string.Empty);
@@ -86,10 +86,10 @@ public class ItemPropertyViewModel {
         IsRatingEditable.Value = clientService.RatingSupport.AllowReadWrite;
         IsMarkEditable.Value = clientService.MarkSupport.AllowReadWrite;
         IsCategoryEditable.Value = clientService.CategorySupport.AllowReadWrite;
-        Rating.Value = 0;
+        Rating.Value = clientService.RatingSupport.DefaultRating;
         Mark.Value = 0;
 
-        CategoryList.Value = clientService.CategorySupport.GetCategoryList(withAll: true, withUnspecified: false);
+        CategoryList.Value = clientService.CategorySupport.GetCategoryList(withAll: false, withUnspecified: true);
         Category.Value = model.Category.Unspecified;
     }
 
@@ -107,7 +107,7 @@ public class ItemPropertyViewModel {
             if (IsMarkEditable.Value && Mark.Value != item.Mark) {
                 mark = Mark.Value;
             }
-            if (IsCategoryEditable.Value && !Category.Value.Match(item.CategoryName)) {
+            if (IsCategoryEditable.Value && Category.Value!=null && !Category.Value.Match(item.CategoryName)) {
                 category = Category.Value.Name;
             }
             if (Name.Value.IsNotEmpty() &&Name.Value != item.Name) {

@@ -38,6 +38,27 @@ public class NegBoolConverter : IValueConverter {
 }
 
 
+/// <summary>
+/// int値 ⇔ インデックス の変換（parameter: オフセット = インデックス0に対応する値）
+/// </summary>
+public class IntIndexConverter : IValueConverter {
+    private static int GetOffset(object parameter) {
+        return int.TryParse(parameter as string, out var offset) ? offset : 0;
+    }
+
+    public object Convert(object value, Type targetType, object parameter, string language) {
+        return (int)value - GetOffset(parameter);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+        var index = (int)value;
+        if (index < 0) {
+            return 0;
+        }
+        return index + GetOffset(parameter);
+    }
+}
+
 public class EnumBooleanConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, string language) {
         string? parameterString = parameter as string;

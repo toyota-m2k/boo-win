@@ -9,22 +9,83 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <ResourceDictionary Source="../Converters.xaml"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Converters.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ToggleRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="MinWidth" Value="40"/>
+                <Setter Property="Padding" Value="10,4"/>
+                <Setter Property="Margin" Value="0,0,4,0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Grid x:Name="RootGrid"
+                                  Background="{ThemeResource ToggleButtonBackground}"
+                                  BorderBrush="{ThemeResource ToggleButtonBorderBrush}"
+                                  BorderThickness="1"
+                                  CornerRadius="4">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="StateOverlay.Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="StateOverlay.Background" Value="{ThemeResource SubtleFillColorTertiaryBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootGrid.Opacity" Value="0.5"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Checked">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootGrid.Background" Value="{ThemeResource ToggleButtonBackgroundChecked}"/>
+                                                <Setter Target="RootGrid.BorderBrush" Value="{ThemeResource ToggleButtonBackgroundChecked}"/>
+                                                <Setter Target="ContentArea.Foreground" Value="{ThemeResource ToggleButtonForegroundChecked}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Unchecked"/>
+                                        <VisualState x:Name="Indeterminate"/>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" CornerRadius="3"/>
+                                <ContentPresenter x:Name="ContentArea"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  Foreground="{ThemeResource ToggleButtonForeground}"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="Center"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <StackPanel Orientation="Vertical">
         <TextBlock>Name</TextBlock>
-        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Name.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditName, Converter={StaticResource NegBoolConverter}}"/>
+        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Name.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditName.Value, Converter={StaticResource NegBoolConverter}}"/>
         <TextBlock>Label</TextBlock>
-        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Label.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditLabel, Converter={StaticResource NegBoolConverter}}"/>
+        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Label.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditLabel.Value, Converter={StaticResource NegBoolConverter}}"/>
 
         <StackPanel 
             Orientation="Vertical" 
             Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
-            <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource CardHeaderStyle}"/>
+            <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}"/>
             <DropDownButton 
                 Content="{x:Bind ViewModel.ItemPropertyModel.Category.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6"
-                IsEnabled="{x:Bind ViewModel.CanEditCategory, Converter={StaticResource NegBoolConverter}}"
+                IsEnabled="{x:Bind ViewModel.CanEditCategory.Value, Mode=OneWay}"
                 >
                 <DropDownButton.Flyout>
                     <Flyout x:Name="categoryFlyout" Placement="BottomEdgeAlignedLeft">
@@ -46,18 +107,27 @@
 
         </StackPanel>
         <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsRatingSupported.Value, Mode=OneWay}">
-            <TextBlock Text="Mark"/>
-            <RadioButtons x:Name="Rating" IsEnabled="{x:Bind ViewModel.CanEditRating, Converter={StaticResource NegBoolConverter}, Mode=OneWay}">
-
-
+            <TextBlock Text="Rating"/>
+            <RadioButtons x:Name="Rating" IsEnabled="{x:Bind ViewModel.CanEditRating.Value, Mode=OneWay}"
+                          MaxColumns="5"
+                          SelectedIndex="{x:Bind ViewModel.ItemPropertyModel.Rating.Value, Mode=TwoWay, Converter={StaticResource IntIndexConverter}, ConverterParameter=1}">
+                <RadioButton Content="1" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="2" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="3" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="4" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="5" Style="{StaticResource ToggleRadioButtonStyle}"/>
             </RadioButtons>
         </StackPanel>
 
         <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsMarkSupported.Value, Mode=OneWay}">
             <TextBlock Text="Mark"/>
-            <RadioButtons x:Name="Mark" IsEnabled="{x:Bind ViewModel.CanEditMark, Converter={StaticResource NegBoolConverter}, Mode=OneWay}">
-
-
+            <RadioButtons x:Name="Mark" IsEnabled="{x:Bind ViewModel.CanEditMark.Value, Mode=OneWay}"
+                          MaxColumns="4"
+                          SelectedIndex="{x:Bind ViewModel.ItemPropertyModel.Mark.Value, Mode=TwoWay, Converter={StaticResource IntIndexConverter}, ConverterParameter=0}">
+                <RadioButton Content="0" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="1" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="2" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Content="3" Style="{StaticResource ToggleRadioButtonStyle}"/>
             </RadioButtons>
         </StackPanel>
 

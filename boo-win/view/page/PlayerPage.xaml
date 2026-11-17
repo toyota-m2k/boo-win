@@ -246,7 +246,7 @@
             </Grid>
 
             <Grid x:Name="PropertyPanel" Grid.Column="3" Width="300" Visibility="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=OneWay}">
-                
+                <parts:ItemPropertyView ViewModel="{x:Bind ViewModel, Mode=OneWay}"/>
             </Grid>
         </Grid>
     </Grid>
