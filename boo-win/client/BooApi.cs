@@ -41,7 +41,7 @@ public class BooApi : IDisposable {
     public async Task<bool> NopAsync() {
         try {
             var url = $"{Host.BaseUrl}/nop";
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex) {
@@ -57,7 +57,7 @@ public class BooApi : IDisposable {
                 return _capability;
             }
             var url = $"{Host.BaseUrl}/capability?v=3";
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get capability from {Host.Address}. StatusCode: {response.StatusCode}");
                 return null;
@@ -89,7 +89,7 @@ public class BooApi : IDisposable {
                 return CategorySupport.Empty;
             }
             var url = MakeUrl("categories");
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get category support from {Host.Address}. StatusCode: {response.StatusCode}");
                 return CategorySupport.Empty;
@@ -111,7 +111,7 @@ public class BooApi : IDisposable {
                 return RatingSupport.Empty;
             }
             var url = MakeUrl("ratings");
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get rating support from {Host.Address}. StatusCode: {response.StatusCode}");
                 return RatingSupport.Empty;
@@ -133,7 +133,7 @@ public class BooApi : IDisposable {
                 return MarkSupport.Empty;
             }
             var url = MakeUrl("marks");
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get mark support from {Host.Address}. StatusCode: {response.StatusCode}");
                 return MarkSupport.Empty;
@@ -167,7 +167,7 @@ public class BooApi : IDisposable {
 
     public async Task<string> GetChallenge() {
         var url = MakeUrl("auth/");
-        var response = await _httpClient.GetAsync(url);
+        using var response = await _httpClient.GetAsync(url);
         return await GetChallengeFromResponse(response);
     }
 
@@ -191,7 +191,7 @@ public class BooApi : IDisposable {
         var hashedPassword = CreateHashedPassword(password);
         var passPhrase = CreatePassPhrase(challenge, hashedPassword);
         var url = MakeUrl($"auth");
-        var res = await _httpClient.PutAsync(url, new StringContent(passPhrase, Encoding.UTF8, CT_TEXT));
+        using var res = await _httpClient.PutAsync(url, new StringContent(passPhrase, Encoding.UTF8, CT_TEXT));
         if (res.IsSuccessStatusCode) {
             return await GetAuthTokenFromResponse(res);
         }
@@ -214,7 +214,7 @@ public class BooApi : IDisposable {
      */
     private async Task<string?> CheckAuthToken(string currentAuthToken) {
         var url = MakeUrl($"auth/{currentAuthToken}");
-        var response = await _httpClient.GetAsync(url);
+        using var response = await _httpClient.GetAsync(url);
         if (response.IsSuccessStatusCode) {
             return null;
         }
@@ -268,6 +268,7 @@ public class BooApi : IDisposable {
                     url = url.Substring(0, queryIndex);
                 }
                 url += MakeQueryString(dic);
+                response.Dispose();
                 return await _httpClient.GetAsync(url);
             }
         }
@@ -318,7 +319,7 @@ public class BooApi : IDisposable {
         }
        
         url += MakeQueryString(dic);
-        var response = await RequestWithAuth(url);
+        using var response = await RequestWithAuth(url);
         var json = await response.Content.ReadAsStringAsync();
         return MediaItemList.FromJson(json);
     }
@@ -350,7 +351,7 @@ public class BooApi : IDisposable {
             dic["auth"] = AuthToken;
         }
         var url = MakeUrl($"chapter{MakeQueryString(dic)}");
-        var response = await RequestWithAuth(url);
+        using var response = await RequestWithAuth(url);
         if (!response.IsSuccessStatusCode) {
             return new List<Chapter>();
         }
@@ -390,7 +391,7 @@ public class BooApi : IDisposable {
         var cmd = cap.PropCmd > 0 ? "props" : "reputation";
         var url = MakeUrl(cmd);
         
-        var response = await _httpClient.PutAsync(url, new StringContent(JsonSerializer.Serialize(dic), Encoding.UTF8, CT_JSON));
+        using var response = await _httpClient.PutAsync(url, new StringContent(JsonSerializer.Serialize(dic), Encoding.UTF8, CT_JSON));
         return response.IsSuccessStatusCode;
     }
 

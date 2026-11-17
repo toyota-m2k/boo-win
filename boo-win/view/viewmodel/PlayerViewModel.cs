@@ -27,6 +27,7 @@ public class PlayerViewModel {
     public ReadOnlyReactiveProperty<string> PositionString { get; }
     public ReadOnlyReactiveProperty<string> DurationString { get; }
 
+
     /**
      * VideoPlayerの状態
      */
@@ -93,7 +94,7 @@ public class PlayerViewModel {
         PlayerState.Value = MediaPlayerState.NONE;
         MediaEnded.Value = false;
         MediaError.Value = false;
-        mSourceMediaItem.Value = item;
+        mSourceMediaItem.Value = item?.IsAV == true ? item : null;
         //if (item!=null) {
         //    var chapters = await _clientService.LoadChapterAsync(item);
         //    if (item ==mSourceMediaItem.Value) {

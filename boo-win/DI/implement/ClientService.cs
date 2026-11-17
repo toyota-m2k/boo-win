@@ -51,19 +51,21 @@ public class ClientService : IClientService {
         if (_api == null) {
             return false;
         }
-        try {
-            _capability = await _api.GetCapabilityAsync();
-            _categorySupport = await _api.GetCategorySupportAsync();
-            _ratingSupport = await _api.GetRatingSupportAsync();
-            _markSupport = await _api.GetMarkSupportAsync();
-            _currentHost = host;
-            return true;
-        }
-        catch (Exception ex) {
-            Logger.Error(ex);
-            Reset();
-            return false;
-        }
+        return await Task.Run(async () => {
+            try {
+                _capability = await _api.GetCapabilityAsync();
+                _categorySupport = await _api.GetCategorySupportAsync();
+                _ratingSupport = await _api.GetRatingSupportAsync();
+                _markSupport = await _api.GetMarkSupportAsync();
+                _currentHost = host;
+                return true;
+            }
+            catch (Exception ex) {
+                Logger.Error(ex);
+                Reset();
+                return false;
+            }
+        });
     }
 
     private Capability? _capability = null;

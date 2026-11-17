@@ -34,6 +34,7 @@ public class  Category : ICategory {
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int SortIndex { get; set; } = 0;
     [JsonPropertyName("color")]
+    [JsonConverter(typeof(NumberOrStringConverter))]
     public string ColorName { get; set; } = "";
     [JsonPropertyName("svg")]
     public string SvgPath { get; set; } = "";

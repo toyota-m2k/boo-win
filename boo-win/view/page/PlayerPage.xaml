@@ -200,6 +200,7 @@
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <CheckBox Content="Slide Show" IsChecked="{x:Bind ViewModel.PlayerModel.ContinuousPlayback.Value, Mode=TwoWay}"/>
                     <ToggleButton Content="Properties" IsChecked="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=TwoWay}"/>
                 </StackPanel>
             </Grid>
@@ -241,8 +242,11 @@
                                   ResizeDirection="Columns"/>
 
             <!-- Player -->
-            <Grid x:Name="PlayerPanel" Grid.Column="2">
+            <Grid x:Name="PlayerPanel" Grid.Column="2" Visibility="{x:Bind ViewModel.IsMediaPlayerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
                 <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+            </Grid>
+            <Grid x:Name="PhotoViewer" Grid.Column="2" Visibility="{x:Bind ViewModel.IsPhotoViewerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
+                <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SelectedItem.Value), Mode=OneWay}"/>
             </Grid>
 
             <Grid x:Name="PropertyPanel" Grid.Column="3" Width="300" Visibility="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=OneWay}">

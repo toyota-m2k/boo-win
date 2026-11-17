@@ -3,6 +3,9 @@ using BooWin.model;
 using CommunityToolkit.WinUI;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.System.Power;
 using Reactive.Bindings;
 using System;
@@ -41,6 +44,12 @@ public class PlayerPageViewModel
         PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
         FilterModel = new FilterViewModel(_clientService);
 
+        IsPlayerOnly.Subscribe(v => {
+            if (v) {
+                // Player Only モードになったら、ItemPropertyも非表示にする。
+                IsPropertiesVisible.Value = false;
+            }
+        });
 
         ItemList = ItemListSource
             .CombineLatest(FilterModel.Filter, (list, filter) => {
@@ -151,6 +160,21 @@ public class PlayerPageViewModel
     public ReactiveProperty<MediaItemList> ItemListSource { get; } = new (MediaItemList.Empty);
     public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
+
+    public ImageSource? GetItemUrl(MediaItem? item) {
+        if (item == null) return null;
+        var url = _clientService.GetItemUrl(item);
+        if (string.IsNullOrEmpty(url)) return null;
+        return new BitmapImage(new Uri(url));
+    }
+
+    public Visibility IsPhotoViewerVisible(MediaItem? item) {
+        return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
+    }
+    public Visibility IsMediaPlayerVisible(MediaItem? item) {
+        return (item?.IsAV == true) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
 
     public ReactiveProperty<bool> IsCategorySupported { get; } = new ReactiveProperty<bool>(false);
     public ReactiveProperty<bool> IsRatingSupported { get; } = new(false);
