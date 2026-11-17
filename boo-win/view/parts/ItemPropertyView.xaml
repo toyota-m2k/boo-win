@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="BooWin.view.parts.ItemPropertyView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BooWin.view.parts"
+    xmlns:model="using:BooWin.model"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary Source="../Converters.xaml"/>
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Vertical">
+        <TextBlock>Name</TextBlock>
+        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Name.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditName, Converter={StaticResource NegBoolConverter}}"/>
+        <TextBlock>Label</TextBlock>
+        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Label.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditLabel, Converter={StaticResource NegBoolConverter}}"/>
+
+        <StackPanel 
+            Orientation="Vertical" 
+            Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
+            <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource CardHeaderStyle}"/>
+            <DropDownButton 
+                Content="{x:Bind ViewModel.FilterModel.SelectedCategory.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6"
+                IsEnabled="{x:Bind ViewModel.CanEditCategory, Converter={StaticResource NegBoolConverter}}"
+                >
+                <DropDownButton.Flyout>
+                    <Flyout x:Name="categoryFlyout" Placement="BottomEdgeAlignedLeft">
+                        <ListView ItemsSource="{x:Bind ViewModel.ItemPropertyModel.CategoryList.Value, Mode=OneWay}" SelectionMode="Single" MaxHeight="400"
+                                                  SelectedItem="{x:Bind ViewModel.ItemPropertyModel.Category.Value, Mode=TwoWay}"
+                                                  SelectionChanged="OnCategorySelectionChanged">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="model:ICategory">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                        <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Flyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
+
+        </StackPanel>
+        <RadioButtons x:Name="Rating">
+            
+            
+        </RadioButtons>
+
+        <RadioButtons x:Name="Mark">
+            
+            
+        </RadioButtons>
+
+    </StackPanel>
+</UserControl>

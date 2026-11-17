@@ -15,6 +15,9 @@ public class Mark {
     public string Label { get; set; } = "";
     [JsonPropertyName("svg")]
     public string SvgPath { get; set; } = "";
+
+
+    public static Mark None => new Mark { Value = 0, Label = "", SvgPath = "" };
 }
 
 public class MarkSupport {
@@ -26,7 +29,7 @@ public class MarkSupport {
 
     private MarkSupport(List<Mark>? marks=null, bool allowReadWrite=false) {
         Marks = marks ?? new List<Mark>();
-        AllowReadWrite = allowReadWrite;
+        AllowReadWrite = allowReadWrite && IsSupported;
     }
 
     public static MarkSupport Empty => new MarkSupport(null);

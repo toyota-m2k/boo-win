@@ -21,6 +21,9 @@ public interface IMediaItem {
     string CategoryName { get; }
     DateTimeOffset Date { get; }
     MediaType MediaType { get; }
+
+    bool IsPhoto { get; }
+    bool IsAV { get; }
 }
 
 public class NumberOrStringConverter : JsonConverter<string> {
@@ -76,7 +79,7 @@ public class MediaItem : IMediaItem {
     [JsonPropertyName("mark")]
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int Mark { get; set; } = 0;
-    [JsonPropertyName("categoryName")]
+    [JsonPropertyName("category")]
     public string CategoryName { get; set; } = "";
 
     [JsonIgnore]
@@ -98,5 +101,8 @@ public class MediaItem : IMediaItem {
         if (s.Contains('p')) mediaType |= MediaType.PHOTO;
         return mediaType;
     }
+    [JsonIgnore]
+    public bool IsPhoto => this.MediaType == MediaType.PHOTO;
+    public bool IsAV => this.MediaType == MediaType.VIDEO || this.MediaType == MediaType.AUDIO;
 
 }

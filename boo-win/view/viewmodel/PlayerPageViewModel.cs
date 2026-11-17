@@ -1,5 +1,7 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using CommunityToolkit.WinUI;
+using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Dispatching;
 using Microsoft.Windows.System.Power;
 using Reactive.Bindings;
@@ -15,6 +17,7 @@ namespace BooWin.view.viewmodel;
 
 public class PlayerPageViewModel
 {
+    public UtLog Logger = new UtLog("PlayerPage");
     private readonly ISettingsService _settingsService;
     private readonly IClientService _clientService;
     private readonly IPageService _pageService;
@@ -22,6 +25,7 @@ public class PlayerPageViewModel
 
     public PlayerViewModel PlayerModel { get; }
     public FilterViewModel FilterModel { get; }
+    public ItemPropertyViewModel ItemPropertyModel { get; } = new ItemPropertyViewModel();
 
 
     public PlayerPageViewModel(
@@ -37,9 +41,14 @@ public class PlayerPageViewModel
         PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
         FilterModel = new FilterViewModel(_clientService);
 
+
         ItemList = ItemListSource
             .CombineLatest(FilterModel.Filter, (list, filter) => {
-                return list.Items.Where(it => filter.Filter(it)).ToList();
+                var currentItem = SelectedItem.Value;
+                var position = PlayerModel.PlayerPosition.Value;
+                var newList = list.Items.Where(it => filter.Filter(it)).ToList();
+                ReservePlayingItem(currentItem?.Id, position);
+                return newList;
             }).ToReadOnlyReactiveProperty();
 
         BackToEntryPageCommand.Subscribe(() => {
@@ -48,12 +57,17 @@ public class PlayerPageViewModel
 
         SelectedItem.Subscribe(item => {
             PlayerModel.SetSource(item);
+            var changes = ItemPropertyModel.SetSource(item, _clientService);
+            // ItemPropertyModel#SetSourceを呼んだ時に、以前のItemPropertyに変更があれば、IChanges が返ってくる。
+            if (changes!=null) {
+                OnUpdateItemProperties(changes);
+            }
         });
 
         PlayerModel.NextItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
             var item = SelectedItem.Value;
             if (item == null) return;
-            var list = ItemListSource.Value.Items;
+            var list = ItemList.Value;
             if (list == null || list.Count == 0) return;
             var index = list.FindIndex(it => it.Id == item.Id);
             if (index>=0 && index+1 < list.Count) {
@@ -64,7 +78,7 @@ public class PlayerPageViewModel
         PlayerModel.PrevItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
             var item = SelectedItem.Value;
             if (item == null) return;
-            var list = ItemListSource.Value.Items;
+            var list = ItemList.Value;
             if (list == null || list.Count == 0) return;
             var index = list.FindIndex(it => it.Id == item.Id);
             if (index > 0) {
@@ -73,7 +87,6 @@ public class PlayerPageViewModel
         });
 
     }
-
 
     public async Task<bool> Prepare() {
         PlayerModel.SetSource(null);
@@ -86,30 +99,69 @@ public class PlayerPageViewModel
         await _clientService.SetCurrentHostAsync(currentHost);
         ItemListSource.Value = await _clientService.GetMediaItemListAsync();
 
-        FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
-        FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
-        FilterModel.SelectedCategory.Value = FilterModel.CategoryList.Value[0];
-        FilterModel.IsCategorySupported.Value = _clientService.CategorySupport.IsSupported;
-        FilterModel.IsRatingSupported.Value = _clientService.RatingSupport.IsSupported;
-        FilterModel.IsMarkSupported.Value = _clientService.MarkSupport.IsSupported;
+        IsCategorySupported.Value = _clientService.CategorySupport.IsSupported;
+        IsRatingSupported.Value = _clientService.RatingSupport.IsSupported;
+        IsMarkSupported.Value = _clientService.MarkSupport.IsSupported;
+        
+        CanEditCategory.Value = _clientService.CategorySupport.AllowReadWrite;
+        CanEditRating.Value = _clientService.RatingSupport.AllowReadWrite;
+        CanEditMark.Value = _clientService.MarkSupport.AllowReadWrite;
+        CanEditName.Value = _clientService.Capability.CanEditName;
+        CanEditLabel.Value = _clientService.Capability.CanEditLabel;
 
-        _pageService.DispatcherQueue?.TryEnqueue(() => {
-            var lastPlayingId = currentHost.LastPlayingId;
-            if (lastPlayingId != null) {
-                var item = ItemListSource.Value.Items.Find(it => it.Id == lastPlayingId);
-                if (item != null) {
-                    PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
-                    SelectedItem.Value = item;
-                }
-            }
-        });
+        FilterModel.ResetOnHostChanged();
+        ItemPropertyModel.ResetOnHostChanged(_clientService);
+        //FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
+        //FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
+        //FilterModel.SelectedCategory.Value = FilterModel.CategoryList.Value[0];
+
+        ReservePlayingItem(currentHost.LastPlayingId, currentHost.LastPlayingPosition);
+        
+        
+
+        //_pageService.DispatcherQueue?.TryEnqueue(() => {
+        //    var lastPlayingId = currentHost.LastPlayingId;
+        //    if (lastPlayingId != null) {
+        //        var item = ItemList.Value.Find(it => it.Id == lastPlayingId);
+        //        if (item != null) {
+        //            PlayerModel.LastPlayingPosition = currentHost.LastPlayingPosition;
+        //            SelectedItem.Value = item;
+        //        }
+        //    }
+        //});
         return true;
     }
+
+    private void ReservePlayingItem(string? lastPlayingId, long position) {
+        if (string.IsNullOrEmpty(lastPlayingId)) return;
+        _pageService.DispatcherQueue?.EnqueueAsync(async () => {
+            await Task.Delay(500);
+            var item = ItemList.Value.Find(it => it.Id == lastPlayingId);
+            if (item != null) {
+                if (item.IsAV) {
+                    PlayerModel.ReservedPlayingItemPosition = (item.Id, position);
+                }
+                SelectedItem.Value = item;
+            }
+        });
+    }
+
+
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new ();
     public ReactiveProperty<MediaItemList> ItemListSource { get; } = new (MediaItemList.Empty);
     public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
-
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
+
+    public ReactiveProperty<bool> IsCategorySupported { get; } = new ReactiveProperty<bool>(false);
+    public ReactiveProperty<bool> IsRatingSupported { get; } = new(false);
+    public ReactiveProperty<bool> IsMarkSupported { get; } = new(false);
+
+    public ReactiveProperty<bool> CanEditName { get; } = new(false);
+    public ReactiveProperty<bool> CanEditLabel { get; } = new(false);
+    public ReactiveProperty<bool> CanEditCategory { get; } = new(false);
+    public ReactiveProperty<bool> CanEditRating { get; } = new(false);
+    public ReactiveProperty<bool> CanEditMark { get; } = new(false);
+
 
     public ReactiveCommand BackToEntryPageCommand { get; } = new();
 
@@ -123,4 +175,26 @@ public class PlayerPageViewModel
         if (item == null) return;
         _settingsService.UpdateCurrentHostStatus(item.Id, 0, save: true);
     }
+
+    private void OnUpdateItemProperties(ItemPropertyViewModel.IChanges changes) {
+        Task.Run(async () => {
+            try {
+                // サーバーを更新
+                var result = await _clientService.UpdateItemPropertiesAsync(changes.Item.Id, changes.Category, changes.Rating, changes.Mark, changes.Name, changes.Label);
+                if (result) {
+                    // MediaItemを更新
+                    changes.ApplyChanges();
+                    // ToDo: mark/category/ratingをリスト上に表示するなら、ItemList をObservableCollectionに変換して、変更を反映する 
+                }
+                else {
+                    await _dialogService.ShowMessage("Server Error", "Failed to update item properties.");
+                }
+            }
+            catch (Exception ex) {
+                Logger.Error(ex);
+                await _dialogService.ShowMessage("Exception", "Failed to update item properties.");
+            }
+        });
+    }
+
 }

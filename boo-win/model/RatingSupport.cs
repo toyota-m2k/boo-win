@@ -17,10 +17,12 @@ public class Rating {
 
     [JsonPropertyName("svg")]
     public string SvgPath { get; set; } = "";
+
+    public static Rating None => new Rating { Value = 0, Label = "", SvgPath = "" };
 }
 
 public class RatingSupport {
-    public int DefaultRating { get; set; }
+    public int DefaultRating { get; set; } = 3;
     public List<Rating> Ratings { get; set; }
     public bool IsSupported => Ratings.Count > 0;
     public bool AllowReadWrite { get; set; } = false;
@@ -30,9 +32,9 @@ public class RatingSupport {
     }
 
     private RatingSupport(int defaultRating=3, List<Rating>? ratings=null, bool allowReadWrite=false) {
-        AllowReadWrite = allowReadWrite;
         DefaultRating = defaultRating;
         Ratings = ratings ?? new List<Rating>();
+        AllowReadWrite = allowReadWrite && IsSupported;
     }
 
     public static RatingSupport Empty => new RatingSupport();

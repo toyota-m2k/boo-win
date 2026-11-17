@@ -17,6 +17,9 @@ public class Capability {
     public string Types { get; }
     public string CategoryLabel { get; }
     public bool Authentication { get; }
+    public int PropCmd { get; } = 0;
+    public bool CanEditName => (PropCmd & 1) != 0;
+    public bool CanEditLabel => (PropCmd & 2) != 0;
 
     private Capability(
         string serverName,
@@ -29,7 +32,8 @@ public class Capability {
         bool hasView,
         string types,
         string categoryLabel,
-        bool authentication
+        bool authentication,
+        int propCmd
         ) {
         ServerName = serverName;
         Version = version;
@@ -42,6 +46,7 @@ public class Capability {
         Types = types;
         CategoryLabel = categoryLabel;
         Authentication = authentication;
+        PropCmd = propCmd;
     }
 
     public static Capability? FromJson(string? jsonString) {
@@ -59,6 +64,7 @@ public class Capability {
             var category = 0;
             var rating = 0;
             var mark = 0;
+            var propCmd = json.GetInt("props", 0);
             var version = json.GetInt("version", 1);
             if (version==3) {
                 category = json.GetInt("category", 0);
@@ -73,7 +79,7 @@ public class Capability {
             var types = json.GetString("types", "vap");
             var categoryLabel = json.GetString("categoryLabel", "Category");
             var authentication = json.GetBool("authentication");
-            return new Capability(serverName, version, root, category, rating, mark, chapter, hasView, types, categoryLabel, authentication);
+            return new Capability(serverName, version, root, category, rating, mark, chapter, hasView, types, categoryLabel, authentication, propCmd);
         } catch(Exception e) {
             BooApi.Logger.Error(e);
             return null;

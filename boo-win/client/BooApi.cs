@@ -11,6 +11,8 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace BooWin.client;
@@ -71,7 +73,7 @@ public class BooApi : IDisposable {
         }
     }
 
-    public string MakeUrlAsync(string path) {
+    public string MakeUrl(string path) {
         var cap = _capability;
         if (cap == null) {
             throw new InvalidOperationException("no capability");
@@ -86,7 +88,7 @@ public class BooApi : IDisposable {
             if (capCategory <= 0) {
                 return CategorySupport.Empty;
             }
-            var url = MakeUrlAsync("categories");
+            var url = MakeUrl("categories");
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get category support from {Host.Address}. StatusCode: {response.StatusCode}");
@@ -108,7 +110,7 @@ public class BooApi : IDisposable {
             if (capRating <= 0) {
                 return RatingSupport.Empty;
             }
-            var url = MakeUrlAsync("ratings");
+            var url = MakeUrl("ratings");
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get rating support from {Host.Address}. StatusCode: {response.StatusCode}");
@@ -130,7 +132,7 @@ public class BooApi : IDisposable {
             if (capMark <= 0) {
                 return MarkSupport.Empty;
             }
-            var url = MakeUrlAsync("marks");
+            var url = MakeUrl("marks");
             var response = await _httpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) {
                 Logger.Error($"Failed to get mark support from {Host.Address}. StatusCode: {response.StatusCode}");
@@ -164,7 +166,7 @@ public class BooApi : IDisposable {
 
 
     public async Task<string> GetChallenge() {
-        var url = MakeUrlAsync("auth/");
+        var url = MakeUrl("auth/");
         var response = await _httpClient.GetAsync(url);
         return await GetChallengeFromResponse(response);
     }
@@ -188,7 +190,7 @@ public class BooApi : IDisposable {
         challenge = challenge ?? await GetChallenge();
         var hashedPassword = CreateHashedPassword(password);
         var passPhrase = CreatePassPhrase(challenge, hashedPassword);
-        var url = MakeUrlAsync($"auth");
+        var url = MakeUrl($"auth");
         var res = await _httpClient.PutAsync(url, new StringContent(passPhrase, Encoding.UTF8, CT_TEXT));
         if (res.IsSuccessStatusCode) {
             return await GetAuthTokenFromResponse(res);
@@ -211,7 +213,7 @@ public class BooApi : IDisposable {
      * 無効であれば、サーバからの challenge を返すので、それを使って再度認証を行う必要がある。
      */
     private async Task<string?> CheckAuthToken(string currentAuthToken) {
-        var url = MakeUrlAsync($"auth/{currentAuthToken}");
+        var url = MakeUrl($"auth/{currentAuthToken}");
         var response = await _httpClient.GetAsync(url);
         if (response.IsSuccessStatusCode) {
             return null;
@@ -288,7 +290,7 @@ public class BooApi : IDisposable {
             string? category = null,
             string? searchText = null
             ) {
-        var url = MakeUrlAsync("list?s=1");
+        var url = MakeUrl("list?s=1");
         var dic = new Dictionary<string, string>();
         if (!string.IsNullOrEmpty(AuthToken)) {
             dic["auth"] = AuthToken;
@@ -347,13 +349,48 @@ public class BooApi : IDisposable {
         if (!string.IsNullOrEmpty(AuthToken)) {
             dic["auth"] = AuthToken;
         }
-        var url = $"{Host.BaseUrl}{cap.Root}chapter{MakeQueryString(dic)}";
+        var url = MakeUrl($"chapter{MakeQueryString(dic)}");
         var response = await RequestWithAuth(url);
         if (!response.IsSuccessStatusCode) {
             return new List<Chapter>();
         }
         var json = await response.Content.ReadAsStringAsync();
         return Chapter.ListFromJson(json);
+    }
+
+    public async Task<bool> PutPropertiesAsync(string id, string? category, int? rating, int? mark, string? name, string? label) {
+        var cap = _capability;
+        if (cap == null) {
+            throw new InvalidOperationException("no capability");
+        }
+        if (category==null && rating == null && mark == null) {
+            return true;    // 何も変更しないので成功扱い
+        }
+        var dic = new Dictionary<string, string>() {
+            { "id", id }
+        };
+        if (!string.IsNullOrEmpty(AuthToken)) {
+            dic["auth"] = AuthToken;
+        }
+        if (category != null) {
+            dic["category"] = category;
+        }
+        if (rating.HasValue) {
+            dic["rating"] = rating.Value.ToString();
+        }
+        if (mark.HasValue) {
+            dic["mark"] = mark.Value.ToString();
+        }
+        if (name != null) {
+            dic["name"] = name;
+        }
+        if (label != null) {
+            dic["label"] = label;
+        }
+        var url = MakeUrl($"props");
+        
+        var response = await _httpClient.PutAsync(url, new StringContent(JsonSerializer.Serialize(dic), Encoding.UTF8, CT_JSON));
+        return response.IsSuccessStatusCode;
     }
 
     #endregion

@@ -28,4 +28,6 @@ public interface IClientService {
     Task<List<Chapter>> LoadChapterAsync(MediaItem item);
     
     Task<bool> CheckHostAvailabilityAsync(PeerHost host);
+
+    Task<bool> UpdateItemPropertiesAsync(string itemId, string? category, int? rating, int? mark, string? name, string? label);
 }

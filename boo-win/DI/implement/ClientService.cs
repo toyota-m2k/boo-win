@@ -161,4 +161,13 @@ public class ClientService : IClientService {
             }
         }
     }
+
+    public async Task<bool> UpdateItemPropertiesAsync(string itemId, string? category, int? rating, int? mark, string? name, string? label) {
+        if (_api == null) {
+            throw new InvalidOperationException("API is not available. CurrentHost is not set.");
+        }
+        return await _api.PutPropertiesAsync(itemId.ToString(), category, rating, mark, name, label);
+    }
+
+    
 }

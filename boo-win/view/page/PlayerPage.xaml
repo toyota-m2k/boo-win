@@ -93,7 +93,7 @@
                         <Button Content="Player Only" Click="{x:Bind ViewModel.TogglePlayerOnly}" ToolTipService.ToolTip="Esc で解除"/>
 
                         <!-- Channel -->
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsCategorySupported.Value, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
                             <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                             <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource CardHeaderStyle}"/>
                             <DropDownButton Content="{x:Bind ViewModel.FilterModel.SelectedCategory.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6">
@@ -142,7 +142,7 @@
                         </Border>
 
                         <!-- Rating -->
-                        <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsRatingSupported.Value, Mode=OneWay}">
+                        <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.IsRatingSupported.Value, Mode=OneWay}">
                             <StackPanel Orientation="Horizontal" Spacing="2">
                                 <CheckBox Content="Rating" Style="{StaticResource FilterCheckBoxStyle}"
                                           IsChecked="{x:Bind ViewModel.FilterModel.RatingFilterEnabled.Value, Mode=TwoWay}"/>
@@ -168,7 +168,7 @@
                         </Border>
 
                         <!-- Mark -->
-                        <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.FilterModel.IsMarkSupported.Value, Mode=OneWay}">
+                        <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.IsMarkSupported.Value, Mode=OneWay}">
                             <StackPanel Orientation="Horizontal" Spacing="2">
                                 <CheckBox Content="Mark" Style="{StaticResource FilterCheckBoxStyle}"
                                           IsChecked="{x:Bind ViewModel.FilterModel.MarkFilterEnabled.Value, Mode=TwoWay}"/>

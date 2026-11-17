@@ -85,7 +85,7 @@ public class PlayerViewModel {
     }
     #endregion
 
-    public long LastPlayingPosition { get; set; } = 0;
+    public (string? Id, long Position) ReservedPlayingItemPosition { get; set; } = (null,0);
 
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
     public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
@@ -189,12 +189,12 @@ public class PlayerViewModel {
     public void OnNaturalDurationChanged(MediaPlaybackSession sender, object args) {
         var dur = sender.NaturalDuration;
         NaturalDuration.Value = (long)Math.Round(dur.TotalMilliseconds);
-        if (LastPlayingPosition > 0) {
-            _pageService.DispatcherQueue?.TryEnqueue(() => {
-                PlayerSeekToCommand.Execute(LastPlayingPosition);
-                LastPlayingPosition = 0;
-            });
-        }
+        _pageService.DispatcherQueue?.TryEnqueue(() => {
+            if (ReservedPlayingItemPosition.Id == SourceMediaItem.Value?.Id && ReservedPlayingItemPosition.Position > 0) {
+                PlayerSeekToCommand.Execute(ReservedPlayingItemPosition.Position);
+            }
+            ReservedPlayingItemPosition = (null, 0);
+        });
     }
 
     /**

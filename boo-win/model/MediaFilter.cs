@@ -15,7 +15,7 @@ public interface IMediaFilter {
 
 public class MediaFilter : IMediaFilter {
     private IClientService ClientService { get; }
-    public ICategory Category = BuiltInCategory.All;
+    public ICategory? Category = BuiltInCategory.All;
     public IList<int>? Ratings = null; // null: all / ratings to allow
     public IList<int>? Marks = null;   // 
 
@@ -33,19 +33,19 @@ public class MediaFilter : IMediaFilter {
 
 
     public bool Filter(IMediaItem item) {
-        if (Category!=null && Category != BuiltInCategory.All) {
+        if (ClientService.CategorySupport.IsSupported && Category != null && Category != BuiltInCategory.All) {
             if (Category== BuiltInCategory.Unspecified && !string.IsNullOrWhiteSpace(item.CategoryName) ||
                 Category != BuiltInCategory.Unspecified && item.CategoryName != Category.Name) {
                 return false;
             }   
         }
-        if (Ratings != null) {
+        if (ClientService.RatingSupport.IsSupported && Ratings != null) {
             if (!Ratings.Any(it=>it == ClientService.RatingSupport.ComplementalRating(item))) {
                 return false;
             }
         }
 
-        if (Marks != null) {
+        if (ClientService.MarkSupport.IsSupported && Marks != null) {
             if (!Marks.Any(it => it == item.Mark)) {
                 return false;
             }
@@ -113,6 +113,40 @@ public class MediaFilter : IMediaFilter {
             return true;
         }
         return false;
+    }
+
+    public override bool Equals(object? obj) {
+        if (obj is IMediaFilter filter) {
+            return IsEqual(this, filter);
+        } else {
+            return false;
+        }
+    }
+    public override int GetHashCode() {
+        var hash = new HashCode();
+        hash.Add(Category.Name);
+        Ratings?.Aggregate(hash, (acc, r) => {
+            acc.Add(r);
+            return acc;
+        });
+        Marks?.Aggregate(hash, (acc, m) => {
+                acc.Add(m);
+                return acc;
+            });
+        TargetTypes?.Aggregate(hash, (acc, t) => {
+                acc.Add(t);
+                return acc;
+            });
+        hash.Add(SearchText??"");
+        hash.Add(EnableStartDate);
+        if (EnableStartDate) {
+            hash.Add(StartDate);
+        }
+        hash.Add(EnableEndDate);
+        if (EnableEndDate) {
+            hash.Add(EndDate);
+        }
+        return hash.ToHashCode();
     }
 }
 

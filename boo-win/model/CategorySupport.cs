@@ -15,6 +15,16 @@ public interface ICategory {
     public string ColorName { get; }
     public string SvgPath { get; }
     public bool IsBuiltIn { get; }
+
+    public bool Match(string? categoryName) {
+        if (this == BuiltInCategory.All) {
+            return true;
+        }
+        if (string.IsNullOrEmpty(categoryName)) {
+            return this == BuiltInCategory.Unspecified;
+        }
+        return Name.Equals(categoryName, StringComparison.OrdinalIgnoreCase);
+    }
 }
 public class  Category : ICategory {
 
@@ -30,6 +40,9 @@ public class  Category : ICategory {
     public bool IsBuiltIn => false;
     //[JsonIgnore]
     //public Color Color => Color.FromArgb(ARGB);
+
+    public static ICategory All => BuiltInCategory.All;
+    public static ICategory Unspecified => BuiltInCategory.Unspecified;
 }
 
 public class BuiltInCategory : ICategory {
@@ -55,19 +68,42 @@ public class CategorySupport {
     public List<ICategory> Categories { get; }
     public bool IsSupported => Categories.Count > 0;
     public bool AllowReadWrite { get; set; } = false;
+    public string UnspecifiedCategoryName { get; }
 
-    private CategorySupport(List<ICategory>? list=null, bool allowReadWrite=false) {
-        Categories = list ?? new List<ICategory>();
-        AllowReadWrite = allowReadWrite;
+    public ICategory GetCategoryByName(string name) {
+        return Categories.FirstOrDefault(it => it.Match(name)) ?? Category.Unspecified;
     }
-    public static CategorySupport Empty => new CategorySupport(null);
+
+    public List<ICategory> GetCategoryList(bool withAll, bool withUnspecified) {
+        if (!IsSupported) {
+            return new List<ICategory>();
+        }
+        var list = Categories.Where(c=> 
+                           !c.Name.Equals(BuiltInCategory.All.Name, StringComparison.InvariantCultureIgnoreCase)
+                        && !c.Name.Equals(UnspecifiedCategoryName, StringComparison.InvariantCultureIgnoreCase)).ToList();
+        if (withAll) {
+            list.Insert(0, BuiltInCategory.All);
+        }
+        if (withUnspecified) {
+            list.Add(BuiltInCategory.Unspecified);
+        }
+        return list;
+    }
+
+    private CategorySupport(List<ICategory>? list, bool allowReadWrite, string unspecifiedCategoryName) {
+        Categories = list ?? new List<ICategory>();
+        AllowReadWrite = allowReadWrite && IsSupported;
+        UnspecifiedCategoryName = unspecifiedCategoryName;
+    }
+    public static CategorySupport Empty => new CategorySupport(null, false, BuiltInCategory.Unspecified.Name);
 
     public static CategorySupport FromJson(string? jsonString, bool allowReadWrite) {
         try {
             var json = JsonUtil.ParseOrThrow(jsonString);
+            var unspecified = json.GetString("unchecked", BuiltInCategory.Unspecified.Name);
             var categories = json["categories"].Deserialize<List<Category>>(JsonUtil.SerializeCaseInsensitive);
             if (categories != null) {
-                return new CategorySupport(categories.OrderByDescending(it => it.SortIndex).Cast<ICategory>().ToList(), allowReadWrite);
+                return new CategorySupport(categories.OrderByDescending(it => it.SortIndex).Cast<ICategory>().ToList(), allowReadWrite, unspecified);
             }
         }
         catch (Exception ex) {
