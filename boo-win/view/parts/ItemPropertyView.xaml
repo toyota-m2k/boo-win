@@ -23,7 +23,7 @@
             Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
             <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource CardHeaderStyle}"/>
             <DropDownButton 
-                Content="{x:Bind ViewModel.FilterModel.SelectedCategory.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6"
+                Content="{x:Bind ViewModel.ItemPropertyModel.Category.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6"
                 IsEnabled="{x:Bind ViewModel.CanEditCategory, Converter={StaticResource NegBoolConverter}}"
                 >
                 <DropDownButton.Flyout>
@@ -45,15 +45,21 @@
             </DropDownButton>
 
         </StackPanel>
-        <RadioButtons x:Name="Rating">
-            
-            
-        </RadioButtons>
+        <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsRatingSupported.Value, Mode=OneWay}">
+            <TextBlock Text="Mark"/>
+            <RadioButtons x:Name="Rating" IsEnabled="{x:Bind ViewModel.CanEditRating, Converter={StaticResource NegBoolConverter}, Mode=OneWay}">
 
-        <RadioButtons x:Name="Mark">
-            
-            
-        </RadioButtons>
+
+            </RadioButtons>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsMarkSupported.Value, Mode=OneWay}">
+            <TextBlock Text="Mark"/>
+            <RadioButtons x:Name="Mark" IsEnabled="{x:Bind ViewModel.CanEditMark, Converter={StaticResource NegBoolConverter}, Mode=OneWay}">
+
+
+            </RadioButtons>
+        </StackPanel>
 
     </StackPanel>
 </UserControl>
