@@ -1,3 +1,4 @@
+using BooWin.DI.contract;
 using BooWin.model;
 using BooWin.view.viewmodel;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -52,6 +54,26 @@ public sealed partial class EntryPage : Page {
     private void OnEditHostClick(object sender, RoutedEventArgs e) {
         if (((FrameworkElement)sender).DataContext is PeerHost host) {
             ViewModel.EditHostCommand.Execute(host);
+        }
+    }
+
+    private async void OnListDoubleTapped(object sender, DoubleTappedRoutedEventArgs e) {
+        // ダブルクリックされたアイテムを取得する(空き領域でのダブルクリックは無視する)
+        if ((e.OriginalSource as FrameworkElement)?.DataContext is not PeerHost host) {
+            return;
+        }
+        ViewModel.CurrentHost.Value = host;
+
+        try {
+            // CanOpenPlayerPageがtrue になるまで最大１秒待機
+            await ViewModel.CanOpenPlayerPage.Where(x => x)
+                      .FirstAsync()
+                      .Timeout(TimeSpan.FromSeconds(1));
+            ViewModel.GotoPlayerPageCommand.Execute();
+        }
+        catch (TimeoutException) {
+            // タイムアウト
+            await App.GetService<IDialogService>().ShowMessage("Host", $"{host.ServiceName} is not available.");            
         }
     }
 }

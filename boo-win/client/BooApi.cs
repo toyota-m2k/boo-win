@@ -362,6 +362,16 @@ public class BooApi : IDisposable {
         return Chapter.ListFromJson(json);
     }
 
+    public async Task<bool> PutChapterAsync(MediaItem item, List<Chapter> chapters ) {
+        var dic = new Dictionary<string, object>() {
+            { "id", item.Id },
+            { "chapters", chapters }
+        };
+        var url = MakeUrl("chapter");
+        using var response = await _httpClient.PutAsync(url, new StringContent(JsonSerializer.Serialize(dic), Encoding.UTF8, CT_JSON));
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<bool> PutPropertiesAsync(string id, string? category, int? rating, int? mark, string? name, string? label) {
         var cap = _capability;
         if (cap == null) {

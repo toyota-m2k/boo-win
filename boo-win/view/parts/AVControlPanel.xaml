@@ -39,7 +39,7 @@
                 <Button Content="Prev Chapter" Command="{x:Bind ViewModel.ChapterModel.PrevChapterCommand, Mode=OneWay}"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.Editable.Value}">
+            <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.ChapterEditable.Value}">
                 <Button Content="Add Chapter" Command="{x:Bind ViewModel.ChapterModel.AddChapterCommand, Mode=OneWay}" />
                 <Button Content="Del Chapter" Command="{x:Bind ViewModel.ChapterModel.RemoveChapterCommand, Mode=OneWay}" />
                 <Button Content="Skip Chapter" Command="{x:Bind ViewModel.ChapterModel.ToggleSkipChapterCommand, Mode=OneWay}" />

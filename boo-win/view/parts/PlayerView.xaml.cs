@@ -6,6 +6,7 @@ using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading;
@@ -40,17 +41,6 @@ public sealed partial class PlayerView : UserControl {
 
     public PlayerView() {
         InitializeComponent();
-    }
-
-    private async void LoadChapter(MediaItem item) {
-        var viewModel = ViewModel;
-        if (viewModel != null) {
-            viewModel.ChapterModel.Clear(null);
-            var chapters = await _clientService.LoadChapterAsync(item);
-            if (viewModel.SourceMediaItem.Value == item) {
-                viewModel.ChapterModel.Clear(chapters);
-            }
-        }
     }
 
     private MediaPlayer? mInternalPlayer = null;
@@ -124,11 +114,12 @@ public sealed partial class PlayerView : UserControl {
                 if (item != null) {
                     player.AutoPlay = true;
                     player.SetUriSource(new Uri(_clientService.GetItemUrl(item)));
-                    LoadChapter(item);
+                    vm.LoadChapter(item);
                 }
                 else {
                     player.Pause();
                     player.Source = null;
+                    vm.LoadChapter(null);   // clear
                 }
             }),
         vm.IsPlaying.ObserveOn(vm.UIContext).Subscribe(isPlaying => {

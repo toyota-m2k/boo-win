@@ -61,6 +61,8 @@ public class ChapterListViewModel
         set => HistoryIndex.Value = value;
     }
 
+    public bool IsDirty => mHistoryIndex > 0;
+
     private IDialogService _dialogService;
     public ChapterListViewModel(IDialogService dialogService) {
         _dialogService = dialogService;
@@ -86,9 +88,9 @@ public class ChapterListViewModel
     public void Clear(List<Chapter>? newChapter) {
         lock(mChapters) {
             mChapters.Set(newChapter);
-            OnUpdateChapterList();      // 通知するときに履歴にも積まれるので、続いてクリアする。
             mChapterHistory.Clear();
-            mHistoryIndex = -1;
+            OnUpdateChapterList();      
+            mHistoryIndex = 0;
         }
     }
 

@@ -4,15 +4,18 @@ using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Reactive.Bindings;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Windows.Media.Playback;
 
 namespace BooWin.view.viewmodel;
 
 public class PlayerViewModel {
     public UtLog Logger = new UtLog("Player");
-    public ReactiveProperty<bool> Editable { get; set; } = new(true); // player: false / editor: true
+    public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
 
     public ChapterListViewModel ChapterModel { get; }
 
@@ -85,6 +88,8 @@ public class PlayerViewModel {
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
     public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
     public async void SetSource(MediaItem? item) {
+        SaveChapter(mSourceMediaItem.Value);
+
         PlayerState.Value = MediaPlayerState.NONE;
         MediaEnded.Value = false;
         MediaError.Value = false;
@@ -96,6 +101,27 @@ public class PlayerViewModel {
         //    }
         //}
     }
+
+    private void SaveChapter(MediaItem? item) {
+        if (item == null) return;
+        if (!ChapterModel.IsDirty) return;
+        var chapters = ChapterModel.ChapterList.Value.ToList();
+        Task.Run(async () => {
+            await _clientService.SaveChapterAsync(item, chapters);
+        });
+    }
+
+    public async void LoadChapter(MediaItem? item) {
+        ChapterModel.Clear(null);
+        if (item != null) {
+            var chapters = await _clientService.LoadChapterAsync(item);
+            if (SourceMediaItem.Value == item) {
+                ChapterModel.Clear(chapters);
+            }
+        }
+    }
+
+
 
     private IClientService _clientService;
     private IDialogService _dialogService;

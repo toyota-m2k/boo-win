@@ -11,6 +11,7 @@
     Unloaded="OnUnloaded"
     mc:Ignorable="d">
 
+    <Grid>
     <!-- UseSharedDevice=False の理由は ChapterRangeView.xaml のコメント参照 -->
     <canvas:CanvasControl
         x:Name="mCanvas"
@@ -27,4 +28,12 @@
         PointerPressed="OnPointerPressed"
         PointerReleased="OnPointerReleased"
         />
+    <!-- コンテキストメニュー表示位置の基準となる透明な要素（ピンの位置に移動して使う） -->
+    <Border
+        x:Name="mPinAnchor"
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        IsHitTestVisible="False"
+        />
+    </Grid>
 </UserControl>

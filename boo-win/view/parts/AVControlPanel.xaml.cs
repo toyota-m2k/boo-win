@@ -89,26 +89,34 @@ public sealed partial class AVControlPanel : UserControl
 
 
     private async void CV_ChapterContextMenu(Chapter chapter, FrameworkElement sender, Rect pinRect) {
+        var viewModel = ViewModel;
+        if (viewModel == null) return;
+
         var menu = new MenuFlyout();
         var item = new MenuFlyoutItem { Text = "Remove" };
         item.Click += (s, e) => {
-            ViewModel?.ChapterModel.RemoveChapter(chapter.Position);
+            viewModel.ChapterModel.RemoveChapter(chapter.Position);
         };
         menu.Items.Add(item);
         item = new MenuFlyoutItem { Text = "Chapter Name" };
         item.Click += (s, e) => {
-            ViewModel?.ChapterModel.RenameChapter(chapter);
+            viewModel.ChapterModel.RenameChapter(chapter);
         };
         menu.Items.Add(item);
         item = new MenuFlyoutItem { Text = chapter.Skip ? "Enable" : "Disable" };
         item.Click += (s, e) => {
-            ViewModel?.ChapterModel.ToggleSkipChapter(chapter);
+            viewModel.ChapterModel.ToggleSkipChapter(chapter);
         };
         menu.Items.Add(item);
 
+        var pinned = viewModel.ControlPanelPinned.Value;
+        viewModel.ControlPanelPinned.Value = true;  // メニュー表示中はControlPanelを閉じない
+        menu.Closed += (s, e) => {
+            viewModel.ControlPanelPinned.Value = pinned;    // 状態を復元
+        };
+
         menu.ShowAt(sender, new FlyoutShowOptions {
-            Position = new Point((pinRect.X+pinRect.Width/2), pinRect.Y),   // targetElement 基準の座標
-            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            Placement = FlyoutPlacementMode.Top,    // sender(ピン位置のアンカー要素)の上に、X方向は中央揃えで表示
         });
     }
 

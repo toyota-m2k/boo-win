@@ -1,6 +1,7 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
 using BooWin.view.dialog;
+using io.github.toyota32k.BooLib.Utils;
 using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
 using System;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 namespace BooWin.view.viewmodel; 
 
 public class EntryPageViewModel {
+    public UtLog Logger = new UtLog("EPVM");
     private readonly ISettingsService _settingsService;
     private readonly IMainThreadService _mainThreadService;
     private readonly IDialogService _dialogService;
@@ -99,7 +101,7 @@ public class EntryPageViewModel {
     }
 
     public void GotoPlayerPage() {
-        if (CurrentHost.Value != null) {
+        if (CurrentHost.Value != null && CanOpenPlayerPage.Value) {
             Save();
             _pageService.GoToPlayerPage();
         }

@@ -102,6 +102,7 @@ public class PlayerPageViewModel
         }
         CurrentHost.Value = currentHost;
         await _clientService.SetCurrentHostAsync(currentHost);
+        PlayerModel.ChapterEditable.Value = _clientService.Capability.CanEditChapter;
         ItemListSource.Value = await _clientService.GetMediaItemListAsync();
 
         IsCategorySupported.Value = _clientService.CategorySupport.IsSupported;

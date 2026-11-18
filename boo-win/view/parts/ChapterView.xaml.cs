@@ -178,10 +178,13 @@ public sealed partial class ChapterView : UserControl {
 
         if (hitTestChapter(pt.X, out var chapter) && chapter != null) {
             var left = chapterIconLeft(chapter.Position);
-            var rect = new Rect(left, 0, ICON_WIDTH, ActualHeight);
-            var pinRect = TransformToVisual(null).TransformBounds(rect);
+            var pinRect = new Rect(left, 0, ICON_WIDTH, mCanvas.ActualHeight);
+            mPinAnchor.Margin = new Thickness(pinRect.X, pinRect.Y, 0, 0);
+            mPinAnchor.Width = pinRect.Width;
+            mPinAnchor.Height = pinRect.Height;
+            mPinAnchor.UpdateLayout();
             SelectChapter(chapter);
-            handler.Invoke(chapter, mCanvas, pinRect);
+            handler.Invoke(chapter, mPinAnchor, pinRect);
         }
     }
 

@@ -156,6 +156,13 @@ public class ClientService : IClientService {
         return ChapterListEditor.MergeChaptersAndStartEnd(chapterList, item.Start, item.End);
     }
 
+    public async Task<bool> SaveChapterAsync(MediaItem item, List<Chapter> chapters) {
+        if (_api == null) {
+            throw new InvalidOperationException("API is not available. CurrentHost is not set.");
+        }
+        return await _api.PutChapterAsync(item, chapters);
+    }
+
     public async Task<bool> CheckHostAvailabilityAsync(PeerHost host) {
         using (var api = host.CreateApi(_httpClientFactory, _dialogService)) {
             if (api == null) {

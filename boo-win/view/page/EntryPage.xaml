@@ -14,8 +14,10 @@
             <Button Content="Discover Host" Command="{x:Bind ViewModel.DiscoverHostCommand}"/>
         </StackPanel>
         <ListView
+            x:Name="HostListView"
             ItemsSource="{x:Bind ViewModel.HostList}"
             SelectedItem="{x:Bind ViewModel.CurrentHost.Value, Mode=TwoWay}"
+            DoubleTapped="OnListDoubleTapped"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Height="400"
