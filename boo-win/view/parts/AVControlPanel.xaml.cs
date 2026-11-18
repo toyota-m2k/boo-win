@@ -88,7 +88,7 @@ public sealed partial class AVControlPanel : UserControl
     }
 
 
-    private async void CV_ChapterContextMenu(Chapter chapter, FrameworkElement sender, Rect pinRect) {
+    private async void CV_ChapterContextMenu(Chapter chapter, FrameworkElement sender, Rect pinRect, Action Completed) {
         var viewModel = ViewModel;
         if (viewModel == null) return;
 
@@ -113,6 +113,7 @@ public sealed partial class AVControlPanel : UserControl
         viewModel.ControlPanelPinned.Value = true;  // メニュー表示中はControlPanelを閉じない
         menu.Closed += (s, e) => {
             viewModel.ControlPanelPinned.Value = pinned;    // 状態を復元
+            Completed?.Invoke();
         };
 
         menu.ShowAt(sender, new FlyoutShowOptions {

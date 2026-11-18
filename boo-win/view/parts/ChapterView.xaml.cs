@@ -120,22 +120,22 @@ public sealed partial class ChapterView : UserControl {
      * device ロスト時にも再生成されるよう CreateResources で構築する。
      */
     private void OnCreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args) {
-        // ピン本体: M1,1 L17,1 L17,10 L9,18 L1,10 Z（viewport 18x36 座標）
+        // ピン本体（上下反転）: M1,35 L17,35 L17,26 L9,18 L1,26 Z（viewport 18x36 座標）
         using (var head = new CanvasPathBuilder(sender)) {
-            head.BeginFigure(1, 1);
-            head.AddLine(17, 1);
-            head.AddLine(17, 10);
-            head.AddLine(9, 18);
-            head.AddLine(1, 10);
+            head.BeginFigure(1, 30);
+            head.AddLine(17, 30);
+            head.AddLine(17, 21);
+            head.AddLine(9, 13);
+            head.AddLine(1, 21);
             head.EndFigure(CanvasFigureLoop.Closed);
             mHeadGeometry?.Dispose();
             mHeadGeometry = CanvasGeometry.CreatePath(head);
         }
 
-        // ピンの脚: M9,16 L9,36
+        // ピンの脚（上下反転）: M9,20 L9,0
         using (var stem = new CanvasPathBuilder(sender)) {
-            stem.BeginFigure(9, 16);
-            stem.AddLine(9, 36);
+            stem.BeginFigure(9, 15);
+            stem.AddLine(9, 0);
             stem.EndFigure(CanvasFigureLoop.Open);
             mStemGeometry?.Dispose();
             mStemGeometry = CanvasGeometry.CreatePath(stem);
@@ -186,7 +186,7 @@ public sealed partial class ChapterView : UserControl {
             mPinAnchor.Height = pinRect.Height;
             mPinAnchor.UpdateLayout();
             SelectChapter(chapter);
-            handler.Invoke(chapter, mPinAnchor, pinRect);
+            handler.Invoke(chapter, mPinAnchor, pinRect, () => { UnselectChapter(); });
         }
     }
 
@@ -242,7 +242,7 @@ public sealed partial class ChapterView : UserControl {
      * チャプター上でコンテキストメニューが要求されたときのイベント。
      * ホストは anchor / position を使って MenuFlyout を表示する。
      */
-    public delegate void ChapterContextHandler(Chapter chapter, FrameworkElement anchor, Rect pinRect);
+    public delegate void ChapterContextHandler(Chapter chapter, FrameworkElement anchor, Rect pinRect, Action Completed);
     public event ChapterContextHandler? ChapterContextMenuRequested;
 
     #endregion

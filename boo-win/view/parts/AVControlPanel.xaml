@@ -64,8 +64,8 @@
 
         <!-- Chapters -->
         <local:ChapterView
-            Grid.Row="0"
-            Margin="0,8,0,0"
+            Grid.Row="1"
+            Margin="0,-16,0,4"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             ChapterContextMenuRequested="CV_ChapterContextMenu"
@@ -73,7 +73,7 @@
             />
         <!-- Chapter Slider -->
         <local:PlayerSlider
-            Grid.Row="1"
+            Grid.Row="0"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             Height="50"
             x:Name="mChapterSlider"
