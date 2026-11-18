@@ -70,6 +70,20 @@ public sealed partial class ChapterRangeView : UserControl {
 
     public ChapterRangeView() {
         this.InitializeComponent();
+        ActualThemeChanged += (_, _) => { applyThemeColors(); invalidate(); };
+        applyThemeColors();
+    }
+
+    /**
+     * Win2D では ThemeResource を直接使えないため、テーマに応じたシステムカラーを取得して設定する。
+     */
+    private void applyThemeColors() {
+        mEnabledLeftColor = ThemeColors.Get(this, "AccentFillColorDefaultBrush", mEnabledLeftColor);
+        mEnabledRightColor = ThemeColors.Get(this, "AccentFillColorDisabledBrush", mEnabledRightColor);
+        mDisabledLeftColor = ThemeColors.Get(this, "ControlStrongFillColorDefaultBrush", mDisabledLeftColor);
+        mDisabledRightColor = ThemeColors.Get(this, "ControlStrongFillColorDisabledBrush", mDisabledRightColor);
+        mSlitColor = ThemeColors.Get(this, "SolidBackgroundFillColorBaseBrush", mSlitColor);
+        mCursorColor = ThemeColors.Get(this, "TextFillColorPrimaryBrush", mCursorColor);
     }
 
     private IList<Chapter>? mChapterList = null;

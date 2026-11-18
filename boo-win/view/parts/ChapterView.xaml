@@ -17,7 +17,7 @@
         x:Name="mCanvas"
         HorizontalAlignment="Stretch"
         Height="25"
-        ClearColor="Gray"
+        ClearColor="Transparent"
         UseSharedDevice="False"
         CreateResources="OnCreateResources"
         Draw="OnDraw"

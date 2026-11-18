@@ -8,6 +8,22 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <UserControl.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.ThemeDictionaries>
+            <!--  つまみの色: 区間バー(AccentFillColorDefault)と区別するため、アクセントカラーの濃淡違いを使う  -->
+            <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="SliderThumbFillBrush" Color="{ThemeResource SystemAccentColorDark3}" />
+                <SolidColorBrush x:Key="SliderThumbStrokeBrush" Color="{ThemeResource SystemAccentColorLight2}" />
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="Dark">
+                <SolidColorBrush x:Key="SliderThumbFillBrush" Color="{ThemeResource SystemAccentColorLight3}" />
+                <SolidColorBrush x:Key="SliderThumbStrokeBrush" Color="{ThemeResource SystemAccentColorDark1}" />
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="HighContrast">
+                <SolidColorBrush x:Key="SliderThumbFillBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                <SolidColorBrush x:Key="SliderThumbStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            </ResourceDictionary>
+        </ResourceDictionary.ThemeDictionaries>
         <!--  SVG(Android drawable)のpathDataをそのまま利用したThumb  -->
         <Style x:Key="SvgThumbStyle" TargetType="Thumb">
             <Setter Property="Background" Value="Transparent" />
@@ -20,9 +36,9 @@
                         <Grid Background="Transparent">
                             <Path
                                 Data="M1,1L25,1L25,25L13,35L1,25L1,1Z"
-                                Fill="White"
+                                Fill="{ThemeResource SliderThumbFillBrush}"
                                 Stretch="Uniform"
-                                Stroke="#C0C0C0"
+                                Stroke="{ThemeResource SliderThumbStrokeBrush}"
                                 StrokeLineJoin="Round"
                                 StrokeThickness="1.2" />
                         </Grid>
@@ -66,7 +82,7 @@
                             <Grid
                                 x:Name="SliderContainer"
                                 Grid.Row="1"
-                                Background="{ThemeResource SliderContainerBackground}"
+                                Background="Transparent"
                                 Control.IsTemplateFocusTarget="True">
                                 <Grid x:Name="HorizontalTemplate" MinHeight="0">
                                     <Grid.ColumnDefinitions>
@@ -124,6 +140,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+      </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
