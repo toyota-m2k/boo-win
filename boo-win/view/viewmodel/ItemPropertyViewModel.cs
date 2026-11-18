@@ -1,11 +1,8 @@
 ﻿using BooWin.DI.contract;
-using BooWin.DI.implement;
 using BooWin.model;
 using io.github.toyota32k.BooLib.Utils;
 using Reactive.Bindings;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace BooWin.view.viewmodel; 
 public class ItemPropertyViewModel {

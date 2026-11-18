@@ -1,34 +1,17 @@
 ﻿using BooWin.client;
 using BooWin.DI.contract;
+using io.github.toyota32k.BooLib.Server.client;
 using io.github.toyota32k.BooLib.Server.mdns;
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace BooWin.model;
 
-public interface IHttpClient : IDisposable {
-    TimeSpan Timeout { get; set; }
-    Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken? cancellationToken=null);
-    Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken? cancellationToken = null);
-
-    Task<HttpResponseMessage> GetAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, HttpCompletionOption completionOption, CancellationToken? cancellationToken = null);
-    Task<HttpResponseMessage> GetAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, CancellationToken? cancellationToken = null);
-
-    Task<HttpResponseMessage> PutAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, HttpContent? content, HttpCompletionOption completionOption, CancellationToken? cancellationToken = null);
-    Task<HttpResponseMessage> PutAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, HttpContent? content, CancellationToken? cancellationToken = null);
-
-    Task<HttpResponseMessage> PostAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, HttpContent? content, HttpCompletionOption completionOption, CancellationToken? cancellationToken = null);
-    Task<HttpResponseMessage> PostAsync([StringSyntax(StringSyntaxAttribute.Uri)] string requestUri, HttpContent? content, CancellationToken? cancellationToken = null);
-}
-
-public class PeerHost {
+public class PeerHost : ICustomPeer {
     [JsonPropertyName("address")]
     public string Address { get; }
     [JsonPropertyName("service")]
@@ -78,7 +61,11 @@ public class PeerHost {
     public string Scheme => IsHttps ? "https" : "http";
     public string BaseUrl => $"{Scheme}://{Address}";
 
-    
+    // ICustomPeer
+    public bool CheckUrl(string url) {
+        return url.StartsWith(BaseUrl + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
 
     public BooApi CreateApi(IHttpClientFactory httpClientFactory, IDialogService dialogService) {
         return new BooApi(this, httpClientFactory, dialogService);
@@ -120,70 +107,22 @@ public class PeerHost {
         return sb.ToString();
     }
 
-    // HttpClient Wrapper
-    private class PeerHostHttpClient : IHttpClient {
-        private readonly PeerHost _peerHost;
-        private readonly HttpClient _httpClient;
-
-        public PeerHostHttpClient(PeerHost peerHost, IHttpClientFactory factory) {
-            _peerHost = peerHost;
-            _httpClient = factory.CreateClient(HTTP_CLIENT_FACTORY_NAME);
-        }
-
-        public void Dispose() {
-            _httpClient.Dispose();
-        }
-
-        // completionOption を下層の HttpClient まで伝える版。
-        // ResponseHeadersRead を指定したいダウンロード系で必須（既定の ResponseContentRead だと
-        // ボディを全部受信し終えるまで Task が完了せず、ストリーミング受信できない）。
-        public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken? cancellationToken) {
-            request.Options.Set(KEY, _peerHost);
-            return _httpClient.SendAsync(request, completionOption, cancellationToken ?? CancellationToken.None);
-        }
-        public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken? cancellationToken) {
-            return SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken ?? CancellationToken.None);
-        }
-
-        public Task<HttpResponseMessage> GetAsync([StringSyntax("Uri")] string requestUri, HttpCompletionOption completionOption, CancellationToken? cancellationToken) {
-            var uri = new Uri(requestUri, UriKind.RelativeOrAbsolute);
-            var req = new HttpRequestMessage(HttpMethod.Get, uri);
-            return SendAsync(req, completionOption, cancellationToken);
-        }
-        public Task<HttpResponseMessage> GetAsync([StringSyntax("Uri")] string requestUri, CancellationToken? cancellationToken) {
-            return GetAsync(requestUri, HttpCompletionOption.ResponseContentRead, cancellationToken);
-        }
-
-        public Task<HttpResponseMessage> PostAsync([StringSyntax("Uri")] string requestUri, HttpContent? content, HttpCompletionOption completionOption, CancellationToken? cancellationToken) {
-            var uri = new Uri(requestUri, UriKind.RelativeOrAbsolute);
-            var req = new HttpRequestMessage(HttpMethod.Post, uri) {
-                Content = content
-            };
-            return SendAsync(req, completionOption, cancellationToken);
-        }
-        public Task<HttpResponseMessage> PostAsync([StringSyntax("Uri")] string requestUri, HttpContent? content, CancellationToken? cancellationToken) {
-            return PostAsync(requestUri, content, HttpCompletionOption.ResponseContentRead, cancellationToken);
-        }
-
-        public Task<HttpResponseMessage> PutAsync([StringSyntax("Uri")] string requestUri, HttpContent? content, HttpCompletionOption completionOption, CancellationToken? cancellationToken) {
-            var uri = new Uri(requestUri, UriKind.RelativeOrAbsolute);
-            var req = new HttpRequestMessage(HttpMethod.Put, uri) {
-                Content = content
-            };
-            return SendAsync(req, completionOption, cancellationToken);
-        }
-
-        public Task<HttpResponseMessage> PutAsync([StringSyntax("Uri")] string requestUri, HttpContent? content, CancellationToken? cancellationToken = null) {
-            return PutAsync(requestUri, content, HttpCompletionOption.ResponseContentRead, cancellationToken);
-        }
-        public TimeSpan Timeout {
-            get => _httpClient.Timeout;
-            set => _httpClient.Timeout = value;
-        }
-    }
     public static readonly string HTTP_CLIENT_FACTORY_NAME = "PeerHostHttpClientFactory";
-    public static readonly HttpRequestOptionsKey<PeerHost> KEY = new("PeerHost");
-    public IHttpClient CreateHttpClient(IHttpClientFactory factory) {
-        return new PeerHostHttpClient(this, factory);
+    //public static readonly HttpRequestOptionsKey<PeerHost> KEY = new("PeerHost");
+
+    /**
+     * factoryから素のHttpClientを作成する
+     * LoopbackProxy が要求するので。
+     */
+    public static HttpClient CreateHttpClient(IHttpClientFactory factory) {
+        return factory.CreateClient(HTTP_CLIENT_FACTORY_NAME);
+    }
+
+    /**
+     * CustomHttpClientを作成する。
+     */
+    public ICustomHttpClient CreateCustomHttpClient(IHttpClientFactory factory) {
+        var client = factory.CreateClient(HTTP_CLIENT_FACTORY_NAME);
+        return new CustomHttpClient(this, client);
     }
 }

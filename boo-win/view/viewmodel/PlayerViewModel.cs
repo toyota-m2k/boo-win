@@ -1,18 +1,12 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
-using FFMpegCore;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Reactive.Bindings;
 using System;
-using System.Collections.Generic;
 using System.Reactive.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
 using Windows.Media.Playback;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BooWin.view.viewmodel;
 

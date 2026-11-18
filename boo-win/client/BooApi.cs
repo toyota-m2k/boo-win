@@ -1,5 +1,6 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using io.github.toyota32k.BooLib.Server.client;
 using io.github.toyota32k.BooLib.Server.http;
 using io.github.toyota32k.BooLib.Utils;
 using System;
@@ -25,14 +26,14 @@ public class BooApi : IDisposable {
     private PeerHost Host { get; }
     private IDialogService _dialogService;
 
-    private IHttpClient _httpClient { get; }
+    private ICustomHttpClient _httpClient { get; }
 
     public bool IsHttps => Host.IsHttps;
 
     public BooApi(PeerHost peer, IHttpClientFactory httpClientFactory, IDialogService dialogService) {
         Host = peer;
         _dialogService = dialogService;
-        _httpClient = Host.CreateHttpClient(httpClientFactory);
+        _httpClient = Host.CreateCustomHttpClient(httpClientFactory);
     }
     public void Dispose() {
         _httpClient.Dispose();

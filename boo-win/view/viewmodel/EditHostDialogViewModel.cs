@@ -1,8 +1,5 @@
 ﻿using BooWin.model;
 using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace BooWin.view.viewmodel;

@@ -3,7 +3,6 @@ using Reactive.Bindings;
 using System;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using io.github.toyota32k.BooLib.Server.mdns;
 using io.github.toyota32k.BooLib.Utils;
 using BooWin.DI.contract;

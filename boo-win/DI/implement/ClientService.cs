@@ -1,11 +1,11 @@
 ﻿using BooWin.client;
 using BooWin.DI.contract;
 using BooWin.model;
+using io.github.toyota32k.BooLib.Server.client;
 using io.github.toyota32k.BooLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BooWin.DI.implement;
@@ -37,7 +37,7 @@ public class ClientService : IClientService {
     public void Reset() {
         _api?.Dispose();
         _api = null;
-        _proxy.SetPeer(null, null);
+        _proxy.ResetPeer();
         _currentHost = null;
         _capability = null;
         _categorySupport = null;
@@ -54,7 +54,7 @@ public class ClientService : IClientService {
             return false;
         }
         if (host.IsHttps) {
-            _proxy.SetPeer(host, _httpClientFactory);
+            _proxy.SetPeer(host, host.CreateCustomHttpClient(_httpClientFactory));
         }
         return await Task.Run(async () => {
             try {

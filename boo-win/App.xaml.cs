@@ -2,6 +2,7 @@
 using BooWin.DI.implement;
 using BooWin.model;
 using BooWin.view.viewmodel;
+using io.github.toyota32k.BooLib.Server.client;
 using io.github.toyota32k.BooLib.Server.mdns;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,7 +61,7 @@ namespace BooWin {
 
             services
                 .AddHttpClient(PeerHost.HTTP_CLIENT_FACTORY_NAME)
-                .ConfigurePrimaryHttpMessageHandler(() => CreateHttpClientHandler());
+                .ConfigurePrimaryHttpMessageHandler(() => CustomHttpClient.CreateHttpClientHandler());
 
             // Register services here
             // services.AddSingleton<IMyService, MyService>();
@@ -124,37 +125,37 @@ namespace BooWin {
             }
         }
 
-        /**
-         * HTTPS 用 HttpClientHandler を生成。peer.IsHttps の場合、mDNS TXT で得た指紋と
-         * 実際のサーバ証明書 SHA-256 を pin-to-fingerprint 比較する。
-         */
-        private HttpClientHandler CreateHttpClientHandler() {
-            return new HttpClientHandler {
-                ServerCertificateCustomValidationCallback = (req, cert, chain, sslErrors) => {
-                    // HTTP は証明書検証不要
-                    if (req.RequestUri?.Scheme != Uri.UriSchemeHttps) return true;
-                    if (cert == null) {
-                        Logger.Error("Sync: no certificate presented");
-                        return false;
-                    }
-                    var peer = req.Options.TryGetValue(PeerHost.KEY, out PeerHost? v) ? v : null;
-                    if (peer == null) {
-                        Logger.Error("Sync: no PeerHost info in request options");
-                        return false;
-                    }
-                    var expected = peer.Fingerprint ?? "";
-                    string actual = CertificateGenerator.ComputeSha256Fingerprint(cert);
-                    bool ok = string.Equals(
-                        PeerEndpoint.NormalizeFp(actual),
-                        PeerEndpoint.NormalizeFp(expected),
-                        StringComparison.OrdinalIgnoreCase);
-                    if (!ok) {
-                        Logger.Error($"Sync: certificate fingerprint mismatch.\n  expected={expected}\n  actual  ={actual}");
-                    }
-                    return ok;
-                }
-            };
-        }
+        ///**
+        // * HTTPS 用 HttpClientHandler を生成。peer.IsHttps の場合、mDNS TXT で得た指紋と
+        // * 実際のサーバ証明書 SHA-256 を pin-to-fingerprint 比較する。
+        // */
+        //private HttpClientHandler CreateHttpClientHandler() {
+        //    return new HttpClientHandler {
+        //        ServerCertificateCustomValidationCallback = (req, cert, chain, sslErrors) => {
+        //            // HTTP は証明書検証不要
+        //            if (req.RequestUri?.Scheme != Uri.UriSchemeHttps) return true;
+        //            if (cert == null) {
+        //                Logger.Error("Sync: no certificate presented");
+        //                return false;
+        //            }
+        //            var peer = req.Options.TryGetValue(PeerHost.KEY, out PeerHost? v) ? v : null;
+        //            if (peer == null) {
+        //                Logger.Error("Sync: no PeerHost info in request options");
+        //                return false;
+        //            }
+        //            var expected = peer.Fingerprint ?? "";
+        //            string actual = CertificateGenerator.ComputeSha256Fingerprint(cert);
+        //            bool ok = string.Equals(
+        //                PeerEndpoint.NormalizeFp(actual),
+        //                PeerEndpoint.NormalizeFp(expected),
+        //                StringComparison.OrdinalIgnoreCase);
+        //            if (!ok) {
+        //                Logger.Error($"Sync: certificate fingerprint mismatch.\n  expected={expected}\n  actual  ={actual}");
+        //            }
+        //            return ok;
+        //        }
+        //    };
+        //}
 
     }
 }
