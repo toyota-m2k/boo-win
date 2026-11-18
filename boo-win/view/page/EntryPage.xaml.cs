@@ -57,8 +57,24 @@ public sealed partial class EntryPage : Page {
         }
     }
 
+    private void OnHostItemPointerEntered(object sender, PointerRoutedEventArgs e) {
+        SetItemActionsVisible(sender, true);
+    }
+
+    private void OnHostItemPointerExited(object sender, PointerRoutedEventArgs e) {
+        SetItemActionsVisible(sender, false);
+    }
+
+    private static void SetItemActionsVisible(object sender, bool visible) {
+        if (sender is not Panel panel) return;
+        var actions = panel.Children.OfType<FrameworkElement>().FirstOrDefault(c => c.Tag as string == "ItemActions");
+        if (actions == null) return;
+        actions.Opacity = visible ? 1 : 0;
+        actions.IsHitTestVisible = visible;
+    }
+
     private async void OnListDoubleTapped(object sender, DoubleTappedRoutedEventArgs e) {
-        // ダブルクリックされたアイテムを取得する(空き領域でのダブルクリックは無視する)
+        // 
         if ((e.OriginalSource as FrameworkElement)?.DataContext is not PeerHost host) {
             return;
         }

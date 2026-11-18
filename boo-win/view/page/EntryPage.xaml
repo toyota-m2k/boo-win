@@ -8,30 +8,161 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Vertical">
-        <StackPanel Orientation="Horizontal">
-            <Button Content="Add Host" Command="{x:Bind ViewModel.AddHostCommand}"/>
-            <Button Content="Discover Host" Command="{x:Bind ViewModel.DiscoverHostCommand}"/>
-        </StackPanel>
-        <ListView
-            x:Name="HostListView"
-            ItemsSource="{x:Bind ViewModel.HostList}"
-            SelectedItem="{x:Bind ViewModel.CurrentHost.Value, Mode=TwoWay}"
-            DoubleTapped="OnListDoubleTapped"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Height="400"
-            >
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="local:PeerHost">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{x:Bind DisplayLabel}" Margin="5"/>
-                        <Button Content="Del" Click="OnDeleteHostClick"/>
-                        <Button Content="Edit" Click="OnEditHostClick"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-        <Button Content="Open Player" Command="{x:Bind ViewModel.GotoPlayerPageCommand}" IsEnabled="{x:Bind ViewModel.CanOpenPlayerPage.Value, Mode=OneWay}"/>
-    </StackPanel>
+    <Page.Resources>
+        <Style x:Key="ToolIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style x:Key="ItemIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid Padding="24,16,24,20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE968;" FontSize="22" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Hosts" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                <Button Style="{StaticResource ToolIconButtonStyle}"
+                        Command="{x:Bind ViewModel.AddHostCommand}"
+                        ToolTipService.ToolTip="Add Host"
+                        AutomationProperties.Name="Add Host">
+                    <FontIcon Glyph="&#xE710;" FontSize="16"/>
+                </Button>
+                <Button Style="{StaticResource ToolIconButtonStyle}"
+                        Command="{x:Bind ViewModel.DiscoverHostCommand}"
+                        ToolTipService.ToolTip="Discover Host"
+                        AutomationProperties.Name="Discover Host">
+                    <FontIcon Glyph="&#xE721;" FontSize="16"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Host list -->
+        <Border Grid.Row="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="4">
+            <ListView
+                x:Name="HostListView"
+                ItemsSource="{x:Bind ViewModel.HostList}"
+                SelectedItem="{x:Bind ViewModel.CurrentHost.Value, Mode=TwoWay}"
+                DoubleTapped="OnListDoubleTapped"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="12,6,8,6"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:PeerHost">
+                        <Grid ColumnSpacing="12"
+                              Background="Transparent"
+                              PointerEntered="OnHostItemPointerEntered"
+                              PointerExited="OnHostItemPointerExited"
+                              PointerCanceled="OnHostItemPointerExited">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Scheme badge -->
+                            <Grid Width="36" Height="36" CornerRadius="18" VerticalAlignment="Center">
+                                <Border Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                                        Visibility="{x:Bind IsHttps}"
+                                        ToolTipService.ToolTip="HTTPS">
+                                    <FontIcon Glyph="&#xE72E;" FontSize="16" Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                                </Border>
+                                <Border Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                                        Visibility="{x:Bind IsHttp}"
+                                        ToolTipService.ToolTip="HTTP">
+                                    <FontIcon Glyph="&#xE785;" FontSize="16" Foreground="{ThemeResource SystemFillColorCautionBrush}"/>
+                                </Border>
+                            </Grid>
+
+                            <!-- Name / Address -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="{x:Bind Title}"
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{x:Bind SchemeLabel}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    <TextBlock Text="{x:Bind Address}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Visibility="{x:Bind HasServiceName}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Item actions (hover only) -->
+                            <StackPanel Grid.Column="2"
+                                        Tag="ItemActions"
+                                        Orientation="Horizontal"
+                                        Spacing="2"
+                                        VerticalAlignment="Center"
+                                        Opacity="0"
+                                        IsHitTestVisible="False">
+                                <Button Style="{StaticResource ItemIconButtonStyle}"
+                                        Click="OnEditHostClick"
+                                        ToolTipService.ToolTip="Edit"
+                                        AutomationProperties.Name="Edit">
+                                    <FontIcon Glyph="&#xE70F;" FontSize="14"/>
+                                </Button>
+                                <Button Style="{StaticResource ItemIconButtonStyle}"
+                                        Click="OnDeleteHostClick"
+                                        ToolTipService.ToolTip="Delete"
+                                        AutomationProperties.Name="Delete">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
+
+        <!-- Footer -->
+        <Button Grid.Row="2"
+                HorizontalAlignment="Right"
+                Style="{StaticResource AccentButtonStyle}"
+                Padding="16,8"
+                Command="{x:Bind ViewModel.GotoPlayerPageCommand}"
+                IsEnabled="{x:Bind ViewModel.CanOpenPlayerPage.Value, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE768;" FontSize="16"/>
+                <TextBlock Text="Open Player"/>
+            </StackPanel>
+        </Button>
+    </Grid>
 </Page>

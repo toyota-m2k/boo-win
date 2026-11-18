@@ -35,6 +35,15 @@ public class PeerHost : ICustomPeer {
         }
     }
 
+    [JsonIgnore]
+    public string Title => string.IsNullOrEmpty(ServiceName) ? Address : ServiceName;
+    [JsonIgnore]
+    public bool HasServiceName => !string.IsNullOrEmpty(ServiceName);
+    [JsonIgnore]
+    public bool IsHttp => !IsHttps;
+    [JsonIgnore]
+    public string SchemeLabel => IsHttps ? "HTTPS" : "HTTP";
+
     public override bool Equals(object? obj) {
         if (obj is PeerHost other) {
             return Address == other.Address
