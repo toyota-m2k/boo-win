@@ -9,50 +9,63 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
+    RequestedTheme="Dark"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <ResourceDictionary Source="../Converters.xaml"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Converters.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 動画上に重ねる透過アイコンボタン -->
+            <Style x:Key="PanelIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="18"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="FontSize" Value="16"/>
+            </Style>
+            <Style x:Key="PanelIconToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="18"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <!-- 再生/一時停止 (主ボタン) -->
+            <Style x:Key="PanelPlayButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+                <Setter Property="Width" Value="48"/>
+                <Setter Property="Height" Value="48"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="24"/>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid 
-        Background="#40FFFFFF"
-        Tapped="OnContainerTapped"
-        >
+    <Grid
+        Padding="12,0,12,8"
+        Tapped="OnContainerTapped">
+        <!-- 下から上へ薄くなるスクリム (動画を透かしつつ文字/ボタンの視認性を確保) -->
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Color="#00000000" Offset="0"/>
+                <GradientStop Color="#80000000" Offset="0.35"/>
+                <GradientStop Color="#C0000000" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-        <!-- buttons -->
-            <StackPanel Orientation="Horizontal">
-                <Button Content="Play" Command="{x:Bind ViewModel.PlayCommand, Mode=OneWay}" 
-                        IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.IsPlaying.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"/>
-                <Button Content="Pause" Command="{x:Bind ViewModel.PauseCommand, Mode=OneWay}" 
-                        IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
-                        Visibility="{x:Bind ViewModel.IsPlaying.Value, Mode=OneWay, Converter={StaticResource BoolVisibilityConverter}}"/>
-                <Button Content="Prev" Command="{x:Bind ViewModel.PrevItemCommand, Mode=OneWay}" />
-                <Button Content="Next" Command="{x:Bind ViewModel.NextItemCommand, Mode=OneWay}" />
-                <Button Content="Next Chapter" Command="{x:Bind ViewModel.ChapterModel.NextChapterCommand, Mode=OneWay}"/>
-                <Button Content="Prev Chapter" Command="{x:Bind ViewModel.ChapterModel.PrevChapterCommand, Mode=OneWay}"/>
-            </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.ChapterEditable.Value}">
-                <Button Content="Add Chapter" Command="{x:Bind ViewModel.ChapterModel.AddChapterCommand, Mode=OneWay}" />
-                <Button Content="Del Chapter" Command="{x:Bind ViewModel.ChapterModel.RemoveChapterCommand, Mode=OneWay}" />
-                <Button Content="Skip Chapter" Command="{x:Bind ViewModel.ChapterModel.ToggleSkipChapterCommand, Mode=OneWay}" />
-                <Button Content="Name Chapter" Command="{x:Bind ViewModel.ChapterModel.SetChapterLabelCommand, Mode=OneWay}" />
-                <Button Content="Undo" Command="{x:Bind ViewModel.ChapterModel.UndoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.ChapterModel.CanUndo.Value, Mode=OneWay}"/>
-                <Button Content="Redo" Command="{x:Bind ViewModel.ChapterModel.RedoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.ChapterModel.CanRedo.Value, Mode=OneWay}"/>
-            </StackPanel>
-        </StackPanel>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
-            <ToggleButton Content="Pin" IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}" />
-        </StackPanel>
+        <!-- Chapters -->
         <local:ChapterView
-            Grid.Row="1"
+            Grid.Row="0"
+            Margin="0,8,0,0"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             ChapterContextMenuRequested="CV_ChapterContextMenu"
@@ -60,10 +73,10 @@
             />
         <!-- Chapter Slider -->
         <local:PlayerSlider
-            Grid.Row="2"
+            Grid.Row="1"
             ViewModel="{x:Bind ViewModel, Mode=OneWay}"
             Height="50"
-            x:Name="mChapterSlider" 
+            x:Name="mChapterSlider"
             Minimum="0"
             Maximum="{x:Bind view:Conv.ToDouble(ViewModel.NaturalDuration.Value), Mode=OneWay}"
             SmallChange="1000"
@@ -75,20 +88,110 @@
             DragCompleted="OnSliderDragCompleted"
             IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
             />
-        <Grid Grid.Row="3" Margin="10,0,10,0" Background="White">
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="2" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="AUTO"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock 
-                Grid.Column="0" 
-                Text="{x:Bind ViewModel.ChapterModel.ChapterLabel.Value, Mode=OneWay}"/>
-            <TextBlock Grid.Column="1">
-                <Run Text="{x:Bind ViewModel.PositionString.Value, Mode=OneWay}"/>
-                <Run Text=" / "/>
-                <Run Text="{x:Bind ViewModel.DurationString.Value, Mode=OneWay}"/>
-            </TextBlock>
-        </Grid>
 
+            <!-- 時間 / チャプター名 -->
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="4,0,0,0">
+                <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" FontFamily="Consolas">
+                    <Run Text="{x:Bind ViewModel.PositionString.Value, Mode=OneWay}"/>
+                    <Run Text=" / " Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <Run Text="{x:Bind ViewModel.DurationString.Value, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </TextBlock>
+                <TextBlock
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextTrimming="CharacterEllipsis"
+                    Text="{x:Bind ViewModel.ChapterModel.ChapterLabel.Value, Mode=OneWay}"/>
+            </StackPanel>
+
+            <!-- 再生コントロール -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <Button Style="{StaticResource PanelIconButtonStyle}"
+                        Command="{x:Bind ViewModel.PrevItemCommand, Mode=OneWay}"
+                        ToolTipService.ToolTip="Previous Item" AutomationProperties.Name="Previous Item">
+                    <FontIcon Glyph="&#xE892;" FontSize="16"/>
+                </Button>
+                <Button Style="{StaticResource PanelIconButtonStyle}"
+                        Command="{x:Bind ViewModel.ChapterModel.PrevChapterCommand, Mode=OneWay}"
+                        ToolTipService.ToolTip="Previous Chapter" AutomationProperties.Name="Previous Chapter">
+                    <FontIcon Glyph="&#xE76B;" FontSize="16"/>
+                </Button>
+                <Button Style="{StaticResource PanelPlayButtonStyle}"
+                        Command="{x:Bind ViewModel.PlayCommand, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsPlaying.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
+                        ToolTipService.ToolTip="Play" AutomationProperties.Name="Play">
+                    <FontIcon Glyph="&#xF5B0;" FontSize="20"/>
+                </Button>
+                <Button Style="{StaticResource PanelPlayButtonStyle}"
+                        Command="{x:Bind ViewModel.PauseCommand, Mode=OneWay}"
+                        IsEnabled="{x:Bind ViewModel.MediaReady.Value, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsPlaying.Value, Mode=OneWay, Converter={StaticResource BoolVisibilityConverter}}"
+                        ToolTipService.ToolTip="Pause" AutomationProperties.Name="Pause">
+                    <FontIcon Glyph="&#xF8AE;" FontSize="20"/>
+                </Button>
+                <Button Style="{StaticResource PanelIconButtonStyle}"
+                        Command="{x:Bind ViewModel.ChapterModel.NextChapterCommand, Mode=OneWay}"
+                        ToolTipService.ToolTip="Next Chapter" AutomationProperties.Name="Next Chapter">
+                    <FontIcon Glyph="&#xE76C;" FontSize="16"/>
+                </Button>
+                <Button Style="{StaticResource PanelIconButtonStyle}"
+                        Command="{x:Bind ViewModel.NextItemCommand, Mode=OneWay}"
+                        ToolTipService.ToolTip="Next Item" AutomationProperties.Name="Next Item">
+                    <FontIcon Glyph="&#xE893;" FontSize="16"/>
+                </Button>
+            </StackPanel>
+
+            <!-- チャプター編集 / ピン -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="2" Visibility="{x:Bind ViewModel.ChapterEditable.Value}">
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.AddChapterCommand, Mode=OneWay}"
+                            ToolTipService.ToolTip="Add Chapter" AutomationProperties.Name="Add Chapter">
+                        <FontIcon Glyph="&#xE710;" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.RemoveChapterCommand, Mode=OneWay}"
+                            ToolTipService.ToolTip="Delete Chapter" AutomationProperties.Name="Delete Chapter">
+                        <FontIcon Glyph="&#xE738;" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.ToggleSkipChapterCommand, Mode=OneWay}"
+                            ToolTipService.ToolTip="Skip Chapter" AutomationProperties.Name="Skip Chapter">
+                        <FontIcon Glyph="&#xED1A;" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.SetChapterLabelCommand, Mode=OneWay}"
+                            ToolTipService.ToolTip="Name Chapter" AutomationProperties.Name="Name Chapter">
+                        <FontIcon Glyph="&#xE8AC;" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.UndoCommand, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.ChapterModel.CanUndo.Value, Mode=OneWay}"
+                            ToolTipService.ToolTip="Undo" AutomationProperties.Name="Undo">
+                        <FontIcon Glyph="&#xE7A7;" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource PanelIconButtonStyle}"
+                            Command="{x:Bind ViewModel.ChapterModel.RedoCommand, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.ChapterModel.CanRedo.Value, Mode=OneWay}"
+                            ToolTipService.ToolTip="Redo" AutomationProperties.Name="Redo">
+                        <FontIcon Glyph="&#xE7A6;" FontSize="16"/>
+                    </Button>
+                    <AppBarSeparator Padding="2,0"/>
+                </StackPanel>
+                <ToggleButton Style="{StaticResource PanelIconToggleButtonStyle}"
+                              IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}"
+                              ToolTipService.ToolTip="Pin Control Panel" AutomationProperties.Name="Pin Control Panel">
+                    <FontIcon Glyph="&#xE718;" FontSize="16"/>
+                </ToggleButton>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

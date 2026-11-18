@@ -82,7 +82,7 @@
                             <Grid
                                 x:Name="SliderContainer"
                                 Grid.Row="1"
-                                Background="Transparent"
+                                Background="{ThemeResource SliderContainerBackground}"
                                 Control.IsTemplateFocusTarget="True">
                                 <Grid x:Name="HorizontalTemplate" MinHeight="0">
                                     <Grid.ColumnDefinitions>
