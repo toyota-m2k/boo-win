@@ -1,16 +1,10 @@
 using BooWin.DI.contract;
-using BooWin.model;
 using BooWin.view.viewmodel;
-using CommunityToolkit.WinUI.Animations;
 using io.github.toyota32k.BooLib.Utils;
-using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Reactive.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using Windows.Media.Playback;
 
@@ -53,6 +47,7 @@ public sealed partial class PlayerView : UserControl {
     private void OnLoaded(object sender, RoutedEventArgs e) {
         if (mInternalPlayer == null) {
             mInternalPlayer = new MediaPlayer();
+            mInternalPlayer.CommandManager.IsEnabled = false;   // SMTC からの意図しない Pause 要求を受け付けない
             mSession = mInternalPlayer.PlaybackSession;
             mPlayerElement.SetMediaPlayer(mInternalPlayer);
         }
@@ -141,6 +136,7 @@ public sealed partial class PlayerView : UserControl {
             player.Play();
         }),
         vm.PauseCommand.Subscribe(_ => {
+            vm.Logger.Debug("Paused by command.");
             player.Pause();
         }),
         vm.PlayerSeekToCommand.Subscribe(pos => {
@@ -167,9 +163,9 @@ public sealed partial class PlayerView : UserControl {
         var viewModel = ViewModel;
         if (viewModel != null && mSession != null && mInternalPlayer != null) {
 
-            viewModel.Logger.Info($"{DateTime.Now:HH:mm:ss.fff} State={mSession.PlaybackState} Pos={mSession.Position} " +
-                    $"Buf={mSession.BufferingProgress:P0} DL={mSession.DownloadProgress:P0} " +
-                    $"Size={mSession.NaturalVideoWidth}x{mSession.NaturalVideoHeight}");
+            //viewModel.Logger.Info($"{DateTime.Now:HH:mm:ss.fff} State={mSession.PlaybackState} Pos={mSession.Position} " +
+            //        $"Buf={mSession.BufferingProgress:P0} DL={mSession.DownloadProgress:P0} " +
+            //        $"Size={mSession.NaturalVideoWidth}x{mSession.NaturalVideoHeight}");
 
             var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
             var chapter = viewModel.ChapterModel.GetChapterAt(pos);
