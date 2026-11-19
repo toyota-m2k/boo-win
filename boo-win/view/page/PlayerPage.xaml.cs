@@ -1,18 +1,10 @@
+using BooWin.model;
 using BooWin.view.viewmodel;
-using Microsoft.UI.Xaml;
+using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,13 +27,23 @@ public sealed partial class PlayerPage : Page {
             args.Handled = true;
         }
     }
+    private DisposableCollection Disposer = new DisposableCollection();
+
     protected override void OnNavigatedFrom(NavigationEventArgs e) {
         base.OnNavigatedFrom(e);
-        ViewModel.SaveCurrentStatus();
+        ViewModel.Save();
     }
     protected override void OnNavigatedTo(NavigationEventArgs e) {
         base.OnNavigatedTo(e);
         _ = ViewModel.Prepare();
+
+        Disposer.Add(
+            ViewModel.SelectedItem.Subscribe(item => {
+                if (item!=null) { 
+                    PlaylistView.ScrollIntoView(item);
+                }
+            }));
+        
     }
 
     private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e) {

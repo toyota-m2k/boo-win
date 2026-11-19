@@ -255,6 +255,7 @@
             <!-- Playlist -->
             <Grid x:Name="PlaylistPanel" Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}">
                 <ListView
+                    x:Name="PlaylistView"
                     ItemsSource="{x:Bind ViewModel.ItemList.Value, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedItem.Value, Mode=TwoWay}"
                     SelectionMode="Single"
