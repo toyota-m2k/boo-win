@@ -48,8 +48,22 @@
                 <Setter Property="MinWidth" Value="0"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
-        </ResourceDictionary>
-    </Page.Resources>
+                <Style x:Key="ToolIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                    <Setter Property="Width" Value="36"/>
+                    <Setter Property="Height" Value="36"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="CornerRadius" Value="6"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+                <Style x:Key="ToolIconToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+                    <Setter Property="Width" Value="36"/>
+                    <Setter Property="Height" Value="36"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="CornerRadius" Value="6"/>
+                </Style>
+            </ResourceDictionary>
+        </Page.Resources>
 
     <Grid>
         <VisualStateManager.VisualStateGroups>
@@ -89,8 +103,22 @@
                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled">
                     <StackPanel Orientation="Horizontal" Spacing="12">
 
-                        <Button Content="Back" Command="{x:Bind ViewModel.BackToEntryPageCommand}"/>
-                        <Button Content="Player Only" Click="{x:Bind ViewModel.TogglePlayerOnly}" ToolTipService.ToolTip="Esc で解除"/>
+                        <StackPanel 
+                            Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                            <Button Style="{StaticResource ToolIconButtonStyle}" Command="{x:Bind ViewModel.BackToEntryPageCommand}"
+                                    ToolTipService.ToolTip="Back" AutomationProperties.Name="Back">
+                                <FontIcon Glyph="&#xE72B;" FontSize="16"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIconButtonStyle}" Command="{x:Bind ViewModel.ReloadListCommand}"
+                                    ToolTipService.ToolTip="Back" AutomationProperties.Name="Back">
+                                <FontIcon Glyph="&#xE72C;" FontSize="16"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIconButtonStyle}" Click="{x:Bind ViewModel.TogglePlayerOnly}"
+                                    ToolTipService.ToolTip="Player Only (Esc to exit)" AutomationProperties.Name="Player Only">
+                                <FontIcon Glyph="&#xE740;" FontSize="16"/>
+                            </Button>
+                        </StackPanel>
+                        <AppBarSeparator Padding="0"/>
 
                         <!-- Channel -->
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
@@ -199,9 +227,17 @@
                         />
                     </StackPanel>
                 </ScrollViewer>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <CheckBox Content="Slide Show" IsChecked="{x:Bind ViewModel.PlayerModel.ContinuousPlayback.Value, Mode=TwoWay}"/>
-                    <ToggleButton Content="Properties" IsChecked="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=TwoWay}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4" Margin="12,0,0,0">
+                    <ToggleButton Style="{StaticResource ToolIconToggleButtonStyle}"
+                                  IsChecked="{x:Bind ViewModel.PlayerModel.ContinuousPlayback.Value, Mode=TwoWay}"
+                                  ToolTipService.ToolTip="Slide Show" AutomationProperties.Name="Slide Show">
+                        <FontIcon Glyph="&#xE786;" FontSize="16"/>
+                    </ToggleButton>
+                    <ToggleButton Style="{StaticResource ToolIconToggleButtonStyle}"
+                                  IsChecked="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=TwoWay}"
+                                  ToolTipService.ToolTip="Properties" AutomationProperties.Name="Properties">
+                        <FontIcon Glyph="&#xE946;" FontSize="16"/>
+                    </ToggleButton>
                 </StackPanel>
             </Grid>
         </Border>
@@ -217,20 +253,55 @@
             </Grid.ColumnDefinitions>
 
             <!-- Playlist -->
-            <Grid x:Name="PlaylistPanel" Grid.Column="0">
+            <Grid x:Name="PlaylistPanel" Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}">
                 <ListView
                     ItemsSource="{x:Bind ViewModel.ItemList.Value, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedItem.Value, Mode=TwoWay}"
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                    Padding="0,4">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="10,6"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="model:MediaItem">
-                            <StackPanel Padding="0,4">
-                                <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis"/>
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="{x:Bind Type}" Style="{ThemeResource CaptionTextBlockStyle}"/>
-                                    <TextBlock Text="{x:Bind Size}" Style="{ThemeResource CaptionTextBlockStyle}"/>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- MediaType icon -->
+                                <Border Width="32" Height="32" CornerRadius="6" VerticalAlignment="Center"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        ToolTipService.ToolTip="{x:Bind MediaTypeLabel}">
+                                    <FontIcon Glyph="{x:Bind MediaTypeGlyph}" FontSize="16"
+                                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}"
+                                               TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Name}"/>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="56"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{x:Bind DateText}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                        <Border Grid.Column="1" Padding="5,0" CornerRadius="3" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                Visibility="{x:Bind HasDuration}">
+                                            <TextBlock Text="{x:Bind DurationText}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="2" Text="{x:Bind SizeText}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                    </Grid>
                                 </StackPanel>
-                            </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
@@ -242,16 +313,22 @@
                                   ResizeDirection="Columns"/>
 
             <!-- Player -->
-            <Grid x:Name="PlayerPanel" Grid.Column="2" Visibility="{x:Bind ViewModel.IsMediaPlayerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
+            <Grid x:Name="PlayerPanel" Grid.Column="2" Background="Black" Visibility="{x:Bind ViewModel.IsMediaPlayerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
                 <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
             </Grid>
-            <Grid x:Name="PhotoViewer" Grid.Column="2" Visibility="{x:Bind ViewModel.IsPhotoViewerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
+            <Grid x:Name="PhotoViewer" Grid.Column="2" Background="Black" Visibility="{x:Bind ViewModel.IsPhotoViewerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
                 <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SelectedItem.Value), Mode=OneWay}"/>
             </Grid>
 
-            <Grid x:Name="PropertyPanel" Grid.Column="3" Width="300" Visibility="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=OneWay}">
-                <parts:ItemPropertyView ViewModel="{x:Bind ViewModel, Mode=OneWay}"/>
-            </Grid>
+            <Border x:Name="PropertyPanel" Grid.Column="3" Width="300"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1,0,0,0"
+                    Visibility="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=OneWay}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <parts:ItemPropertyView ViewModel="{x:Bind ViewModel, Mode=OneWay}" Margin="16,12"/>
+                </ScrollViewer>
+            </Border>
         </Grid>
     </Grid>
 </Page>

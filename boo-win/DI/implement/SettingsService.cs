@@ -35,6 +35,13 @@ public class SettingsService : ISettingsService {
         set => JsonStore.Set(KEY_WORKING_PATH, value);
     }
 
+    static readonly string KEY_AUTO_START_PLAYER= "AutoStart";
+    public bool AutoStartPlayer {
+        get => JsonStore.Get<bool>(KEY_AUTO_START_PLAYER, false);
+        set => JsonStore.Set(KEY_AUTO_START_PLAYER, value);
+    }
+
+
     #endregion
 
     #region Hosts

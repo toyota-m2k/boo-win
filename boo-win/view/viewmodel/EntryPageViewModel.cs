@@ -24,6 +24,8 @@ public class EntryPageViewModel {
     public ObservableCollection<PeerHost> HostList { get; }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
     public ReactiveProperty<bool> IsHostAvailable { get; } = new(false);
+    public ReactiveProperty<bool> AutoStartPlayer { get; } = new(false);
+    public bool FirstTime { get; set; } = true;
 
     public ReadOnlyReactiveProperty<bool> CanOpenPlayerPage { get; }
 
@@ -54,10 +56,17 @@ public class EntryPageViewModel {
         EditHostCommand.Subscribe(EditHost);
         GotoPlayerPageCommand.Subscribe(GotoPlayerPage);
 
+        CurrentHost.Value = _settingsService.CurrentHost;
         CanOpenPlayerPage = CurrentHost.CombineLatest(IsHostAvailable, (host,a) => host != null && a).ToReadOnlyReactiveProperty();
         CurrentHost.Subscribe(CheckHostAvailability);
 
         HostList = new ObservableCollection<PeerHost>(settingsService.Hosts);
+
+        AutoStartPlayer.Value = settingsService.AutoStartPlayer;
+        AutoStartPlayer.Subscribe(v => {
+            _settingsService.AutoStartPlayer = v;
+            _settingsService.Save();
+        });
     }
 
     public async void DiscoverPeer() {

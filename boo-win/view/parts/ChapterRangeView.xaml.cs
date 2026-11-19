@@ -79,9 +79,10 @@ public sealed partial class ChapterRangeView : UserControl {
      */
     private void applyThemeColors() {
         mEnabledLeftColor = ThemeColors.Get(this, "AccentFillColorDefaultBrush", mEnabledLeftColor);
-        mEnabledRightColor = ThemeColors.Get(this, "AccentFillColorDisabledBrush", mEnabledRightColor);
+        // *Disabled 系のテーマリソースは半透明色のため、動画上で背景が透けて見えなくなる。不透明な色を使う。
+        mEnabledRightColor = ThemeColors.Get(this, ActualTheme == ElementTheme.Light ? "SystemAccentColorLight2" : "SystemAccentColorDark1", mEnabledRightColor);
         mDisabledLeftColor = ThemeColors.Get(this, "ControlStrongFillColorDefaultBrush", mDisabledLeftColor);
-        mDisabledRightColor = ThemeColors.Get(this, "ControlStrongFillColorDisabledBrush", mDisabledRightColor);
+        mDisabledRightColor = ActualTheme == ElementTheme.Light ? Color.FromArgb(0xFF, 0xBD, 0xBD, 0xBD) : Color.FromArgb(0xFF, 0x5A, 0x5A, 0x5A);
         mSlitColor = ThemeColors.Get(this, "SolidBackgroundFillColorBaseBrush", mSlitColor);
         mCursorColor = ThemeColors.Get(this, "TextFillColorPrimaryBrush", mCursorColor);
     }

@@ -9,6 +9,7 @@ public interface ISettingsService {
     bool UseFFMpeg { get; set; }
     string FFMpegPath { get; set; }
     string WorkingPath { get; set; }
+    bool AutoStartPlayer { get; set; }
 
     // Hosts
     IReadOnlyList<PeerHost> Hosts { get; }

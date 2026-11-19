@@ -70,21 +70,29 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-        </ResourceDictionary>
-    </UserControl.Resources>
+                <Style x:Key="SectionHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
+                    <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Style>
+            </ResourceDictionary>
+        </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical">
-        <TextBlock>Name</TextBlock>
-        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Name.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditName.Value, Converter={StaticResource NegBoolConverter}}"/>
-        <TextBlock>Label</TextBlock>
-        <TextBox Text="{x:Bind ViewModel.ItemPropertyModel.Label.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditLabel.Value, Converter={StaticResource NegBoolConverter}}"/>
+    <StackPanel Orientation="Vertical" Spacing="16">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <FontIcon Glyph="&#xE946;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+            <TextBlock Text="Properties" Style="{StaticResource SubtitleTextBlockStyle}" FontSize="18"/>
+        </StackPanel>
+
+        <TextBox Header="Name" TextWrapping="Wrap"
+                 Text="{x:Bind ViewModel.ItemPropertyModel.Name.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditName.Value, Converter={StaticResource NegBoolConverter}}"/>
+        <TextBox Header="Label" TextWrapping="Wrap"
+                 Text="{x:Bind ViewModel.ItemPropertyModel.Label.Value, Mode=TwoWay}" IsReadOnly="{x:Bind ViewModel.CanEditLabel.Value, Converter={StaticResource NegBoolConverter}}"/>
 
         <StackPanel 
-            Orientation="Vertical" 
+            Orientation="Vertical" Spacing="6"
             Visibility="{x:Bind ViewModel.IsCategorySupported.Value, Mode=OneWay}">
-            <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}"/>
+            <TextBlock Text="{x:Bind ViewModel.FilterModel.CategoryLabel.Value, Mode=OneWay}" Style="{StaticResource SectionHeaderStyle}"/>
             <DropDownButton 
-                Content="{x:Bind ViewModel.ItemPropertyModel.Category.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6"
+                Content="{x:Bind ViewModel.ItemPropertyModel.Category.Value.Name, Mode=OneWay}" MinWidth="120" CornerRadius="6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                 IsEnabled="{x:Bind ViewModel.CanEditCategory.Value, Mode=OneWay}"
                 >
                 <DropDownButton.Flyout>
@@ -106,28 +114,28 @@
             </DropDownButton>
 
         </StackPanel>
-        <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsRatingSupported.Value, Mode=OneWay}">
-            <TextBlock Text="Rating"/>
+        <StackPanel Orientation="Vertical" Spacing="6" Visibility="{x:Bind ViewModel.IsRatingSupported.Value, Mode=OneWay}">
+            <TextBlock Text="Rating" Style="{StaticResource SectionHeaderStyle}"/>
             <RadioButtons x:Name="Rating" IsEnabled="{x:Bind ViewModel.CanEditRating.Value, Mode=OneWay}"
                           MaxColumns="5"
                           SelectedIndex="{x:Bind ViewModel.ItemPropertyModel.Rating.Value, Mode=TwoWay, Converter={StaticResource IntIndexConverter}, ConverterParameter=1}">
-                <RadioButton Content="1" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="2" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="3" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="4" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="5" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="1"><FontIcon Glyph="&#xF146;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="2"><FontIcon Glyph="&#xF147;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="3"><FontIcon Glyph="&#xF148;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="4"><FontIcon Glyph="&#xF149;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="5"><FontIcon Glyph="&#xF14A;" FontSize="14"/></RadioButton>
             </RadioButtons>
         </StackPanel>
 
-        <StackPanel Orientation="Vertical" Visibility="{x:Bind ViewModel.IsMarkSupported.Value, Mode=OneWay}">
-            <TextBlock Text="Mark"/>
+        <StackPanel Orientation="Vertical" Spacing="6" Visibility="{x:Bind ViewModel.IsMarkSupported.Value, Mode=OneWay}">
+            <TextBlock Text="Mark" Style="{StaticResource SectionHeaderStyle}"/>
             <RadioButtons x:Name="Mark" IsEnabled="{x:Bind ViewModel.CanEditMark.Value, Mode=OneWay}"
                           MaxColumns="4"
                           SelectedIndex="{x:Bind ViewModel.ItemPropertyModel.Mark.Value, Mode=TwoWay, Converter={StaticResource IntIndexConverter}, ConverterParameter=0}">
-                <RadioButton Content="0" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="1" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="2" Style="{StaticResource ToggleRadioButtonStyle}"/>
-                <RadioButton Content="3" Style="{StaticResource ToggleRadioButtonStyle}"/>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="None"><FontIcon Glyph="&#xE739;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="1"><FontIcon Glyph="&#xE734;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="2"><FontIcon Glyph="&#xE81B;" FontSize="14"/></RadioButton>
+                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" ToolTipService.ToolTip="3"><FontIcon Glyph="&#xEB51;" FontSize="14"/></RadioButton>
             </RadioButtons>
         </StackPanel>
 

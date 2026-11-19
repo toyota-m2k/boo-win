@@ -87,11 +87,20 @@ public sealed partial class ChapterView : UserControl {
 
     // 色（ピン本体の有効/無効、枠線、脚）
     // Win2D では ThemeResource を直接使えないため、描画時にテーマに応じたシステムカラーを取得する。
-    private Color ColorFillEnabled => ThemeColors.Get(this, "TextFillColorPrimaryBrush", Colors.White);
-    private Color ColorFillDisabled => ThemeColors.Get(this, "TextFillColorDisabledBrush", Colors.Gray);
-    private Color ColorFillSelected => ThemeColors.Get(this, "AccentFillColorDefaultBrush", Colors.DodgerBlue);
-    private Color ColorHeadStroke => ThemeColors.Get(this, "ControlStrongStrokeColorDefaultBrush", Colors.Silver);
-    private Color ColorStemStroke => ThemeColors.Get(this, "TextFillColorSecondaryBrush", Colors.White);
+    //private Color ColorFillEnabled => ThemeColors.Get(this, "TextFillColorPrimaryBrush", Colors.White);
+    //private Color ColorFillDisabled => ThemeColors.Get(this, "TextFillColorDisabledBrush", Colors.Gray);
+    //private Color ColorFillSelected => ThemeColors.Get(this, "AccentFillColorDefaultBrush", Colors.DodgerBlue);
+    //private Color ColorHeadStroke => ThemeColors.Get(this, "ControlStrongStrokeColorDefaultBrush", Colors.Silver);
+    //private Color ColorStemStroke => ThemeColors.Get(this, "TextFillColorSecondaryBrush", Colors.White);
+
+    private Color Color_Enabled_Fill => ThemeColors.Get(this, "AccentTextFillColorSecondaryBrush", Colors.Blue);
+    private Color Color_Enabled_Stroke => ThemeColors.Get(this, "ControlFillColorInputActiveBrush", Colors.White);
+
+    private Color Color_Selected_Fill => ThemeColors.Get(this, "AccentFillColorTertiaryBrush", Colors.White);
+    private Color Color_Selected_Stroke => ThemeColors.Get(this, "ControlFillColorInputActiveBrush", Colors.White);
+    
+    private Color Color_Disabled_Fill => ThemeColors.Get(this, "TextFillColorTertiaryBrush", Colors.White);
+    private Color Color_Disabled_Stroke => ThemeColors.Get(this, "ControlFillColorInputActiveBrush", Colors.White);
 
     private long mSelectedChapterTimeInMs = -1L;
     #endregion
@@ -120,21 +129,13 @@ public sealed partial class ChapterView : UserControl {
      * device ロスト時にも再生成されるよう CreateResources で構築する。
      */
     private void OnCreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args) {
-        // ピン本体（上下反転）: M1,35 L17,35 L17,26 L9,18 L1,26 Z（viewport 18x36 座標）
-        using (var head = new CanvasPathBuilder(sender)) {
-            head.BeginFigure(1, 30);
-            head.AddLine(17, 30);
-            head.AddLine(17, 21);
-            head.AddLine(9, 13);
-            head.AddLine(1, 21);
-            head.EndFigure(CanvasFigureLoop.Closed);
-            mHeadGeometry?.Dispose();
-            mHeadGeometry = CanvasGeometry.CreatePath(head);
-        }
+        // ピン本体（丸型）: 中心(9,22) 半径8 → 幅16, y=14～30（viewport 18x36 座標）
+        mHeadGeometry?.Dispose();
+        mHeadGeometry = CanvasGeometry.CreateCircle(sender, 9, 22, 8);
 
-        // ピンの脚（上下反転）: M9,20 L9,0
+        // ピンの脚（上下反転）: M9,14 L9,0
         using (var stem = new CanvasPathBuilder(sender)) {
-            stem.BeginFigure(9, 15);
+            stem.BeginFigure(9, 14);
             stem.AddLine(9, 0);
             stem.EndFigure(CanvasFigureLoop.Open);
             mStemGeometry?.Dispose();
@@ -271,19 +272,16 @@ public sealed partial class ChapterView : UserControl {
         var ds = args.DrawingSession;
         float scale = (float)(ICON_WIDTH / VP_WIDTH);   // 12/18 == 24/36（等倍スケール）
         var baseTransform = ds.Transform;
-        var fillEnabled = ColorFillEnabled;
-        var fillDisabled = ColorFillDisabled;
-        var headStroke = ColorHeadStroke;
-        var stemStroke = ColorStemStroke;
 
         foreach (var chapter in mChapterList) {
             if (chapter.Position != mSelectedChapterTimeInMs) {
-                var fill = chapter.Enabled ? fillEnabled : fillDisabled;
-                drawOne(ds, chapter.Position, fill, headStroke, stemStroke, scale);
+                var fill = chapter.Enabled ? Color_Enabled_Fill : Color_Disabled_Fill;
+                var stroke = chapter.Enabled ? Color_Enabled_Stroke : Color_Disabled_Stroke;
+                drawOne(ds, chapter.Position, fill, stroke, stroke, scale);
             }
         }
         if (mSelectedChapterTimeInMs >= 0) {
-            drawOne(ds, mSelectedChapterTimeInMs, ColorFillSelected, headStroke, stemStroke, scale);
+            drawOne(ds, mSelectedChapterTimeInMs, Color_Selected_Fill, Color_Selected_Stroke, Color_Selected_Stroke, scale);
         }
         ds.Transform = baseTransform;
     }
@@ -293,8 +291,8 @@ public sealed partial class ChapterView : UserControl {
         // viewport 座標 -> スケール -> (left, top=0) へ平行移動
         ds.Transform = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation((float)left, 0f);
         ds.FillGeometry(mHeadGeometry, fill);
-        ds.DrawGeometry(mHeadGeometry, headStroke, 1f, mStrokeStyle);
-        ds.DrawGeometry(mStemGeometry, stemStroke, 1f, mStrokeStyle);
+        ds.DrawGeometry(mHeadGeometry, headStroke, 2f, mStrokeStyle);
+        ds.DrawGeometry(mStemGeometry, stemStroke, 2f, mStrokeStyle);
     }
 
     /**

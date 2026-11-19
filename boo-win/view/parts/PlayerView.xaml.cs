@@ -3,9 +3,11 @@ using BooWin.model;
 using BooWin.view.viewmodel;
 using CommunityToolkit.WinUI.Animations;
 using io.github.toyota32k.BooLib.Utils;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -102,6 +104,11 @@ public sealed partial class PlayerView : UserControl {
                 session.NaturalDurationChanged += vm.OnNaturalDurationChanged;
                 player.MediaFailed += vm.OnMediaFailed;
                 player.MediaEnded += vm.OnMediaEnded;
+
+                //session.BufferingStarted += (s, e) => vm.Logger.Info($"BufferingStarted {s.Position}");
+                //session.BufferingEnded += (s, e) => vm.Logger.Info($"BufferingEnded {s.Position}");
+                //session.BufferingProgressChanged += (s, e) => vm.Logger.Info($"Buffering {s.BufferingProgress:P0}");
+                //session.DownloadProgressChanged += (s, e) => vm.Logger.Info($"Download {s.DownloadProgress:P0}");
             },
             () => {
                 session.PlaybackStateChanged -= vm.OnPlaybackStateChanged;
@@ -159,6 +166,11 @@ public sealed partial class PlayerView : UserControl {
     private void UpdatePlayingPosition() {
         var viewModel = ViewModel;
         if (viewModel != null && mSession != null && mInternalPlayer != null) {
+
+            viewModel.Logger.Info($"{DateTime.Now:HH:mm:ss.fff} State={mSession.PlaybackState} Pos={mSession.Position} " +
+                    $"Buf={mSession.BufferingProgress:P0} DL={mSession.DownloadProgress:P0} " +
+                    $"Size={mSession.NaturalVideoWidth}x{mSession.NaturalVideoHeight}");
+
             var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
             var chapter = viewModel.ChapterModel.GetChapterAt(pos);
             if (chapter!=null && !chapter.Enabled) {

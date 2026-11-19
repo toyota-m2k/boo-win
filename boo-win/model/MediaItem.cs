@@ -81,7 +81,7 @@ public class MediaItem : IMediaItem {
     public string CategoryName { get; set; } = "";
 
     [JsonIgnore]
-    public DateTimeOffset Date => DateTimeOffset.FromUnixTimeSeconds(DateInUnixTime);
+    public DateTimeOffset Date => DateTimeOffset.FromUnixTimeMilliseconds(DateInUnixTime);
     [JsonIgnore]
     public MediaType MediaType => MediaTypeFromString(Media);
 
@@ -102,5 +102,39 @@ public class MediaItem : IMediaItem {
     [JsonIgnore]
     public bool IsPhoto => this.MediaType == MediaType.PHOTO;
     public bool IsAV => this.MediaType == MediaType.VIDEO || this.MediaType == MediaType.AUDIO;
+
+    #region Display helpers
+    [JsonIgnore]
+    public bool HasDuration => (MediaType & (MediaType.VIDEO | MediaType.AUDIO)) != 0 && Duration > 0;
+    [JsonIgnore]
+    public string DurationText {
+        get {
+            var t = TimeSpan.FromMilliseconds(Duration);
+            return t.TotalHours >= 1 ? $"{(int)t.TotalHours}:{t:mm\\:ss}" : $"{t:m\\:ss}";
+        }
+    }
+    [JsonIgnore]
+    public string DateText => DateInUnixTime > 0 ? Date.ToLocalTime().ToString("yyyy/MM/dd HH:mm") : "";
+    [JsonIgnore]
+    public string SizeText {
+        get {
+            string[] units = { "B", "KB", "MB", "GB", "TB" };
+            double s = Size;
+            int i = 0;
+            while (s >= 1024 && i < units.Length - 1) { s /= 1024; i++; }
+            return i == 0 ? $"{Size} B" : $"{s:0.#} {units[i]}";
+        }
+    }
+    [JsonIgnore]
+    public string MediaTypeGlyph =>
+        (MediaType & MediaType.VIDEO) != 0 ? "\uE714" :
+        (MediaType & MediaType.AUDIO) != 0 ? "\uE8D6" :
+        (MediaType & MediaType.PHOTO) != 0 ? "\uEB9F" : "\uE8A5";
+    [JsonIgnore]
+    public string MediaTypeLabel =>
+        (MediaType & MediaType.VIDEO) != 0 ? "Video" :
+        (MediaType & MediaType.AUDIO) != 0 ? "Audio" :
+        (MediaType & MediaType.PHOTO) != 0 ? "Photo" : "File";
+    #endregion
 
 }

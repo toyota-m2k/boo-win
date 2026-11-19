@@ -27,7 +27,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="24,16,24,20" RowSpacing="12">
+    <Grid Padding="24,16,24,20" RowSpacing="12" MaxWidth="800">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -153,16 +153,24 @@
         </Border>
 
         <!-- Footer -->
-        <Button Grid.Row="2"
-                HorizontalAlignment="Right"
+        <StackPanel 
+            Orientation="Horizontal" Spacing="8"
+            Grid.Row="2"
+            HorizontalAlignment="Right">
+            <CheckBox
+                Content="Auto Start"
+                IsChecked="{x:Bind ViewModel.AutoStartPlayer.Value, Mode=TwoWay}"
+                VerticalAlignment="Center"/>
+            <Button 
                 Style="{StaticResource AccentButtonStyle}"
                 Padding="16,8"
                 Command="{x:Bind ViewModel.GotoPlayerPageCommand}"
                 IsEnabled="{x:Bind ViewModel.CanOpenPlayerPage.Value, Mode=OneWay}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <FontIcon Glyph="&#xE768;" FontSize="16"/>
-                <TextBlock Text="Open Player"/>
-            </StackPanel>
-        </Button>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE768;" FontSize="16"/>
+                    <TextBlock Text="Open Player"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
     </Grid>
 </Page>

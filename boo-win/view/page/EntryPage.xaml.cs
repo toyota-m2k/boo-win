@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
@@ -79,17 +80,33 @@ public sealed partial class EntryPage : Page {
             return;
         }
         ViewModel.CurrentHost.Value = host;
+        if (!await SafeGotoPlayerPage()) {
+            await App.GetService<IDialogService>().ShowMessage("Host", $"{host.ServiceName} is not available.");
+        }
+    }
 
+    public async Task<bool> SafeGotoPlayerPage() {
+        if (ViewModel.CurrentHost.Value == null) {
+            return false;
+        }
         try {
             // CanOpenPlayerPageがtrue になるまで最大１秒待機
             await ViewModel.CanOpenPlayerPage.Where(x => x)
                       .FirstAsync()
                       .Timeout(TimeSpan.FromSeconds(1));
             ViewModel.GotoPlayerPageCommand.Execute();
+            return true;
         }
         catch (TimeoutException) {
             // タイムアウト
-            await App.GetService<IDialogService>().ShowMessage("Host", $"{host.ServiceName} is not available.");            
+            return false;
         }
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e) {
+        if (ViewModel.AutoStartPlayer.Value && ViewModel.FirstTime) {
+            _ = SafeGotoPlayerPage();
+        }
+        ViewModel.FirstTime = false;
     }
 }

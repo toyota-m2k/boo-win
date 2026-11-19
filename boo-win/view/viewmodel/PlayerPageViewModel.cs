@@ -91,6 +91,13 @@ public class PlayerPageViewModel
             }
         });
 
+        ReloadListCommand.Subscribe(async () => {
+            SaveCurrentStatus();
+            if (!await Prepare()) {
+                BackToEntryPageCommand.Execute();
+            }
+        });
+
     }
 
     public async Task<bool> Prepare() {
@@ -184,6 +191,7 @@ public class PlayerPageViewModel
     public ReactiveProperty<bool> CanEditMark { get; } = new(false);
 
 
+    public ReactiveCommand ReloadListCommand { get; } = new();
     public ReactiveCommand BackToEntryPageCommand { get; } = new();
 
     public ReactiveProperty<bool> IsPlayerOnly { get; } = new(false);
@@ -192,9 +200,7 @@ public class PlayerPageViewModel
     public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
     public void SaveCurrentStatus() {
-        var item = SelectedItem.Value;
-        if (item == null) return;
-        _settingsService.UpdateCurrentHostStatus(item.Id, 0, save: true);
+        PlayerModel.SaveCurrentStatus();
         SelectedItem.Value = null;
     }
 

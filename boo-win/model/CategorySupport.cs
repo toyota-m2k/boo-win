@@ -46,7 +46,7 @@ public class  Category : ICategory {
 }
 
 public class BuiltInCategory : ICategory {
-    public string Name { get; }
+    public string Name { get; private set; }
 
     public int SortIndex { get; }
 
@@ -60,8 +60,12 @@ public class BuiltInCategory : ICategory {
         SortIndex = sortIndex;
     }
     public static ICategory All { get; } = new BuiltInCategory("All", int.MaxValue);
-    public static ICategory Unspecified { get; } = new BuiltInCategory("Unspecified", int.MaxValue - 1);
+    private static BuiltInCategory _unspecified = new BuiltInCategory("Unspecified", int.MaxValue - 1);
+    public static ICategory Unspecified => _unspecified;
 
+    public static void SetUnspecifiedCategoryName(string name) {
+        _unspecified.Name = name;
+    }
 }
 
 public class CategorySupport {
@@ -94,6 +98,7 @@ public class CategorySupport {
         Categories = list ?? new List<ICategory>();
         AllowReadWrite = allowReadWrite && IsSupported;
         UnspecifiedCategoryName = unspecifiedCategoryName;
+        BuiltInCategory.SetUnspecifiedCategoryName(unspecifiedCategoryName);
     }
     public static CategorySupport Empty => new CategorySupport(null, false, BuiltInCategory.Unspecified.Name);
 
@@ -103,7 +108,7 @@ public class CategorySupport {
             var unspecified = json.GetString("unchecked", BuiltInCategory.Unspecified.Name);
             var categories = json["categories"].Deserialize<List<Category>>(JsonUtil.SerializeCaseInsensitive);
             if (categories != null) {
-                return new CategorySupport(categories.OrderByDescending(it => it.SortIndex).Cast<ICategory>().ToList(), allowReadWrite, unspecified);
+                return new CategorySupport(categories.OrderBy(it => it.SortIndex).Cast<ICategory>().ToList(), allowReadWrite, unspecified);
             }
         }
         catch (Exception ex) {
