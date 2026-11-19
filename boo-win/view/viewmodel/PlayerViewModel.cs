@@ -4,7 +4,6 @@ using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
 using Reactive.Bindings;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
@@ -90,6 +89,7 @@ public class PlayerViewModel {
     public async void SetSource(MediaItem? item) {
         SaveChapter(mSourceMediaItem.Value);
 
+        PlayerPosition.Value = 0;
         PlayerState.Value = MediaPlayerState.NONE;
         MediaEnded.Value = false;
         MediaError.Value = false;
@@ -209,6 +209,7 @@ public class PlayerViewModel {
 
     public void OnNaturalDurationChanged(MediaPlaybackSession sender, object args) {
         var dur = sender.NaturalDuration;
+        Logger.Debug($"NaturalDuration={dur}");
         NaturalDuration.Value = (long)Math.Round(dur.TotalMilliseconds);
         _pageService.DispatcherQueue?.TryEnqueue(() => {
             if (ReservedPlayingItemPosition.Id == SourceMediaItem.Value?.Id && ReservedPlayingItemPosition.Position > 0) {
@@ -223,6 +224,7 @@ public class PlayerViewModel {
      */
     public void OnPlaybackStateChanged(MediaPlaybackSession sender, object args) {
         var state = sender.PlaybackState;
+        Logger.Debug($"PlaybackState={state}");
         switch (state) {
             case MediaPlaybackState.Buffering:
             default:
@@ -252,6 +254,7 @@ public class PlayerViewModel {
     }
 
     public void OnMediaEnded(MediaPlayer sender, object args) {
+        Logger.Error("On Media Ended");
         MediaEnded.Value = true;
         if (ContinuousPlayback.Value) {
             NextItemCommand.Execute();

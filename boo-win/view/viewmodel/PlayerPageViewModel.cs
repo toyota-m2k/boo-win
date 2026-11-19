@@ -92,7 +92,7 @@ public class PlayerPageViewModel
         });
 
         ReloadListCommand.Subscribe(async () => {
-            SaveCurrentStatus();
+            Save();
             if (!await Prepare()) {
                 BackToEntryPageCommand.Execute();
             }
@@ -199,7 +199,7 @@ public class PlayerPageViewModel
 
     public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
-    public void SaveCurrentStatus() {
+    public void Save() {
         PlayerModel.SaveCurrentStatus();
         SelectedItem.Value = null;
     }
