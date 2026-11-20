@@ -41,4 +41,28 @@ public sealed partial class PhotoViewer : UserControl {
     public PhotoViewer() {
         InitializeComponent();
     }
+
+    #region Show/Hide Control Panel
+
+    private void OnControlPanelMouseEnter(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.OnControlPanelMouseEnter();
+        e.Handled = true;
+    }
+
+    private void OnControlPanelMouseLeave(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.OnControlPanelMouseLeave();
+        e.Handled = true;
+    }
+
+    private void OnPointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        ViewModel?.ActivateControlPanel();
+        e.Handled = true;
+    }
+
+    private void OnControlPanelMouseMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        e.Handled = true;
+    }
+
+    #endregion
+
 }
