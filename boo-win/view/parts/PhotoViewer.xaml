@@ -37,14 +37,26 @@
     <Grid
         PointerMoved="OnPointerMoved"
         >
+        <!-- Photo Viewer -->
         <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SourceMediaItem.Value), Mode=OneWay}"/>
+        
+        <!-- Control Panel -->
         <Grid
             VerticalAlignment="Bottom"
             PointerEntered="OnControlPanelMouseEnter"
             PointerExited="OnControlPanelMouseLeave"
             PointerMoved="OnControlPanelMouseMoved"
+            Visibility="{x:Bind ViewModel.IsControlPanelVisible.Value, Mode=OneWay}"
             RequestedTheme="Dark"
             >
+            <!-- 下から上へ薄くなるスクリム (動画を透かしつつ文字/ボタンの視認性を確保) -->
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                    <GradientStop Color="#00000000" Offset="0"/>
+                    <GradientStop Color="#80000000" Offset="0.35"/>
+                    <GradientStop Color="#C0000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
