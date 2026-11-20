@@ -218,6 +218,28 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Date Range -->
+                        <Button VerticalAlignment="Center" Height="32" Padding="10,0" CornerRadius="6"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Click="OnDateRangeClick"
+                                Visibility="{x:Bind ViewModel.FilterModel.IsDateRangeActive.Value, Mode=OneWay}"
+                                ToolTipService.ToolTip="Date Range Filter" AutomationProperties.Name="Date Range Filter">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE787;" FontSize="14"/>
+                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold"
+                                           Text="{x:Bind ViewModel.FilterModel.DateRangeLabel.Value, Mode=OneWay}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button VerticalAlignment="Center" Height="32" Padding="10,0" CornerRadius="6"
+                                Click="OnDateRangeClick"
+                                Visibility="{x:Bind ViewModel.FilterModel.IsDateRangeInactive.Value, Mode=OneWay}"
+                                ToolTipService.ToolTip="Date Range Filter" AutomationProperties.Name="Date Range Filter">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE787;" FontSize="14"/>
+                                <TextBlock VerticalAlignment="Center" Text="Date Range: Off"/>
+                            </StackPanel>
+                        </Button>
+
                         <!-- Text -->
                         <TextBox 
                         Width="200"

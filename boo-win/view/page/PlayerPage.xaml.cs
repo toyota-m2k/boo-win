@@ -46,6 +46,10 @@ public sealed partial class PlayerPage : Page {
         
     }
 
+    private async void OnDateRangeClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+        await dialog.DateRangeDialog.Show(App.GetService<DI.contract.IDialogService>(), ViewModel.FilterModel);
+    }
+
     private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e) {
         categoryFlyout.Hide();
     }

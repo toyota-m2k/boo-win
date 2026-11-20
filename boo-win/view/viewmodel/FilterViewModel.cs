@@ -51,6 +51,9 @@ public class FilterViewModel {
     public ReactiveProperty<DateTimeOffset> StartDate { get; } = new(DateTime.Now.AddDays(-7));
     public ReactiveProperty<bool> EndDateEnabled { get; } = new(false);
     public ReactiveProperty<DateTimeOffset> EndDate { get; } = new(DateTime.Now);
+    public ReadOnlyReactiveProperty<bool> IsDateRangeActive { get; }
+    public ReadOnlyReactiveProperty<bool> IsDateRangeInactive { get; }
+    public ReadOnlyReactiveProperty<string> DateRangeLabel { get; }
     #endregion
 
     #region Text Search
@@ -62,6 +65,17 @@ public class FilterViewModel {
 
     public FilterViewModel(IClientService clientService) {
         _clientService = clientService;
+
+        IsDateRangeActive = Observable.CombineLatest(StartDateEnabled, EndDateEnabled, (s, e) => s || e).ToReadOnlyReactiveProperty();
+        IsDateRangeInactive = IsDateRangeActive.Select(v => !v).ToReadOnlyReactiveProperty();
+        DateRangeLabel = Observable.CombineLatest(
+            StartDateEnabled, StartDate, EndDateEnabled, EndDate,
+            (startEnabled, start, endEnabled, end) => {
+                if (!startEnabled && !endEnabled) return "Date Range";
+                var s = startEnabled ? start.ToString("yyyy/MM/dd") : "";
+                var e = endEnabled ? end.ToString("yyyy/MM/dd") : "";
+                return $"{s} ~ {e}";
+            }).ToReadOnlyReactiveProperty<string>();
 
         ReadOnlyReactiveProperty<List<int>?> marks = Observable.CombineLatest(
             MarkFilterEnabled, 
