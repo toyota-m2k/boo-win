@@ -23,6 +23,7 @@ public class PlayerPageViewModel
     private readonly IDialogService _dialogService;
 
     public PlayerViewModel PlayerModel { get; }
+    public PhotoViewerViewModel PhotoViewerModel { get; }
     public FilterViewModel FilterModel { get; }
     public ItemPropertyViewModel ItemPropertyModel { get; } = new ItemPropertyViewModel();
 
@@ -39,6 +40,7 @@ public class PlayerPageViewModel
 
         PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
         FilterModel = new FilterViewModel(_clientService);
+        PhotoViewerModel = new PhotoViewerViewModel(_clientService, _settingsService);
 
         IsPlayerOnly.Subscribe(v => {
             if (v) {
@@ -62,6 +64,8 @@ public class PlayerPageViewModel
 
         SelectedItem.Subscribe(item => {
             PlayerModel.SetSource(item);
+            PhotoViewerModel.SetSource(item);
+
             var changes = ItemPropertyModel.SetSource(item, _clientService);
             // ItemPropertyModel#SetSourceを呼んだ時に、以前のItemPropertyに変更があれば、IChanges が返ってくる。
             if (changes!=null) {
@@ -70,26 +74,13 @@ public class PlayerPageViewModel
         });
 
         PlayerModel.NextItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
-            var item = SelectedItem.Value;
-            if (item == null) return;
-            var list = ItemList.Value;
-            if (list == null || list.Count == 0) return;
-            var index = list.FindIndex(it => it.Id == item.Id);
-            if (index>=0 && index+1 < list.Count) {
-                SelectedItem.Value = list[index+1];
-            }
+            NextItem();
         });
-
         PlayerModel.PrevItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
-            var item = SelectedItem.Value;
-            if (item == null) return;
-            var list = ItemList.Value;
-            if (list == null || list.Count == 0) return;
-            var index = list.FindIndex(it => it.Id == item.Id);
-            if (index > 0) {
-                SelectedItem.Value = list[index - 1];
-            }
+            PrevItem();
         });
+        PhotoViewerModel.NextItemCommand.Subscribe(NextItem);
+        PhotoViewerModel.PrevItemCommand.Subscribe(PrevItem);
 
         ReloadListCommand.Subscribe(async () => {
             Save();
@@ -97,8 +88,33 @@ public class PlayerPageViewModel
                 BackToEntryPageCommand.Execute();
             }
         });
-
+        SlideShow.Subscribe(ss => {
+            PlayerModel.ContinuousPlayback.Value = ss;
+            PhotoViewerModel.SlideShow.Value = ss;
+        });
     }
+
+    private void NextItem() {
+        var item = SelectedItem.Value;
+        if (item == null) return;
+        var list = ItemList.Value;
+        if (list == null || list.Count == 0) return;
+        var index = list.FindIndex(it => it.Id == item.Id);
+        if (index >= 0 && index + 1 < list.Count) {
+            SelectedItem.Value = list[index + 1];
+        }
+    }
+    private void PrevItem() {
+        var item = SelectedItem.Value;
+        if (item == null) return;
+        var list = ItemList.Value;
+        if (list == null || list.Count == 0) return;
+        var index = list.FindIndex(it => it.Id == item.Id);
+        if (index > 0) {
+            SelectedItem.Value = list[index - 1];
+        }
+    }
+
 
     public async Task<bool> Prepare() {
         PlayerModel.SetSource(null);
@@ -164,13 +180,7 @@ public class PlayerPageViewModel
     public ReactiveProperty<MediaItemList> ItemListSource { get; } = new (MediaItemList.Empty);
     public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
-
-    public ImageSource? GetItemUrl(MediaItem? item) {
-        if (item == null) return null;
-        var url = _clientService.GetItemUrl(item);
-        if (string.IsNullOrEmpty(url)) return null;
-        return new BitmapImage(new Uri(url));
-    }
+    public ReactiveProperty<bool> SlideShow { get; } = new(true);
 
     public Visibility IsPhotoViewerVisible(MediaItem? item) {
         return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;

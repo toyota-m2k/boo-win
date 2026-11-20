@@ -340,7 +340,7 @@
                 <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
             </Grid>
             <Grid x:Name="PhotoViewer" Grid.Column="2" Background="Black" Visibility="{x:Bind ViewModel.IsPhotoViewerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
-                <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SelectedItem.Value), Mode=OneWay}"/>
+                <parts:PhotoViewer ViewModel="{x:Bind ViewModel.PhotoViewerModel, Mode=OneWay}"/>
             </Grid>
 
             <Border x:Name="PropertyPanel" Grid.Column="3" Width="300"

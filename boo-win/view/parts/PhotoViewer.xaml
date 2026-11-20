@@ -9,6 +9,6 @@
     mc:Ignorable="d">
 
     <Grid>
-
+        <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SourceMediaItem.Value), Mode=OneWay}"/>
     </Grid>
 </UserControl>
