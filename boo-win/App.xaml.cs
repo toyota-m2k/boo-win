@@ -3,30 +3,11 @@ using BooWin.DI.implement;
 using BooWin.model;
 using BooWin.view.viewmodel;
 using io.github.toyota32k.BooLib.Server.client;
-using io.github.toyota32k.BooLib.Server.mdns;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading.Tasks;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -115,6 +96,7 @@ namespace BooWin {
         private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
             if (_window == null) return;
             GetService<EntryPageViewModel>().Save();
+            GetService<PlayerPageViewModel>().Save();
             GetService<ISettingsService>().Save();
 
             var appConfigService = GetService<IAppConfigService>();

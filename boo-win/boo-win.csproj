@@ -27,6 +27,7 @@
       <None Remove="view\AVControlPanel.xaml" />
       <None Remove="view\dialog\DiscoverPeerDialog.xaml" />
       <None Remove="view\dialog\EditHostDialog.xaml" />
+	  <None Remove="view\dialog\DateRangeDialog.xaml" />
       <None Remove="view\EntryPage.xaml" />
       <None Remove="view\page\EditorPage.xaml" />
       <None Remove="view\page\EntryPage.xaml" />
@@ -115,6 +116,11 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="view\dialog\EditHostDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="view\dialog\DateRangeDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

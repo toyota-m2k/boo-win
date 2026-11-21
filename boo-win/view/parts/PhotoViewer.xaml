@@ -7,8 +7,89 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Converters.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-    <Grid>
+            <!-- 動画上に重ねる透過アイコンボタン -->
+            <Style x:Key="PanelIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="18"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="FontSize" Value="16"/>
+            </Style>
+            <Style x:Key="PanelIconToggleButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="CornerRadius" Value="18"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
 
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid
+        PointerMoved="OnPointerMoved"
+        >
+        <!-- Photo Viewer -->
+        <Image Source="{x:Bind ViewModel.GetItemUrl(ViewModel.SourceMediaItem.Value), Mode=OneWay}"/>
+        
+        <!-- Control Panel -->
+        <Grid
+            VerticalAlignment="Bottom"
+            PointerEntered="OnControlPanelMouseEnter"
+            PointerExited="OnControlPanelMouseLeave"
+            PointerMoved="OnControlPanelMouseMoved"
+            Visibility="{x:Bind ViewModel.IsControlPanelVisible.Value, Mode=OneWay}"
+            RequestedTheme="Dark"
+            >
+            <!-- 下から上へ薄くなるスクリム (動画を透かしつつ文字/ボタンの視認性を確保) -->
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                    <GradientStop Color="#00000000" Offset="0"/>
+                    <GradientStop Color="#80000000" Offset="0.35"/>
+                    <GradientStop Color="#C0000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel 
+                Orientation="Horizontal"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                HorizontalAlignment="Center"
+                >
+                <Button 
+                    Style="{StaticResource PanelIconButtonStyle}"
+                    Command="{x:Bind ViewModel.PrevItemCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Previous Item" AutomationProperties.Name="Previous Item">
+                    <FontIcon Glyph="&#xE892;" FontSize="16"/>
+                </Button>
+                <Button Style="{StaticResource PanelIconButtonStyle}"
+                        Command="{x:Bind ViewModel.NextItemCommand, Mode=OneWay}"
+                        ToolTipService.ToolTip="Next Item" AutomationProperties.Name="Next Item">
+                    <FontIcon Glyph="&#xE893;" FontSize="16"/>
+                </Button>
+            </StackPanel>
+            <StackPanel 
+                Orientation="Horizontal"
+                Grid.Column="1"
+                >
+                <ToggleButton 
+                    Style="{StaticResource PanelIconToggleButtonStyle}"
+                    IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Pin Control Panel" AutomationProperties.Name="Pin Control Panel">
+                    <FontIcon Glyph="&#xE718;" FontSize="16"/>
+                </ToggleButton>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

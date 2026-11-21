@@ -23,7 +23,9 @@ public class PlayerPageViewModel
     private readonly IDialogService _dialogService;
 
     public PlayerViewModel PlayerModel { get; }
+    public PhotoViewerViewModel PhotoViewerModel { get; }
     public FilterViewModel FilterModel { get; }
+    public SortViewModel SortViewModel { get; }
     public ItemPropertyViewModel ItemPropertyModel { get; } = new ItemPropertyViewModel();
 
 
@@ -38,7 +40,9 @@ public class PlayerPageViewModel
         _dialogService = dialogService;
 
         PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
+        PhotoViewerModel = new PhotoViewerViewModel(_clientService, _settingsService);
         FilterModel = new FilterViewModel(_clientService);
+        SortViewModel = new SortViewModel(_clientService);
 
         IsPlayerOnly.Subscribe(v => {
             if (v) {
@@ -48,10 +52,10 @@ public class PlayerPageViewModel
         });
 
         ItemList = ItemListSource
-            .CombineLatest(FilterModel.Filter, (list, filter) => {
+            .CombineLatest(FilterModel.Filter,SortViewModel.Sorter, (list, filter, sorter) => {
                 var currentItem = SelectedItem.Value;
                 var position = PlayerModel.PlayerPosition.Value;
-                var newList = list.Items.Where(it => filter.Filter(it)).ToList();
+                var newList = list.Items.Where(it => filter.Filter(_clientService, it)).SortBy(sorter).ToList();
                 ReservePlayingItem(currentItem?.Id, position);
                 return newList;
             }).ToReadOnlyReactiveProperty();
@@ -62,6 +66,8 @@ public class PlayerPageViewModel
 
         SelectedItem.Subscribe(item => {
             PlayerModel.SetSource(item);
+            PhotoViewerModel.SetSource(item);
+
             var changes = ItemPropertyModel.SetSource(item, _clientService);
             // ItemPropertyModel#SetSourceを呼んだ時に、以前のItemPropertyに変更があれば、IChanges が返ってくる。
             if (changes!=null) {
@@ -70,35 +76,47 @@ public class PlayerPageViewModel
         });
 
         PlayerModel.NextItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
-            var item = SelectedItem.Value;
-            if (item == null) return;
-            var list = ItemList.Value;
-            if (list == null || list.Count == 0) return;
-            var index = list.FindIndex(it => it.Id == item.Id);
-            if (index>=0 && index+1 < list.Count) {
-                SelectedItem.Value = list[index+1];
-            }
+            NextItem();
         });
-
         PlayerModel.PrevItemCommand.ObserveOn(_pageService.UIContext).Subscribe((_) => {
-            var item = SelectedItem.Value;
-            if (item == null) return;
-            var list = ItemList.Value;
-            if (list == null || list.Count == 0) return;
-            var index = list.FindIndex(it => it.Id == item.Id);
-            if (index > 0) {
-                SelectedItem.Value = list[index - 1];
-            }
+            PrevItem();
         });
+        PhotoViewerModel.NextItemCommand.Subscribe(NextItem);
+        PhotoViewerModel.PrevItemCommand.Subscribe(PrevItem);
 
         ReloadListCommand.Subscribe(async () => {
-            SaveCurrentStatus();
+            Save();
             if (!await Prepare()) {
                 BackToEntryPageCommand.Execute();
             }
         });
-
+        SlideShow.Subscribe(ss => {
+            PlayerModel.ContinuousPlayback.Value = ss;
+            PhotoViewerModel.SlideShow.Value = ss;
+        });
     }
+
+    private void NextItem() {
+        var item = SelectedItem.Value;
+        if (item == null) return;
+        var list = ItemList.Value;
+        if (list == null || list.Count == 0) return;
+        var index = list.FindIndex(it => it.Id == item.Id);
+        if (index >= 0 && index + 1 < list.Count) {
+            SelectedItem.Value = list[index + 1];
+        }
+    }
+    private void PrevItem() {
+        var item = SelectedItem.Value;
+        if (item == null) return;
+        var list = ItemList.Value;
+        if (list == null || list.Count == 0) return;
+        var index = list.FindIndex(it => it.Id == item.Id);
+        if (index > 0) {
+            SelectedItem.Value = list[index - 1];
+        }
+    }
+
 
     public async Task<bool> Prepare() {
         PlayerModel.SetSource(null);
@@ -122,8 +140,14 @@ public class PlayerPageViewModel
         CanEditName.Value = _clientService.Capability.CanEditName;
         CanEditLabel.Value = _clientService.Capability.CanEditLabel;
 
-        FilterModel.ResetOnHostChanged();
+        var additionals = _settingsService.Additionals[currentHost];
+        FilterModel.ResetOnHostChanged(additionals);
+        SortViewModel.ResetOnHostChanged(additionals);
         ItemPropertyModel.ResetOnHostChanged(_clientService);
+
+        SlideShow.Value = additionals.SlideShow.Enabled;
+        SlideShowInterval.Value = additionals.SlideShow.Interval;
+
         //FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
         //FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
         //FilterModel.SelectedCategory.Value = FilterModel.CategoryList.Value[0];
@@ -164,13 +188,8 @@ public class PlayerPageViewModel
     public ReactiveProperty<MediaItemList> ItemListSource { get; } = new (MediaItemList.Empty);
     public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
-
-    public ImageSource? GetItemUrl(MediaItem? item) {
-        if (item == null) return null;
-        var url = _clientService.GetItemUrl(item);
-        if (string.IsNullOrEmpty(url)) return null;
-        return new BitmapImage(new Uri(url));
-    }
+    public ReactiveProperty<bool> SlideShow { get; } = new(true);
+    public ReactiveProperty<TimeSpan> SlideShowInterval { get; } = new(TimeSpan.FromSeconds(5));
 
     public Visibility IsPhotoViewerVisible(MediaItem? item) {
         return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
@@ -199,9 +218,21 @@ public class PlayerPageViewModel
 
     public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
-    public void SaveCurrentStatus() {
+    public void Save() {
+        SaveAdditionals();
         PlayerModel.SaveCurrentStatus();
         SelectedItem.Value = null;
+    }
+
+    private void SaveAdditionals() {
+        var currentHost = CurrentHost.Value;
+        if (currentHost == null) return;
+        var additionals = _settingsService.Additionals[currentHost];
+        additionals.Filter = FilterModel.AsSettings();
+        additionals.Sorter = SortViewModel.AsSettings();
+        additionals.SlideShow.Enabled = SlideShow.Value;
+        additionals.SlideShow.Interval = SlideShowInterval.Value;
+        _settingsService.SaveAdditionals();
     }
 
     private void OnUpdateItemProperties(ItemPropertyViewModel.IChanges changes) {
