@@ -247,6 +247,50 @@
                         PlaceholderText="Search Text"
                         Text="{x:Bind ViewModel.FilterModel.SearchText.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         />
+
+                        <!-- Sort -->
+                        <Border Style="{StaticResource FilterGroupStyle}" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <CheckBox Content="Sort" Style="{StaticResource FilterCheckBoxStyle}"
+                                          IsChecked="{x:Bind ViewModel.SortViewModel.IsEnabled.Value, Mode=TwoWay}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="2"
+                                            Visibility="{x:Bind ViewModel.SortViewModel.IsEnabled.Value, Mode=OneWay}">
+                                    <DropDownButton Content="{x:Bind ViewModel.SortViewModel.SortKey.Value, Mode=OneWay}" MinWidth="80" CornerRadius="4"
+                                                    ToolTipService.ToolTip="Sort Key" AutomationProperties.Name="Sort Key">
+                                        <DropDownButton.Flyout>
+                                            <Flyout x:Name="sortKeyFlyout" Placement="BottomEdgeAlignedLeft">
+                                                <ListView ItemsSource="{x:Bind ViewModel.SortViewModel.AvailableSortKeys.Value, Mode=OneWay}" SelectionMode="Single" MaxHeight="400"
+                                                          SelectedItem="{x:Bind ViewModel.SortViewModel.ToSelectedItem(ViewModel.SortViewModel.SortKey.Value), Mode=TwoWay, BindBack=ViewModel.SortViewModel.SetSortKey}"
+                                                          SelectionChanged="OnSortKeySelectionChanged"/>
+                                            </Flyout>
+                                        </DropDownButton.Flyout>
+                                    </DropDownButton>
+                                    <ToggleButton Style="{StaticResource FilterToggleStyle}"
+                                                  IsChecked="{x:Bind ViewModel.SortViewModel.Descending.Value, Mode=TwoWay}"
+                                                  ToolTipService.ToolTip="Sort Direction" AutomationProperties.Name="Sort Direction">
+                                        <ToggleButton.Resources>
+                                            <ResourceDictionary>
+                                                <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ToggleButtonBackground"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ToggleButtonBackgroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="ToggleButtonBackgroundPressed"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="ToggleButtonForeground"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="ToggleButtonForegroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="ToggleButtonForegroundPressed"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="ToggleButtonBorderBrush"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ToggleButtonBorderBrushPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ToggleButtonBorderBrushPressed"/>
+                                            </ResourceDictionary>
+                                        </ToggleButton.Resources>
+                                        <Grid>
+                                            <FontIcon Glyph="&#xE74B;" FontSize="13"
+                                                      Visibility="{x:Bind ViewModel.SortViewModel.Descending.Value, Mode=OneWay}"/>
+                                            <FontIcon Glyph="&#xE74A;" FontSize="13"
+                                                      Visibility="{x:Bind ViewModel.SortViewModel.Ascending.Value, Mode=OneWay}"/>
+                                        </Grid>
+                                    </ToggleButton>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4" Margin="12,0,0,0">

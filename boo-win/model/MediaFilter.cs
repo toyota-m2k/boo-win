@@ -1,4 +1,5 @@
 ﻿using BooWin.DI.contract;
+using BooWin.view.viewmodel;
 using io.github.toyota32k.BooLib.Utils;
 using System;
 using System.Collections.Generic;
@@ -123,7 +124,9 @@ public class MediaFilter : IMediaFilter {
     }
     public override int GetHashCode() {
         var hash = new HashCode();
-        hash.Add(Category.Name);
+        if (Category != null) {
+            hash.Add(Category.Name);
+        }
         Ratings?.Aggregate(hash, (acc, r) => {
             acc.Add(r);
             return acc;
@@ -148,4 +151,5 @@ public class MediaFilter : IMediaFilter {
         return hash.ToHashCode();
     }
 }
+
 

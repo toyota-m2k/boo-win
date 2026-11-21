@@ -53,4 +53,8 @@ public sealed partial class PlayerPage : Page {
     private void OnCategorySelectionChanged(object sender, SelectionChangedEventArgs e) {
         categoryFlyout.Hide();
     }
+
+    private void OnSortKeySelectionChanged(object sender, SelectionChangedEventArgs e) {
+        sortKeyFlyout.Hide();
+    }
 }

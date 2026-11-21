@@ -25,6 +25,7 @@ public class PlayerPageViewModel
     public PlayerViewModel PlayerModel { get; }
     public PhotoViewerViewModel PhotoViewerModel { get; }
     public FilterViewModel FilterModel { get; }
+    public SortViewModel SortViewModel { get; }
     public ItemPropertyViewModel ItemPropertyModel { get; } = new ItemPropertyViewModel();
 
 
@@ -39,8 +40,9 @@ public class PlayerPageViewModel
         _dialogService = dialogService;
 
         PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
-        FilterModel = new FilterViewModel(_clientService);
         PhotoViewerModel = new PhotoViewerViewModel(_clientService, _settingsService);
+        FilterModel = new FilterViewModel(_clientService);
+        SortViewModel = new SortViewModel(_clientService);
 
         IsPlayerOnly.Subscribe(v => {
             if (v) {
@@ -50,10 +52,10 @@ public class PlayerPageViewModel
         });
 
         ItemList = ItemListSource
-            .CombineLatest(FilterModel.Filter, (list, filter) => {
+            .CombineLatest(FilterModel.Filter,SortViewModel.Sorter, (list, filter, sorter) => {
                 var currentItem = SelectedItem.Value;
                 var position = PlayerModel.PlayerPosition.Value;
-                var newList = list.Items.Where(it => filter.Filter(it)).ToList();
+                var newList = list.Items.Where(it => filter.Filter(it)).SortBy(sorter).ToList();
                 ReservePlayingItem(currentItem?.Id, position);
                 return newList;
             }).ToReadOnlyReactiveProperty();
@@ -139,6 +141,7 @@ public class PlayerPageViewModel
         CanEditLabel.Value = _clientService.Capability.CanEditLabel;
 
         FilterModel.ResetOnHostChanged();
+        SortViewModel.ResetOnHostChanged();
         ItemPropertyModel.ResetOnHostChanged(_clientService);
         //FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
         //FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
