@@ -17,10 +17,15 @@ namespace BooWin.view.viewmodel;
 public class PlayerPageViewModel
 {
     public UtLog Logger = new UtLog("PlayerPage");
+
+    #region DI
     private readonly ISettingsService _settingsService;
     private readonly IClientService _clientService;
     private readonly IPageService _pageService;
     private readonly IDialogService _dialogService;
+    #endregion
+
+    #region Internal ViewModels
 
     public PlayerViewModel PlayerModel { get; }
     public PhotoViewerViewModel PhotoViewerModel { get; }
@@ -28,6 +33,63 @@ public class PlayerPageViewModel
     public SortViewModel SortViewModel { get; }
     public ItemPropertyViewModel ItemPropertyModel { get; } = new ItemPropertyViewModel();
 
+    #endregion
+
+    #region MediaItems
+
+    // Host / Playlist / Item
+
+    public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
+    public ReactiveProperty<MediaItemList> ItemListSource { get; } = new(MediaItemList.Empty);
+    public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
+    public ReactiveProperty<MediaItem?> SelectedItem { get; } = new();
+
+    public Visibility IsPhotoViewerVisible(MediaItem? item) {
+        return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
+    }
+    public Visibility IsMediaPlayerVisible(MediaItem? item) {
+        return (item?.IsAV == true) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    #endregion
+
+    #region Slide Show
+
+    public ReactiveProperty<bool> SlideShow { get; } = new(true);
+    public ReactiveProperty<TimeSpan> SlideShowInterval { get; } = new(TimeSpan.FromSeconds(5));
+
+    #endregion
+
+    #region Filters
+
+    public ReactiveProperty<bool> IsCategorySupported { get; } = new ReactiveProperty<bool>(false);
+    public ReactiveProperty<bool> IsRatingSupported { get; } = new(false);
+    public ReactiveProperty<bool> IsMarkSupported { get; } = new(false);
+
+    public ReactiveProperty<bool> CanEditName { get; } = new(false);
+    public ReactiveProperty<bool> CanEditLabel { get; } = new(false);
+    public ReactiveProperty<bool> CanEditCategory { get; } = new(false);
+    public ReactiveProperty<bool> CanEditRating { get; } = new(false);
+    public ReactiveProperty<bool> CanEditMark { get; } = new(false);
+
+    #endregion
+
+    #region View Mode
+    public ReactiveProperty<bool> IsPlayerOnly { get; } = new(false);
+    public ReactiveProperty<bool> IsPropertiesVisible { get; } = new(false);
+
+    public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
+
+    #endregion
+
+    #region Commands
+
+    public ReactiveCommand ReloadListCommand { get; } = new();
+    public ReactiveCommand BackToEntryPageCommand { get; } = new();
+
+    #endregion
+
+    #region Construction / Private Event Handlers
 
     public PlayerPageViewModel(
         ISettingsService settingsService, 
@@ -116,7 +178,15 @@ public class PlayerPageViewModel
             SelectedItem.Value = list[index - 1];
         }
     }
+    #endregion
 
+    #region Methods
+
+    /**
+     * EntryPageからPlayerPageに遷移してきたとき（＝PeerHostが切り替わったとき）に、ビューモデルの状態を初期化する。
+     * ReloadListCommand（プレイリストの再読み込み）にも利用する。
+     * @return true: 正常に初期化できた。false: PeerHostが存在しない
+     */
 
     public async Task<bool> Prepare() {
         PlayerModel.SetSource(null);
@@ -169,6 +239,10 @@ public class PlayerPageViewModel
         return true;
     }
 
+    /**
+     * 前回の再生アイテムを選択し、
+     * MediaPlayer にソースがロードされたタイミング（=NaturalDurationChanged）での、再生位置復元を予約する。
+     */
     private void ReservePlayingItem(string? lastPlayingId, long position) {
         if (string.IsNullOrEmpty(lastPlayingId)) return;
         _pageService.DispatcherQueue?.EnqueueAsync(async () => {
@@ -183,47 +257,22 @@ public class PlayerPageViewModel
         });
     }
 
-
-    public ReactiveProperty<PeerHost?> CurrentHost { get; } = new ();
-    public ReactiveProperty<MediaItemList> ItemListSource { get; } = new (MediaItemList.Empty);
-    public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
-    public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
-    public ReactiveProperty<bool> SlideShow { get; } = new(true);
-    public ReactiveProperty<TimeSpan> SlideShowInterval { get; } = new(TimeSpan.FromSeconds(5));
-
-    public Visibility IsPhotoViewerVisible(MediaItem? item) {
-        return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
-    }
-    public Visibility IsMediaPlayerVisible(MediaItem? item) {
-        return (item?.IsAV == true) ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-
-    public ReactiveProperty<bool> IsCategorySupported { get; } = new ReactiveProperty<bool>(false);
-    public ReactiveProperty<bool> IsRatingSupported { get; } = new(false);
-    public ReactiveProperty<bool> IsMarkSupported { get; } = new(false);
-
-    public ReactiveProperty<bool> CanEditName { get; } = new(false);
-    public ReactiveProperty<bool> CanEditLabel { get; } = new(false);
-    public ReactiveProperty<bool> CanEditCategory { get; } = new(false);
-    public ReactiveProperty<bool> CanEditRating { get; } = new(false);
-    public ReactiveProperty<bool> CanEditMark { get; } = new(false);
-
-
-    public ReactiveCommand ReloadListCommand { get; } = new();
-    public ReactiveCommand BackToEntryPageCommand { get; } = new();
-
-    public ReactiveProperty<bool> IsPlayerOnly { get; } = new(false);
-    public ReactiveProperty<bool> IsPropertiesVisible { get; } = new(false);
-
-    public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
-
+    /**
+     * モデルの状態を保存する。
+     */
     public void Save() {
+        // Filter, Sorter, SlideShowの状態を保存
         SaveAdditionals();
+        // 再生アイテム、再生位置を保存
         PlayerModel.SaveCurrentStatus();
+        
+        // SelectItemが変更されるタイミングで、直前のアイテムの ItemProperties が保存されるので、null をセットして、保存を強制する。
         SelectedItem.Value = null;
     }
 
+    /**
+     * Filter, Sorter, SlideShowの状態を保存する。
+     */
     private void SaveAdditionals() {
         var currentHost = CurrentHost.Value;
         if (currentHost == null) return;
@@ -235,6 +284,9 @@ public class PlayerPageViewModel
         _settingsService.SaveAdditionals();
     }
 
+    /**
+     * ItemProperties (Category/Mark/Rating/Chapters) が変化したときに、サーバーに変更を反映する。
+     */
     private void OnUpdateItemProperties(ItemPropertyViewModel.IChanges changes) {
         Task.Run(async () => {
             try {
@@ -255,5 +307,5 @@ public class PlayerPageViewModel
             }
         });
     }
-
+    #endregion
 }

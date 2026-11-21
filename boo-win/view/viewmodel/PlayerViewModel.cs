@@ -14,15 +14,52 @@ namespace BooWin.view.viewmodel;
 
 public class PlayerViewModel {
     public UtLog Logger = new UtLog("Player");
-    public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
 
+    #region DI
+
+    private IClientService _clientService;
+    private IDialogService _dialogService;
+    public IPageService _pageService;
+    public ISettingsService _settingsService;
+
+    #endregion
+
+    public SynchronizationContext UIContext => _pageService.UIContext;
+
+
+
+    #region Chapters
+
+    public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
     public ChapterListViewModel ChapterModel { get; }
 
-    public ReactiveProperty<long> PlayerPosition { get; } = new(0);
-    public ReactiveProperty<double> SliderPosition { get; } = new(0.0);
+    private void SaveChapter(MediaItem? item) {
+        if (item == null) return;
+        if (!ChapterModel.IsDirty) return;
+        var chapters = ChapterModel.ChapterList.Value.ToList();
+        Task.Run(async () => {
+            await _clientService.SaveChapterAsync(item, chapters);
+        });
+    }
+
+    public async void LoadChapter(MediaItem? item) {
+        ChapterModel.Clear(null);
+        if (item != null) {
+            var chapters = await _clientService.LoadChapterAsync(item);
+            if (SourceMediaItem.Value == item) {
+                ChapterModel.Clear(chapters);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Playing Status / Seek
+
+    public ReactiveProperty<long> PlayerPosition { get; } = new(0);         // MediaPlayerのPosition
+    public ReactiveProperty<double> SliderPosition { get; } = new(0.0);     // PlayerSliderのPosition
     public ReadOnlyReactiveProperty<string> PositionString { get; }
     public ReadOnlyReactiveProperty<string> DurationString { get; }
-
 
     /**
      * VideoPlayerの状態
@@ -40,7 +77,16 @@ public class PlayerViewModel {
     public ReadOnlyReactiveProperty<bool> Seekable { get; }
     public ReactiveProperty<bool> MediaEnded { get; } = new(false);
     public ReactiveProperty<bool> MediaError { get; } = new(false);
-    public ReactiveProperty<bool> ContinuousPlayback { get; } = new(true);
+
+    #endregion
+
+    #region Modes
+
+    public ReactiveProperty<bool> ContinuousPlayback { get; } = new(true);      // 連続再生 (<-- PlayerPageViewModel.SlideShow)
+
+    #endregion
+
+    #region Commands
 
     public ReactiveCommand PlayCommand { get; } = new();
     public ReactiveCommand PauseCommand { get; } = new();
@@ -48,8 +94,10 @@ public class PlayerViewModel {
     public ReactiveCommand PrevItemCommand { get; } = new();
     public ReactiveCommand<long> PlayerSeekToCommand { get; } = new();
 
+    #endregion
+
     #region Show/Hide Control Panel
-    
+
     // ピン止め有効・無効
     public ReactiveProperty<bool> ControlPanelPinned { get; } = new(false);
     
@@ -82,7 +130,7 @@ public class PlayerViewModel {
     }
     #endregion
 
-    public (string? Id, long Position) ReservedPlayingItemPosition { get; set; } = (null,0);
+    #region Media Source
 
     private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
     public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
@@ -102,33 +150,18 @@ public class PlayerViewModel {
         //}
     }
 
-    private void SaveChapter(MediaItem? item) {
-        if (item == null) return;
-        if (!ChapterModel.IsDirty) return;
-        var chapters = ChapterModel.ChapterList.Value.ToList();
-        Task.Run(async () => {
-            await _clientService.SaveChapterAsync(item, chapters);
-        });
+    public (string? Id, long Position) ReservedPlayingItemPosition { get; set; } = (null, 0);   // 再生位置復元予約用
+
+    public bool SaveCurrentStatus() {
+        var item = SourceMediaItem.Value;
+        if (item == null) return false;
+        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
+        return true;
     }
 
-    public async void LoadChapter(MediaItem? item) {
-        ChapterModel.Clear(null);
-        if (item != null) {
-            var chapters = await _clientService.LoadChapterAsync(item);
-            if (SourceMediaItem.Value == item) {
-                ChapterModel.Clear(chapters);
-            }
-        }
-    }
+    #endregion
 
-
-
-    private IClientService _clientService;
-    private IDialogService _dialogService;
-    public IPageService _pageService;
-    public ISettingsService _settingsService;
-
-    public SynchronizationContext UIContext => _pageService.UIContext;
+    #region Construction / Event Handling
 
     public PlayerViewModel(
         IClientService clientService, 
@@ -260,11 +293,5 @@ public class PlayerViewModel {
             NextItemCommand.Execute();
         }
     }
-
-    public bool SaveCurrentStatus() {
-        var item = SourceMediaItem.Value;
-        if (item == null) return false;
-        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
-        return true;
-    }
+    #endregion
 }
