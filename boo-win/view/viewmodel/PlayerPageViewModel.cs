@@ -55,7 +55,7 @@ public class PlayerPageViewModel
             .CombineLatest(FilterModel.Filter,SortViewModel.Sorter, (list, filter, sorter) => {
                 var currentItem = SelectedItem.Value;
                 var position = PlayerModel.PlayerPosition.Value;
-                var newList = list.Items.Where(it => filter.Filter(it)).SortBy(sorter).ToList();
+                var newList = list.Items.Where(it => filter.Filter(_clientService, it)).SortBy(sorter).ToList();
                 ReservePlayingItem(currentItem?.Id, position);
                 return newList;
             }).ToReadOnlyReactiveProperty();
@@ -140,9 +140,14 @@ public class PlayerPageViewModel
         CanEditName.Value = _clientService.Capability.CanEditName;
         CanEditLabel.Value = _clientService.Capability.CanEditLabel;
 
-        FilterModel.ResetOnHostChanged();
-        SortViewModel.ResetOnHostChanged();
+        var additionals = _settingsService.Additionals[currentHost];
+        FilterModel.ResetOnHostChanged(additionals);
+        SortViewModel.ResetOnHostChanged(additionals);
         ItemPropertyModel.ResetOnHostChanged(_clientService);
+
+        SlideShow.Value = additionals.SlideShow.Enabled;
+        SlideShowInterval.Value = additionals.SlideShow.Interval;
+
         //FilterModel.CategoryLabel.Value = _clientService.Capability.CategoryLabel;
         //FilterModel.CategoryList.Value = [BuiltInCategory.All, .. _clientService.CategorySupport.Categories, BuiltInCategory.Unspecified];
         //FilterModel.SelectedCategory.Value = FilterModel.CategoryList.Value[0];
@@ -184,6 +189,7 @@ public class PlayerPageViewModel
     public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
     public ReactiveProperty<MediaItem?> SelectedItem { get; } = new ();
     public ReactiveProperty<bool> SlideShow { get; } = new(true);
+    public ReactiveProperty<TimeSpan> SlideShowInterval { get; } = new(TimeSpan.FromSeconds(5));
 
     public Visibility IsPhotoViewerVisible(MediaItem? item) {
         return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
@@ -213,8 +219,20 @@ public class PlayerPageViewModel
     public void TogglePlayerOnly() => IsPlayerOnly.Value = !IsPlayerOnly.Value;
 
     public void Save() {
+        SaveAdditionals();
         PlayerModel.SaveCurrentStatus();
         SelectedItem.Value = null;
+    }
+
+    private void SaveAdditionals() {
+        var currentHost = CurrentHost.Value;
+        if (currentHost == null) return;
+        var additionals = _settingsService.Additionals[currentHost];
+        additionals.Filter = FilterModel.AsSettings();
+        additionals.Sorter = SortViewModel.AsSettings();
+        additionals.SlideShow.Enabled = SlideShow.Value;
+        additionals.SlideShow.Interval = SlideShowInterval.Value;
+        _settingsService.SaveAdditionals();
     }
 
     private void OnUpdateItemProperties(ItemPropertyViewModel.IChanges changes) {

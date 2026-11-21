@@ -94,6 +94,12 @@ public class SettingsService : ISettingsService {
         HostList.SaveTo(JsonStore);
     }
 
+    public HostAdditionalInfoMap Additionals => HostList.AdditionalInfo;
+
+    public void SaveAdditionals() {
+        HostList.AdditionalInfo.SaveTo(JsonStore);
+    }
+
     #endregion
 
     public void Save() {

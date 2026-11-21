@@ -4,6 +4,7 @@ using io.github.toyota32k.BooLib.Utils;
 using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
 
 namespace BooWin.view.viewmodel; 
@@ -130,7 +131,7 @@ public class FilterViewModel {
         Filter = Observable.CombineLatest(
             SelectedCategory, types, ratings, marks, SearchText, StartDateEnabled, StartDate, EndDateEnabled, EndDate,
             (category, typeList, ratingList, markList, searchText, startDateEnabled, startDate, endDateEnabled, endDate) => {
-                return new MediaFilter(_clientService) {
+                return new MediaFilter() {
                     Category = category,
                     TargetTypes = typeList,
                     Ratings = ratingList,
@@ -144,20 +145,65 @@ public class FilterViewModel {
             }).ToReadOnlyReactiveProperty<IMediaFilter>();
     }
 
-    public void ResetOnHostChanged() {
-        CategoryLabel.Value = _clientService.Capability.CategoryLabel;
+    public FilterSettings AsSettings() {
+        return new FilterSettings {
+            Category = CategoryLabel.Value,
+            
+            TypeFilterEnabled = TypeFilterEnabled.Value,
+            TypeVideoChecked = TypeVideoChecked.Value,
+            TypeAudioChecked = TypeAudioChecked.Value,
+            TypePhotoChecked = TypePhotoChecked.Value,
 
+            RatingFilterEnabled = RatingFilterEnabled.Value,
+            Rating1Checked = Rating1Checked.Value,
+            Rating2Checked = Rating2Checked.Value,
+            Rating3Checked = Rating3Checked.Value,
+            Rating4Checked = Rating4Checked.Value,
+            Rating5Checked = Rating5Checked.Value,
+
+            MarkFilterEnabled = MarkFilterEnabled.Value,
+            Mark0Checked = Mark0Checked.Value,
+            Mark1Checked = Mark1Checked.Value,
+            Mark2Checked = Mark2Checked.Value,
+            Mark3Checked = Mark3Checked.Value,
+
+            StartDateEnabled = StartDateEnabled.Value,
+            StartDate = StartDate.Value,
+            EndDateEnabled = EndDateEnabled.Value,
+            EndDate = EndDate.Value,
+        };
+    }
+
+    public void ResetOnHostChanged(HostAdditionalInfo additionals) {
+        CategoryLabel.Value = _clientService.Capability.CategoryLabel;
         CategoryList.Value = _clientService.CategorySupport.GetCategoryList(withAll: true, withUnspecified: true);
         if (CategoryList.Value.IsEmpty()) {
             SelectedCategory.Value = null;
         } else {
-            SelectedCategory.Value = CategoryList.Value[0];
+            SelectedCategory.Value = CategoryList.Value.FirstOrDefault(c=>c.Name==additionals.Filter.Category) ?? CategoryList.Value[0];
         }
 
-        TypeFilterEnabled.Value = false;
-        RatingFilterEnabled.Value = false;
-        MarkFilterEnabled.Value = false;
-        StartDateEnabled.Value = false;
-        EndDateEnabled.Value = false;
+        TypeFilterEnabled.Value = additionals.Filter.TypeFilterEnabled;
+        TypeVideoChecked.Value = additionals.Filter.TypeVideoChecked;
+        TypeAudioChecked.Value = additionals.Filter.TypeAudioChecked;
+        TypePhotoChecked.Value = additionals.Filter.TypePhotoChecked;
+
+        RatingFilterEnabled.Value = additionals.Filter.RatingFilterEnabled;
+        Rating1Checked.Value = additionals.Filter.Rating1Checked;
+        Rating2Checked.Value = additionals.Filter.Rating2Checked;
+        Rating3Checked.Value = additionals.Filter.Rating3Checked;
+        Rating4Checked.Value = additionals.Filter.Rating4Checked;
+        Rating5Checked.Value = additionals.Filter.Rating5Checked;
+
+        MarkFilterEnabled.Value = additionals.Filter.MarkFilterEnabled;
+        Mark0Checked.Value = additionals.Filter.Mark0Checked;
+        Mark1Checked.Value = additionals.Filter.Mark1Checked;
+        Mark2Checked.Value = additionals.Filter.Mark2Checked;
+        Mark3Checked.Value = additionals.Filter.Mark3Checked;
+
+        StartDateEnabled.Value = additionals.Filter.StartDateEnabled;
+        StartDate.Value = additionals.Filter.StartDate;
+        EndDateEnabled.Value = additionals.Filter.EndDateEnabled;
+        EndDate.Value = additionals.Filter.EndDate;
     }
 }

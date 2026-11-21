@@ -18,5 +18,9 @@ public interface ISettingsService {
     void UpdateCurrentHostStatus(string lastPlayingId, long lastPlayingPosition, bool save = true);
     void UpdateHostList(IEnumerable<PeerHost> newHostList, PeerHost? newHost);
 
+    // Additionals
+    HostAdditionalInfoMap Additionals { get; }
+    void SaveAdditionals();
+
     void Save();
 }

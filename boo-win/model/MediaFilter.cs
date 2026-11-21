@@ -9,43 +9,56 @@ namespace BooWin.model;
 
 public interface IMediaFilter {
     public bool IsEmpty { get; }
-    public bool Filter(IMediaItem item);
+    public bool Filter(IClientService clientService, IMediaItem item);
 }
 
 
 public class MediaFilter : IMediaFilter {
-    private IClientService ClientService { get; }
-    public ICategory? Category = BuiltInCategory.All;
-    public IList<int>? Ratings = null; // null: all / ratings to allow
-    public IList<int>? Marks = null;   // 
+    public ICategory? Category { get; set; } = BuiltInCategory.All;
+    public IList<int>? Ratings { get; set; } = null; // null: all / ratings to allow
+    public IList<int>? Marks { get; set; } = null;   // 
 
-    public IList<MediaType>? TargetTypes = null;
-    public string SearchText = string.Empty;
+    public IList<MediaType>? TargetTypes { get; set; } = null;
+    public string SearchText { get; set; } = string.Empty;
 
-    public bool EnableStartDate = false;
-    public bool EnableEndDate = false;
-    public DateTimeOffset StartDate = DateTimeOffset.MinValue;
-    public DateTimeOffset EndDate = DateTimeOffset.MaxValue;
+    public bool EnableStartDate { get; set; } = false;
+    public bool EnableEndDate { get; set; } = false;
+    public DateTimeOffset StartDate { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset EndDate { get; set; } = DateTimeOffset.MaxValue;
 
-    public MediaFilter(IClientService clientService) {
-        ClientService = clientService;
+
+    //private IClientService _clientService { get; }
+    public MediaFilter() {
+    }
+    public MediaFilter(IMediaFilter filter) {
+        if (filter is MediaFilter f) {
+            Category = f.Category;
+            Ratings = f.Ratings;
+            Marks = f.Marks;
+            TargetTypes = f.TargetTypes;
+            SearchText = f.SearchText;
+            EnableStartDate = f.EnableStartDate;
+            EnableEndDate = f.EnableEndDate;
+            StartDate = f.StartDate;
+            EndDate = f.EndDate;
+        }
     }
 
 
-    public bool Filter(IMediaItem item) {
-        if (ClientService.CategorySupport.IsSupported && Category != null && Category != BuiltInCategory.All) {
+    public bool Filter(IClientService clientService, IMediaItem item) {
+        if (clientService.CategorySupport.IsSupported && Category != null && Category != BuiltInCategory.All) {
             if (Category== BuiltInCategory.Unspecified && !string.IsNullOrWhiteSpace(item.CategoryName) ||
                 Category != BuiltInCategory.Unspecified && item.CategoryName != Category.Name) {
                 return false;
             }   
         }
-        if (ClientService.RatingSupport.IsSupported && Ratings != null) {
-            if (!Ratings.Any(it=>it == ClientService.RatingSupport.ComplementalRating(item))) {
+        if (clientService.RatingSupport.IsSupported && Ratings != null) {
+            if (!Ratings.Any(it=>it == clientService.RatingSupport.ComplementalRating(item))) {
                 return false;
             }
         }
 
-        if (ClientService.MarkSupport.IsSupported && Marks != null) {
+        if (clientService.MarkSupport.IsSupported && Marks != null) {
             if (!Marks.Any(it => it == item.Mark)) {
                 return false;
             }

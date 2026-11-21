@@ -16,6 +16,8 @@ public class PeerHostStatusList {
             store.Set<PeerHostStatusList>(SETTING_KEY, this);
             IsDirty = false;
         }
+        // AdditionalInfo：ロードは初期化時にまとめて読み込むが、更新タイミングが異なるので、Saveは別々
+        //AdditionalInfo.SaveTo(store);
     }
 
     public static PeerHostStatusList LoadFrom(JSONSettngStore store) {
@@ -23,6 +25,7 @@ public class PeerHostStatusList {
         if (list == null) {
             list = new PeerHostStatusList();
         }
+        list.AdditionalInfo = HostAdditionalInfoMap.LoadFrom(store);
         return list;
     }
 
@@ -30,6 +33,9 @@ public class PeerHostStatusList {
 
     [JsonIgnore]
     public int Count => Hosts.Count;
+
+    [JsonIgnore]
+    public HostAdditionalInfoMap AdditionalInfo { get; private set; } = new HostAdditionalInfoMap(null);
 
     public PeerHostStatus? this[int index] {
         get {
@@ -93,6 +99,7 @@ public class PeerHostStatusList {
                 IsDirty = true;
             }
         }
+        AdditionalInfo.OnHostListChanged(this);
     }
 
     #endregion

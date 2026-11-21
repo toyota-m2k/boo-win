@@ -25,10 +25,18 @@ public class MediaSorter : IMediaSorter {
     }
 
 
-    public Key PrimarySortKey = Key.Date;
-    public Key SecondarySortKey = Key.Date;
-    public bool Descending = true;
+    public Key PrimarySortKey { get; set; } = Key.Date;
+    public Key SecondarySortKey { get; set; } = Key.Date;
+    public bool Descending { get; set; } = true;
 
+    public MediaSorter() { }
+    public MediaSorter(IMediaSorter sorter) {
+        if (sorter is MediaSorter s) {
+            PrimarySortKey = s.PrimarySortKey;
+            SecondarySortKey = s.SecondarySortKey;
+            Descending = s.Descending;
+        }
+    }
 
     IEnumerable<MediaItem> SortWithKey(IEnumerable<MediaItem> source, Key key, bool descending) {
         switch(key) {

@@ -261,9 +261,10 @@ public class PlayerViewModel {
         }
     }
 
-    public void SaveCurrentStatus() {
+    public bool SaveCurrentStatus() {
         var item = SourceMediaItem.Value;
-        if (item == null) return;
+        if (item == null) return false;
         _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
+        return true;
     }
 }

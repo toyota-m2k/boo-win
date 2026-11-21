@@ -16,7 +16,8 @@ public class SortViewModel {
     public ReadOnlyReactiveProperty<bool> Ascending { get; }
     public static readonly List<MediaSorter.Key> AllSortKeys = new List<MediaSorter.Key>(Enum.GetValues<MediaSorter.Key>());
     public ReactiveProperty<List<MediaSorter.Key>> AvailableSortKeys { get; } = new(AllSortKeys);
-    private MediaSorter.Key PreviousKey { get; set; } = MediaSorter.Key.Date;
+    private MediaSorter.Key PreviousKey = MediaSorter.Key.Date;
+    private MediaSorter.Key SecondaryKey = MediaSorter.Key.Date;
 
 
     public ReadOnlyReactiveProperty<IMediaSorter> Sorter { get; }
@@ -33,13 +34,13 @@ public class SortViewModel {
                 if (!isEnabled) {
                     return MediaSorter.EmptySorter;
                 }
-                var seondary = PreviousKey;
+                SecondaryKey = PreviousKey;
                 if (PreviousKey != sortKey) {
                     PreviousKey = sortKey;
                 }
                 return new MediaSorter {
                     PrimarySortKey = sortKey,
-                    SecondarySortKey = seondary,
+                    SecondarySortKey = SecondaryKey,
                     Descending = descending
                 };
             }
@@ -61,7 +62,15 @@ public class SortViewModel {
         }
     }
 
-    public void ResetOnHostChanged() {
+    public SorterSettings AsSettings() {
+        return new SorterSettings {
+            SortEnabled = IsEnabled.Value,
+            PrimarySortKey = SortKey.Value,
+            SecondarySortKey = SecondaryKey,
+        };
+    }
+
+    public void ResetOnHostChanged(HostAdditionalInfo additionals) {
         AvailableSortKeys.Value = AllSortKeys.Where(k => {
             switch (k) {
                 case MediaSorter.Key.Category:
@@ -75,8 +84,9 @@ public class SortViewModel {
             }
         }).ToList();
 
-        PreviousKey = MediaSorter.Key.Date;
-        SortKey.Value = MediaSorter.Key.Date;
+        PreviousKey = additionals.Sorter.SecondarySortKey;
+        SortKey.Value = additionals.Sorter.PrimarySortKey;
+        Descending.Value = additionals.Sorter.Descending;
     }
 }
 
