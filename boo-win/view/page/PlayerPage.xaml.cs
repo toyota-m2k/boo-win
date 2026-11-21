@@ -57,4 +57,46 @@ public sealed partial class PlayerPage : Page {
     private void OnSortKeySelectionChanged(object sender, SelectionChangedEventArgs e) {
         sortKeyFlyout.Hide();
     }
+
+    private void OnSlideShowRightTapped(object sender, RightTappedRoutedEventArgs e) {
+        e.Handled = true;
+        _ = ShowSlideShowIntervalDialog();
+    }
+
+    private void OnSlideShowHolding(object sender, HoldingRoutedEventArgs e) {
+        // 長押し開始時のみ反応する
+        if (e.HoldingState != Microsoft.UI.Input.HoldingState.Started) return;
+        e.Handled = true;
+        _ = ShowSlideShowIntervalDialog();
+    }
+
+    private bool _isIntervalDialogShowing = false;
+
+    private async System.Threading.Tasks.Task ShowSlideShowIntervalDialog() {
+        if (_isIntervalDialogShowing) return;
+        _isIntervalDialogShowing = true;
+        try {
+            var numberBox = new NumberBox {
+                Header = "Interval (seconds)",
+                Minimum = 1,
+                Maximum = 3600,
+                SmallChange = 1,
+                LargeChange = 10,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
+                Value = Math.Max(1, Math.Round(ViewModel.SlideShowInterval.Value.TotalSeconds)),
+            };
+            var ok = await App.GetService<DI.contract.IDialogService>()
+                .Builder()
+                .Title("Slide Show Interval")
+                .Content(numberBox)
+                .ShowOkCancel();
+            if (ok && !double.IsNaN(numberBox.Value)) {
+                var seconds = Math.Clamp(numberBox.Value, numberBox.Minimum, numberBox.Maximum);
+                ViewModel.SlideShowInterval.Value = TimeSpan.FromSeconds(seconds);
+            }
+        }
+        finally {
+            _isIntervalDialogShowing = false;
+        }
+    }
 }
