@@ -153,6 +153,21 @@
         </Border>
 
         <!-- Footer -->
+        <StackPanel
+            Orientation="Horizontal" Spacing="8"
+            Grid.Row="2"
+            HorizontalAlignment="Left">
+            <Button 
+                Style="{StaticResource DefaultButtonStyle}"
+                Padding="16,8"
+                Command="{x:Bind ViewModel.OpenEditorCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8C6;" FontSize="16"/>
+                    <TextBlock Text="Open Editor"/>
+                </StackPanel>
+            </Button>
+
+        </StackPanel>
         <StackPanel 
             Orientation="Horizontal" Spacing="8"
             Grid.Row="2"

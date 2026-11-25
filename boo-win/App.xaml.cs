@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
+using System.Collections.Generic;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,16 +22,62 @@ namespace BooWin {
         public static UtLog Logger = new UtLog("BooWin");
 
         private ServiceProvider Services { get; }
+        private IServiceScope MainScope { get; }
 
+        /// <summary>
+        /// MainWindowのスコープからサービスを取得する。
+        /// （シングルトンは全Window共通、スコープサービスはMainWindow用のインスタンス）
+        /// </summary>
         public static T GetService<T>()
             where T : class {
-            if ((App.Current as App)!.Services.GetService(typeof(T)) is not T service) {
+            if ((App.Current as App)!.MainScope.ServiceProvider.GetService(typeof(T)) is not T service) {
                 throw new ArgumentException($"{typeof(T)} needs to be registered in ConfigureServices within App.xaml.cs.");
             }
             return service;
         }
 
-        public static MainWindow MainWindow => (App.Current as App)!._window!;
+        /// <summary>
+        /// WindowごとのDIスコープを作成する。
+        /// </summary>
+        public static IServiceScope CreateWindowScope() {
+            return (App.Current as App)!.Services.CreateScope();
+        }
+
+        /// <summary>
+        /// 動画編集ウィンドウを開く（複数起動可）
+        /// </summary>
+        public static EditorWindow OpenEditorWindow() {
+            var window = new EditorWindow();
+            RegisterWindow(window);
+            window.Activate();
+            return window;
+        }
+
+        private static readonly List<Window> _openWindows = new();
+
+        /// <summary>
+        /// Windowを登録し、すべてのWindowが閉じられたら保存処理を行う。
+        /// </summary>
+        public static void RegisterWindow(Window window) {
+            _openWindows.Add(window);
+            window.Closed += OnWindowClosed;
+        }
+
+        private static void OnWindowClosed(object sender, WindowEventArgs args) {
+            if (sender is Window window) {
+                window.Closed -= OnWindowClosed;
+                _openWindows.Remove(window);
+            }
+            if (_openWindows.Count == 0) {
+                OnAllWindowsClosed();
+            }
+        }
+
+        private static void OnAllWindowsClosed() {
+            GetService<ISettingsService>().Save();
+        }
+
+        //public static MainWindow MainWindow => (App.Current as App)!._window!;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -50,17 +97,27 @@ namespace BooWin {
                 .AddSingleton<IAppConfigService, AppConfigService>()
                 .AddSingleton<ISettingsService, SettingsService>()
                 .AddSingleton<IMainThreadService, MainThreadService>()
-                .AddSingleton<IPageService, PageService>()
-                .AddSingleton<IDialogService, DialogService>()
-                .AddSingleton<IClientService, ClientService>()
+                // Windowごとに生成
+                .AddScoped<IPageService, PageService>()
+                .AddScoped<IDialogService, DialogService>()
+                // ClientServiceはMainWindow専用だが、DIをシンプルにするため、AddScopedで登録する。
+                // AddScoped で登録したサービスは、Singletonサービスから依存しないこと。
+                // ならず、Scoped or Transient サービスから依存する。これができないようなら、
+                //
+                //.AddSingleton<IClientService>(sp => new ClientService(
+                //    sp.GetRequiredService<System.Net.Http.IHttpClientFactory>(),
+                //    GetService<IDialogService>()))
+                // とする。
+                .AddScoped<IClientService, ClientService>()
                 .AddSingleton<LogViewModel>()
                 .AddSingleton<MainWindowViewModel>()
-                .AddSingleton<EntryPageViewModel>()
-                .AddSingleton<PlayerPageViewModel>()
+                .AddScoped<EntryPageViewModel>()
+                .AddScoped<PlayerPageViewModel>()
                 .AddTransient<DiscoverPeerDialogViewModel>()
                 ;
 
             Services = services.BuildServiceProvider();
+            MainScope = Services.CreateScope();
             UnhandledException += OnUnhandledException;
         }
 
@@ -77,34 +134,10 @@ namespace BooWin {
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
             _window = new MainWindow();
+            RegisterWindow(_window);
             _window.Activate();
-            _window.AppWindow.Closing += AppWindow_Closing;
             UtLog.GlobalLoggerChain.AddLogger(GetService<LogViewModel>());
-            GetService<IPageService>().Startup(_window.RootFrame);
-        }
-
-        private bool closeConfirmed = false;
-        private async void ConfirmClose(Window window) {
-            var r = await GetService<IDialogService>()
-                .ShowYesNo("Confirm Exit", "Are you sure you want to exit?", yesAsDefault: true);
-            if (r == true) {
-                closeConfirmed = true;
-                window.Close();
-            }
-        }
-
-        private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
-            if (_window == null) return;
-            GetService<EntryPageViewModel>().Save();
-            GetService<PlayerPageViewModel>().Save();
-            GetService<ISettingsService>().Save();
-
-            var appConfigService = GetService<IAppConfigService>();
-            if (appConfigService.NeedsConfirmOnExit && !closeConfirmed) {
-                args.Cancel = true;
-                ConfirmClose(_window);
-                return;
-            }
+            GetService<IPageService>().Startup(_window, _window.RootFrame);
         }
 
         ///**

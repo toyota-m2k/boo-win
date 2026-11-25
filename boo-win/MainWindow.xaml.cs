@@ -1,4 +1,6 @@
+using BooWin.DI.contract;
 using BooWin.view.viewmodel;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -31,5 +33,27 @@ public sealed partial class MainWindow : Window {
         ViewModel.WindowTitle.Subscribe(title => {
             this.Title = title;
         });
+        AppWindow.Closing += AppWindow_Closing;
+    }
+
+    private bool _closeConfirmed = false;
+    private async void ConfirmClose() {
+        var r = await App.GetService<IDialogService>()
+            .ShowYesNo("Confirm Exit", "Are you sure you want to exit?", yesAsDefault: true);
+        if (r == true) {
+            _closeConfirmed = true;
+            Close();
+        }
+    }
+
+    private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
+        App.GetService<EntryPageViewModel>().Save();
+        App.GetService<PlayerPageViewModel>().Save();
+        App.GetService<ISettingsService>().Save();
+
+        if (App.GetService<IAppConfigService>().NeedsConfirmOnExit && !_closeConfirmed) {
+            args.Cancel = true;
+            ConfirmClose();
+        }
     }
 }

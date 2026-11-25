@@ -34,6 +34,7 @@ public class EntryPageViewModel {
     public ReactiveCommand<PeerHost> DeleteHostCommand { get; } = new();
     public ReactiveCommand<PeerHost> EditHostCommand { get; } = new();
     public ReactiveCommand GotoPlayerPageCommand { get; } = new();
+    public ReactiveCommand OpenEditorCommand { get; } = new();
 
     private bool HostListModified = false;
 
@@ -55,6 +56,7 @@ public class EntryPageViewModel {
         DeleteHostCommand.Subscribe(DeleteHost);
         EditHostCommand.Subscribe(EditHost);
         GotoPlayerPageCommand.Subscribe(GotoPlayerPage);
+        OpenEditorCommand.Subscribe(OpenEditor);
 
         CurrentHost.Value = _settingsService.CurrentHost;
         CanOpenPlayerPage = CurrentHost.CombineLatest(IsHostAvailable, (host,a) => host != null && a).ToReadOnlyReactiveProperty();
@@ -140,5 +142,9 @@ public class EntryPageViewModel {
                 }
             }, tcs.Token);
         }
+    }
+
+    private void OpenEditor() {
+        //FileOpenPickerBuilder.Create(
     }
 }

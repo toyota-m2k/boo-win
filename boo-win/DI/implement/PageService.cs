@@ -15,6 +15,7 @@ public class PageService : IPageService {
     private Page? _currentPage = null;
     private Frame? _rootFrame = null;
     private ReactivePropertySlim<Type?> _currentPageType = new(null);
+    private Type _homePageType = typeof(view.page.EntryPage);
     public ReadOnlyReactivePropertySlim<bool> CanGoBack { get; }
 
     public Page? CurrentPage => _currentPage;
@@ -29,14 +30,14 @@ public class PageService : IPageService {
 
     public PageService() {
         CanGoBack = _currentPageType
-            .Select(x => x != null && x != typeof(view.page.EntryPage))
+            .Select(x => x != null && x != _homePageType)
             .ToReadOnlyReactivePropertySlim();
     }
 
     public void GoBack() {
         if (CanGoBack.Value) {
-            // ２ページしかないので、戻るなら、必ずEntryPage
-            GoToEntryPage();
+            // 戻り先は、必ずホームページ（MainWindowならEntryPage）
+            NavigateTo(_homePageType);
         }
     }
 
@@ -48,10 +49,14 @@ public class PageService : IPageService {
         NavigateTo(typeof(view.page.PlayerPage));
     }
 
-    public void Startup(Frame rootFrame) {
+    public Window? Window { get; private set; }
+
+    public void Startup(Window window, Frame rootFrame, Type? homePageType = null) {
+        Window = window;
         _rootFrame = rootFrame;
+        _homePageType = homePageType ?? typeof(view.page.EntryPage);
         rootFrame.Navigated += OnNavigated;
-        GoToEntryPage();
+        NavigateTo(_homePageType);
     }
 
     private void OnNavigated(object sender, NavigationEventArgs e) {
