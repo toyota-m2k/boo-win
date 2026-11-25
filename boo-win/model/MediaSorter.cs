@@ -8,7 +8,7 @@ namespace BooWin.model;
 
 public interface IMediaSorter {
 
-    public IEnumerable<MediaItem> Sort(IEnumerable<MediaItem> source);
+    public IEnumerable<IMediaItem> Sort(IEnumerable<IMediaItem> source);
 }
 
 public class MediaSorter : IMediaSorter {
@@ -38,7 +38,7 @@ public class MediaSorter : IMediaSorter {
         }
     }
 
-    IEnumerable<MediaItem> SortWithKey(IEnumerable<MediaItem> source, Key key, bool descending) {
+    IEnumerable<IMediaItem> SortWithKey(IEnumerable<IMediaItem> source, Key key, bool descending) {
         switch(key) {
             case Key.Name:
                 return descending ? source.OrderByDescending(item => item.Name) : source.OrderBy(item => item.Name);
@@ -63,7 +63,7 @@ public class MediaSorter : IMediaSorter {
         }
     }
 
-    public IEnumerable<MediaItem> Sort(IEnumerable<MediaItem> source) {
+    public IEnumerable<IMediaItem> Sort(IEnumerable<IMediaItem> source) {
         var sorted = source;
         if (SecondarySortKey != PrimarySortKey) {
             sorted = SortWithKey(sorted, SecondarySortKey, Descending);
@@ -72,7 +72,7 @@ public class MediaSorter : IMediaSorter {
         return sorted;
     }
     public class EmptySorterImpl : IMediaSorter {
-        public IEnumerable<MediaItem> Sort(IEnumerable<MediaItem> source) {
+        public IEnumerable<IMediaItem> Sort(IEnumerable<IMediaItem> source) {
             return source;
         }
     }
@@ -92,7 +92,7 @@ public class MediaSorter : IMediaSorter {
 }
 
 public static class SortViewModelExtensions {
-    public static IEnumerable<MediaItem> SortBy(this IEnumerable<MediaItem> source, IMediaSorter sorter) {
+    public static IEnumerable<IMediaItem> SortBy(this IEnumerable<IMediaItem> source, IMediaSorter sorter) {
         return sorter.Sort(source);
     }
 }

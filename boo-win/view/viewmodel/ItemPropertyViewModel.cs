@@ -64,8 +64,9 @@ public class ItemPropertyViewModel {
     }
 
 
-    public IChanges? SetSource(MediaItem? item, IClientService clientService) {
+    public IChanges? SetSource(IMediaItem? item_, IClientService clientService) {
         var changes = GetChanges(mEditingItem, clientService);
+        var item = item_ as MediaItem;
         mEditingItem = item;
         if (item != null) {
             Rating.Value = clientService.RatingSupport.ComplementalRating(item);

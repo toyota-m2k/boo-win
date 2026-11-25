@@ -41,13 +41,13 @@ public class PlayerPageViewModel
 
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
     public ReactiveProperty<MediaItemList> ItemListSource { get; } = new(MediaItemList.Empty);
-    public ReadOnlyReactiveProperty<List<MediaItem>> ItemList { get; }
-    public ReactiveProperty<MediaItem?> SelectedItem { get; } = new();
+    public ReadOnlyReactiveProperty<List<IMediaItem>> ItemList { get; }
+    public ReactiveProperty<IMediaItem?> SelectedItem { get; } = new();
 
-    public Visibility IsPhotoViewerVisible(MediaItem? item) {
+    public Visibility IsPhotoViewerVisible(IMediaItem? item) {
         return (item?.IsPhoto == true) ? Visibility.Visible : Visibility.Collapsed;
     }
-    public Visibility IsMediaPlayerVisible(MediaItem? item) {
+    public Visibility IsMediaPlayerVisible(IMediaItem? item) {
         return (item?.IsAV == true) ? Visibility.Visible : Visibility.Collapsed;
     }
 

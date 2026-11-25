@@ -13,9 +13,9 @@ using Windows.Media.Playback;
 
 namespace BooWin.view.viewmodel; 
 public class PhotoViewerViewModel {
-    private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
-    private MediaItem? mCurrentItem = null;
-    public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
+    private ReactiveProperty<IMediaItem?> mSourceMediaItem = new();
+    private IMediaItem? mCurrentItem = null;
+    public IReadOnlyReactiveProperty<IMediaItem?> SourceMediaItem => mSourceMediaItem;
 
     public ReactiveProperty<bool> SlideShow { get; } = new(true);
     public ReactiveCommand NextItemCommand { get; } = new();
@@ -24,7 +24,7 @@ public class PhotoViewerViewModel {
     public TimeSpan SlideShowInterval { get; set; } = TimeSpan.FromSeconds(3);
 
 
-    public void SetSource(MediaItem? item) {
+    public void SetSource(IMediaItem? item) {
         mSourceMediaItem.Value = item?.IsPhoto == true ? item : null;
         if (mSourceMediaItem.Value!=null) {
             _settingsService.UpdateCurrentHostStatus(mSourceMediaItem.Value.Id, 0);
@@ -74,7 +74,7 @@ public class PhotoViewerViewModel {
 
     }
 
-    public ImageSource? GetItemUrl(MediaItem? item) {
+    public ImageSource? GetItemUrl(IMediaItem? item) {
         if (item == null) return null;
         var url = _clientService.GetItemUrl(item);
         if (string.IsNullOrEmpty(url)) return null;

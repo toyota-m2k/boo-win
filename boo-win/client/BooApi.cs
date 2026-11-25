@@ -327,7 +327,7 @@ public class BooApi : IDisposable {
         return MediaItemList.FromJson(json);
     }
 
-    public string GetItemUrl(MediaItem item, string cmdName="item") {
+    public string GetItemUrl(IMediaItem item, string cmdName="item") {
         var cap = _capability;
         if (cap == null) {
             throw new InvalidOperationException("no capability");
@@ -342,7 +342,7 @@ public class BooApi : IDisposable {
     }
 
 
-    public async Task<List<Chapter>> GetChapterAsync(MediaItem item) {
+    public async Task<List<Chapter>> GetChapterAsync(IMediaItem item) {
         var cap = _capability;
         if (cap == null) {
             throw new InvalidOperationException("no capability");
@@ -362,7 +362,7 @@ public class BooApi : IDisposable {
         return Chapter.ListFromJson(json);
     }
 
-    public async Task<bool> PutChapterAsync(MediaItem item, List<Chapter> chapters ) {
+    public async Task<bool> PutChapterAsync(IMediaItem item, List<Chapter> chapters ) {
         var dic = new Dictionary<string, object>() {
             { "id", item.Id },
             { "chapters", chapters }

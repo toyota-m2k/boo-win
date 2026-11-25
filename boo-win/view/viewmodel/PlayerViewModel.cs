@@ -33,7 +33,7 @@ public class PlayerViewModel {
     public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
     public ChapterListViewModel ChapterModel { get; }
 
-    private void SaveChapter(MediaItem? item) {
+    private void SaveChapter(IMediaItem? item) {
         if (item == null) return;
         if (!ChapterModel.IsDirty) return;
         var chapters = ChapterModel.ChapterList.Value.ToList();
@@ -42,7 +42,7 @@ public class PlayerViewModel {
         });
     }
 
-    public async void LoadChapter(MediaItem? item) {
+    public async void LoadChapter(IMediaItem? item) {
         ChapterModel.Clear(null);
         if (item != null) {
             var chapters = await _clientService.LoadChapterAsync(item);
@@ -132,9 +132,9 @@ public class PlayerViewModel {
 
     #region Media Source
 
-    private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
-    public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
-    public async void SetSource(MediaItem? item) {
+    private ReactiveProperty<IMediaItem?> mSourceMediaItem = new();
+    public IReadOnlyReactiveProperty<IMediaItem?> SourceMediaItem => mSourceMediaItem;
+    public async void SetSource(IMediaItem? item) {
         SaveChapter(mSourceMediaItem.Value);
 
         PlayerPosition.Value = 0;

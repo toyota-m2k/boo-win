@@ -24,9 +24,9 @@ public interface IClientService {
         string? category = null,
         string? searchText = null
     );
-    string GetItemUrl(MediaItem item, string cmdName="item");
-    Task<List<Chapter>> LoadChapterAsync(MediaItem item);
-    Task<bool> SaveChapterAsync(MediaItem item, List<Chapter> chapters);
+    string GetItemUrl(IMediaItem item, string cmdName="item");
+    Task<List<Chapter>> LoadChapterAsync(IMediaItem item);
+    Task<bool> SaveChapterAsync(IMediaItem item, List<Chapter> chapters);
 
     Task<bool> CheckHostAvailabilityAsync(PeerHost host);
 

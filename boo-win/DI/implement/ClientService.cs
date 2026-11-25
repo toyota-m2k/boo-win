@@ -113,7 +113,7 @@ public class ClientService : IClientService {
         }
     }
 
-    public string GetItemUrl(MediaItem item, string cmdName = "item") {
+    public string GetItemUrl(IMediaItem item, string cmdName = "item") {
         if (_api == null) {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
@@ -148,7 +148,7 @@ public class ClientService : IClientService {
         return _api.GetMediaItemListAsync(listMode, mediaTypes, since, ratingThreshold, marks, category, searchText);
     }
 
-    public async Task<List<Chapter>> LoadChapterAsync(MediaItem item) {
+    public async Task<List<Chapter>> LoadChapterAsync(IMediaItem item) {
         if (_api == null) {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
@@ -156,7 +156,7 @@ public class ClientService : IClientService {
         return ChapterListEditor.MergeChaptersAndStartEnd(chapterList, item.Start, item.End);
     }
 
-    public async Task<bool> SaveChapterAsync(MediaItem item, List<Chapter> chapters) {
+    public async Task<bool> SaveChapterAsync(IMediaItem item, List<Chapter> chapters) {
         if (_api == null) {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
