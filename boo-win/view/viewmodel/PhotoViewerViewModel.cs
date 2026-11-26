@@ -77,8 +77,8 @@ public class PhotoViewerViewModel {
     public ImageSource? GetItemUrl(IMediaItem? item) {
         if (item == null) return null;
         var url = _clientService.GetItemUrl(item);
-        if (string.IsNullOrEmpty(url)) return null;
-        return new BitmapImage(new Uri(url));
+        if (url == null) return null;
+        return new BitmapImage(url);
     }
 
     #region Show/Hide Control Panel

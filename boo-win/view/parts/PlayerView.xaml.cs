@@ -33,7 +33,7 @@ public sealed partial class PlayerView : UserControl {
     }
     #endregion
 
-    private readonly IClientService _clientService = App.GetService<IClientService>();
+    //private readonly IClientService _clientService = App.GetService<IClientService>();
 
     public PlayerView() {
         InitializeComponent();
@@ -55,8 +55,6 @@ public sealed partial class PlayerView : UserControl {
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e) {
-        ViewModel?.SaveCurrentStatus();
-
         Unbind();
         mPlayerElement.SetMediaPlayer(null);
         mInternalPlayer?.Dispose();
@@ -113,9 +111,10 @@ public sealed partial class PlayerView : UserControl {
             }),
 
             vm.SourceMediaItem.Subscribe(item => {
-                if (item != null) {
+                var url = item!=null ? vm.GetItemUrl(item) : null;
+                if (url != null) {
                     player.AutoPlay = true;
-                    player.SetUriSource(new Uri(_clientService.GetItemUrl(item)));
+                    player.SetUriSource(url);
                     vm.LoadChapter(item);
                 }
                 else {

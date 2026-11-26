@@ -14,7 +14,7 @@ public interface INavigationAware {
 public interface IPageService {
     ReadOnlyReactivePropertySlim<bool> CanGoBack { get; }
     Window? Window { get; }
-    void Startup(Window window, Frame rootFrame, System.Type? homePageType = null);
+    void Startup(Window window, Frame rootFrame, System.Type? homePageType = null, object? parameter = null);
     void GoBack();
     Page? CurrentPage { get; }
     XamlRoot XamlRoot { get; }

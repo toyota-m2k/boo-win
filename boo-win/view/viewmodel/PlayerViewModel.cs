@@ -17,7 +17,7 @@ public class PlayerViewModel {
 
     #region DI
 
-    private IClientService _clientService;
+    private IItemService _itemService;
     private IDialogService _dialogService;
     public IPageService _pageService;
     public ISettingsService _settingsService;
@@ -38,18 +38,22 @@ public class PlayerViewModel {
         if (!ChapterModel.IsDirty) return;
         var chapters = ChapterModel.ChapterList.Value.ToList();
         Task.Run(async () => {
-            await _clientService.SaveChapterAsync(item, chapters);
+            await _itemService.SaveChapterAsync(item, chapters);
         });
     }
 
     public async void LoadChapter(IMediaItem? item) {
         ChapterModel.Clear(null);
         if (item != null) {
-            var chapters = await _clientService.LoadChapterAsync(item);
+            var chapters = await _itemService.LoadChapterAsync(item);
             if (SourceMediaItem.Value == item) {
                 ChapterModel.Clear(chapters);
             }
         }
+    }
+
+    public Uri? GetItemUrl(IMediaItem item) {
+        return _itemService.GetItemUrl(item);
     }
 
     #endregion
@@ -81,6 +85,8 @@ public class PlayerViewModel {
     #endregion
 
     #region Modes
+
+    public bool ForEditor { get; }
 
     public ReactiveProperty<bool> ContinuousPlayback { get; } = new(true);      // 連続再生 (<-- PlayerPageViewModel.SlideShow)
 
@@ -164,17 +170,20 @@ public class PlayerViewModel {
     #region Construction / Event Handling
 
     public PlayerViewModel(
-        IClientService clientService, 
+        IItemService chapterSource, 
         IDialogService dialogService, 
         IPageService pageService,
-        ISettingsService settingsService
+        ISettingsService settingsService,
+        bool forEditor
         ) {
-        _clientService = clientService;
+        ForEditor = forEditor;
+        _itemService = chapterSource;
         _dialogService = dialogService;
         _pageService = pageService;
         _settingsService = settingsService;
 
         ChapterModel = new ChapterListViewModel(dialogService);
+        ControlPanelPinned.Value = ForEditor;    // エディタでは常にピン止め表示
         IsPlaying = PlayerState.Select(s => s == MediaPlayerState.PLAYING).ToReadOnlyReactiveProperty();
         MediaReady = PlayerState.Select(s => s != MediaPlayerState.NONE).ToReadOnlyReactiveProperty();
         Seekable = PlayerState.CombineLatest(NaturalDuration, (state, duration) => (state != MediaPlayerState.NONE && duration > 0)).ToReadOnlyReactiveProperty();

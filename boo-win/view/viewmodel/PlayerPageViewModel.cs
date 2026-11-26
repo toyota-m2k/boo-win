@@ -1,5 +1,8 @@
-﻿using BooWin.DI.contract;
+﻿using BooWin.client;
+using BooWin.DI.contract;
 using BooWin.model;
+using BooWin.model.editor;
+using BooWin.view.dialog;
 using CommunityToolkit.WinUI;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.UI.Xaml;
@@ -8,8 +11,10 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BooWin.view.viewmodel;
@@ -19,6 +24,7 @@ public class PlayerPageViewModel
     public UtLog Logger = new UtLog("PlayerPage");
 
     #region DI
+    private readonly IAppConfigService _appConfigService;
     private readonly ISettingsService _settingsService;
     private readonly IClientService _clientService;
     private readonly IPageService _pageService;
@@ -92,16 +98,18 @@ public class PlayerPageViewModel
     #region Construction / Private Event Handlers
 
     public PlayerPageViewModel(
+        IAppConfigService appConfigService,
         ISettingsService settingsService, 
         IClientService clientService,
         IPageService pageService,
         IDialogService dialogService) {
+        _appConfigService = appConfigService;
         _settingsService = settingsService;
         _clientService = clientService;
         _pageService = pageService;
         _dialogService = dialogService;
 
-        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService);
+        PlayerModel = new PlayerViewModel(_clientService, _dialogService, _pageService, _settingsService, forEditor: false);
         PhotoViewerModel = new PhotoViewerViewModel(_clientService, _settingsService);
         FilterModel = new FilterViewModel(_clientService);
         SortViewModel = new SortViewModel(_clientService);
@@ -261,10 +269,11 @@ public class PlayerPageViewModel
      * モデルの状態を保存する。
      */
     public void Save() {
-        // Filter, Sorter, SlideShowの状態を保存
-        SaveAdditionals();
         // 再生アイテム、再生位置を保存
         PlayerModel.SaveCurrentStatus();
+
+        // Filter, Sorter, SlideShowの状態を保存
+        SaveAdditionals();
         
         // SelectItemが変更されるタイミングで、直前のアイテムの ItemProperties が保存されるので、null をセットして、保存を強制する。
         SelectedItem.Value = null;
@@ -308,4 +317,17 @@ public class PlayerPageViewModel
         });
     }
     #endregion
+
+    public async void OpenEditorWindow(IMediaItem item) {
+        var host = _clientService.CurrentHost;
+        var hash = HashBuilder.MD5.Append(host.Address).Build().AsHexString;
+        var name = $"{hash}-{item.Id}.{item.Type}";
+        var path = Path.Combine(_appConfigService.AppDataPath, name);
+        var chapters = await _clientService.LoadChapterAsync(item);
+        var result = await DownloadProgressDialog.Show(_dialogService, "Download", item.Name,
+            (token, progress) => _clientService.DownloadItemAsync(item, path, token, progress));
+        if (result) {
+            App.OpenEditorWindow(CacheMediaItem.Create(path, item), chapters);
+        }
+    }
 }

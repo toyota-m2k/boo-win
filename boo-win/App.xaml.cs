@@ -1,14 +1,23 @@
 ﻿using BooWin.DI.contract;
 using BooWin.DI.implement;
 using BooWin.model;
+using BooWin.model.editor;
 using BooWin.view.viewmodel;
 using io.github.toyota32k.BooLib.Server.client;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.Activation;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -46,8 +55,8 @@ namespace BooWin {
         /// <summary>
         /// 動画編集ウィンドウを開く（複数起動可）
         /// </summary>
-        public static EditorWindow OpenEditorWindow() {
-            var window = new EditorWindow();
+        public static EditorWindow OpenEditorWindow(IEditorItem item, List<Chapter>? chapters=null) {
+            var window = new EditorWindow(item, chapters);
             RegisterWindow(window);
             window.Activate();
             return window;
@@ -114,6 +123,7 @@ namespace BooWin {
                 .AddScoped<EntryPageViewModel>()
                 .AddScoped<PlayerPageViewModel>()
                 .AddTransient<DiscoverPeerDialogViewModel>()
+                .AddTransient<EditorWindowViewModel>()
                 ;
 
             Services = services.BuildServiceProvider();
@@ -133,11 +143,96 @@ namespace BooWin {
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
+            UtLog.GlobalLoggerChain.AddLogger(GetService<LogViewModel>());
+            _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            // 他プロセスからリダイレクトされたアクティベーションを受け取る
+            AppInstance.GetCurrent().Activated += OnRedirectedActivated;
+            HandleActivation(AppInstance.GetCurrent().GetActivatedEventArgs(), isLaunch: true);
+        }
+
+        private DispatcherQueue? _dispatcherQueue;
+
+        private void OnRedirectedActivated(object? sender, AppActivationArguments args) {
+            // バックグラウンドスレッドから呼ばれるのでUIスレッドで処理する
+            _dispatcherQueue?.TryEnqueue(() => HandleActivation(args, isLaunch: false));
+        }
+
+        /// <summary>
+        /// アクティベーション引数に応じてWindowを開く。
+        /// 動画ファイルが指定されていればEditorWindow、そうでなければMainWindow。
+        /// </summary>
+        private async void HandleActivation(AppActivationArguments args, bool isLaunch) {
+            var paths = GetFilePaths(args, isLaunch);
+            if (paths.Count > 0) {
+                foreach (var path in paths) {
+                    var item = await FileMediaItem.FromPath(path);
+                    if (item != null) {
+                        OpenEditorWindow(item);
+                    }
+                }
+                return;
+            }
+            ShowMainWindow();
+        }
+
+        private void ShowMainWindow() {
+            if (_window != null) {
+                _window.Activate();
+                return;
+            }
             _window = new MainWindow();
+            _window.Closed += (_, _) => _window = null;
             RegisterWindow(_window);
             _window.Activate();
-            UtLog.GlobalLoggerChain.AddLogger(GetService<LogViewModel>());
             GetService<IPageService>().Startup(_window, _window.RootFrame);
+        }
+
+        private static List<string> GetFilePaths(AppActivationArguments args, bool isLaunch) {
+            var result = new List<string>();
+            switch (args.Kind) {
+                case ExtendedActivationKind.File:
+                    if (args.Data is IFileActivatedEventArgs fileArgs) {
+                        foreach (var item in fileArgs.Files) {
+                            if (item is IStorageFile file) {
+                                result.Add(file.Path);
+                            }
+                        }
+                    }
+                    break;
+                case ExtendedActivationKind.Launch:
+                    // 自プロセスの起動なら Environment.GetCommandLineArgs() が確実
+                    // リダイレクトされた場合は Arguments 文字列を分解する
+                    IEnumerable<string> tokens = isLaunch
+                        ? Environment.GetCommandLineArgs().Skip(1)
+                        : SplitCommandLine((args.Data as ILaunchActivatedEventArgs)?.Arguments ?? "");
+                    foreach (var token in tokens) {
+                        if (!token.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && File.Exists(token)) {
+                            result.Add(Path.GetFullPath(token));
+                        }
+                    }
+                    break;
+            }
+            return result;
+        }
+
+        private static IEnumerable<string> SplitCommandLine(string commandLine) {
+            var sb = new StringBuilder();
+            bool inQuote = false;
+            foreach (var c in commandLine) {
+                if (c == '"') {
+                    inQuote = !inQuote;
+                } else if (char.IsWhiteSpace(c) && !inQuote) {
+                    if (sb.Length > 0) {
+                        yield return sb.ToString();
+                        sb.Clear();
+                    }
+                } else {
+                    sb.Append(c);
+                }
+            }
+            if (sb.Length > 0) {
+                yield return sb.ToString();
+            }
         }
 
         ///**

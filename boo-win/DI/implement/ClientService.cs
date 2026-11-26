@@ -6,6 +6,7 @@ using io.github.toyota32k.BooLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BooWin.DI.implement;
@@ -113,13 +114,13 @@ public class ClientService : IClientService {
         }
     }
 
-    public string GetItemUrl(IMediaItem item, string cmdName = "item") {
+    public Uri? GetItemUrl(IMediaItem item, string cmdName = "item") {
         if (_api == null) {
             throw new InvalidOperationException("API is not available. CurrentHost is not set.");
         }
         var url = _api.GetItemUrl(item, cmdName);
         // MediaPlayer / BitmapImage は Fingerprint 検証ができないため、HTTPS はローカル中継経由にする
-        return _api.IsHttps ? _proxy.Wrap(url) : url;
+        return new Uri(_api.IsHttps ? _proxy.Wrap(url) : url);
     }
 
     //public string GetVideoUrl(MediaItem item) {
@@ -185,5 +186,10 @@ public class ClientService : IClientService {
         return await _api.PutPropertiesAsync(itemId.ToString(), category, rating, mark, name, label);
     }
 
-    
+    public async Task<bool> DownloadItemAsync(IMediaItem item, string destPath, CancellationToken token, Action<long, long>? progress = null) {
+        if (_api == null) {
+            throw new InvalidOperationException("API is not available. CurrentHost is not set.");
+        }
+        return await _api.DownloadItemAsync(item, destPath, token, progress);
+    }
 }

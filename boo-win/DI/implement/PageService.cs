@@ -51,12 +51,38 @@ public class PageService : IPageService {
 
     public Window? Window { get; private set; }
 
-    public void Startup(Window window, Frame rootFrame, Type? homePageType = null) {
+    public void Startup(Window window, Frame rootFrame, Type? homePageType = null, object? parameter = null) {
+        // Windowが作り直された場合（MainWindowの再表示など）に備えて、以前の状態をリセットする
+        Reset();
         Window = window;
         _rootFrame = rootFrame;
         _homePageType = homePageType ?? typeof(view.page.EntryPage);
         rootFrame.Navigated += OnNavigated;
-        NavigateTo(_homePageType);
+        window.Closed += OnWindowClosed;
+        NavigateTo(_homePageType, parameter);
+    }
+
+    private void OnWindowClosed(object sender, WindowEventArgs args) {
+        if (sender is Window window && window == Window) {
+            if (_currentPage is INavigationAware before) {
+                before.OnPageLeaving();
+            }
+            Reset();
+        }
+    }
+
+    private void Reset() {
+        if (Window != null) {
+            Window.Closed -= OnWindowClosed;
+        }
+        if (_rootFrame != null) {
+            _rootFrame.Navigated -= OnNavigated;
+        }
+        Window = null;
+        _rootFrame = null;
+        _currentPage = null;
+        _currentPageType.Value = null;
+        _uiContext = null;
     }
 
     private void OnNavigated(object sender, NavigationEventArgs e) {
@@ -72,7 +98,7 @@ public class PageService : IPageService {
         }
     }
 
-    private void NavigateTo(Type pageType) {
+    private void NavigateTo(Type pageType, object? parameter = null) {
         if (_rootFrame == null) {
             throw new InvalidOperationException("Root frame is not set. Call Startup() first.");
         }
@@ -81,7 +107,7 @@ public class PageService : IPageService {
             if (_currentPage is INavigationAware before) {
                 before.OnPageLeaving();
             }
-            _rootFrame?.Navigate(pageType);
+            _rootFrame?.Navigate(pageType, parameter);
         }
     }
 

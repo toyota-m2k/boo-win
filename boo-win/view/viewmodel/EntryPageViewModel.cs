@@ -1,7 +1,9 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using BooWin.model.editor;
 using BooWin.view.dialog;
 using io.github.toyota32k.BooLib.Utils;
+using Microsoft.Windows.Storage.Pickers;
 using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
 using System;
@@ -144,7 +146,25 @@ public class EntryPageViewModel {
         }
     }
 
-    private void OpenEditor() {
-        //FileOpenPickerBuilder.Create(
+    private async void OpenEditor() {
+        var win = _pageService.Window;
+        if (win==null) {
+            Logger.Error("Window is null");
+            return;
+        }
+        var path = await FileOpenPickerBuilder
+            .Create(win)
+            .AddFileType("Video", ".mp4", ".mov", "mkv")
+            .AddFileType("Audio", ".mp3", "m4a")
+            .SetIdentifier("OpenFileToEdit")
+            .PickAsync();
+        if (path != null) {
+            var item = await FileMediaItem.FromPath(path);
+            if (item == null) {
+                await _dialogService.ShowMessage("Error", "Failed to open file.");
+                return;
+            }
+            App.OpenEditorWindow(item);
+        }
     }
 }
