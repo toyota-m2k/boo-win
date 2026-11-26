@@ -106,10 +106,12 @@ public class MediaConvertViewModel {
             0 => "Lossless",
             <18 => "Extreme",
             <22 => "High",
+            23 => "Standard",
             <26 => "Practical",
             <30 => "Compact",
             _=> "Dreadful"
         }).ToReadOnlyReactiveProperty<string>();
+
         CRFHintBrush = CRF.Select(crf => crf switch {
             < 18 => new SolidColorBrush(Colors.Red),
             <22 => new SolidColorBrush(Colors.Blue),
