@@ -1,7 +1,9 @@
 {
   "profiles": {
     "boo-win (Package)": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "commandLineArgs": "\"C:\\Users\\mitsu\\Videos\\a.mp4\"",
+      "nativeDebugging": true
     },
     "boo-win (Unpackaged)": {
       "commandName": "Project"

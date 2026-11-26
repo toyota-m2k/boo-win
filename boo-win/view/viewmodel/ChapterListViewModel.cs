@@ -157,12 +157,12 @@ public class ChapterListViewModel
     }
 
     public void ToggleSkipChapter(Chapter chapter) {
-        UpdateChapter(chapter.Position, null, !chapter.Skip);
+        UpdateChapter(chapter, null, !chapter.Skip);
     }
     public void ToggleSkipChapter(long position) {
         var chapter = mChapters.GetChapterAt(position);
         if (chapter != null) {
-            UpdateChapter(chapter.Position, null, !chapter.Skip);
+            UpdateChapter(chapter, null, !chapter.Skip);
         } else {
             AddChapter(0, skip: true);
         }

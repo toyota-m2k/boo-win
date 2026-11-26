@@ -84,7 +84,7 @@ public sealed partial class DownloadProgressDialog : ContentDialog {
      * ダウンロード進捗ダイアログを表示してダウンロードを実行する。
      * @return true: ダウンロード成功 / false: 失敗またはキャンセル
      */
-    public static async Task<bool> Show(IDialogService dialogService, string title, string message, Func<CancellationToken, Action<long, long>, Task<bool>> download) {
+    public static async Task<bool> ShowAsync(IDialogService dialogService, string title, string message, Func<CancellationToken, Action<long, long>, Task<bool>> download) {
         var dialog = new DownloadProgressDialog(message, download);
         await dialogService
             .Builder(dialog)

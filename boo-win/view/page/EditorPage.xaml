@@ -10,6 +10,12 @@
     mc:Ignorable="d">
 
     <Grid>
-        <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Button Content="Open" VerticalAlignment="Top" HorizontalAlignment="Right"/>
+        <parts:PlayerView Grid.Column="0" ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+        <parts:EditorPanel Grid.Column="1" ViewModel="{x:Bind ViewModel, Mode=OneWay}"/>
     </Grid>
 </Page>

@@ -1,14 +1,25 @@
 ﻿using BooWin.model;
+using io.github.toyota32k.BooLib.Media;
 using System;
 using System.Collections.Generic;
 
 namespace BooWin.DI.contract;
 
 public interface ISettingsService {
-    // FFMpeg
+    // FFMpeg 
     bool UseFFMpeg { get; set; }
     string FFMpegPath { get; set; }
     string WorkingPath { get; set; }
+    
+    // Converter
+    int MaxLengthInPixel { get; set; }
+    int MaxFrameRate { get; set; }
+    int MaxBitRate { get; set; }
+    int CRF { get; set; }
+    VideoCodecOption OutputVideoCodec { get; set; }
+
+
+    // Player
     bool AutoStartPlayer { get; set; }
 
     // Hosts

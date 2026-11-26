@@ -7,8 +7,49 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+    <UserControl.Resources>
+        <ResourceDictionary Source="../Converters.xaml"/>
+    </UserControl.Resources>
 
-    <Grid>
+    <StackPanel Orientation="Vertical">
+        <CheckBox
+            Content="Use FFMpeg"
+            IsChecked="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=TwoWay}"
+            />
+        <Button Content="Setup FFMpeg Path"
+                Command="{x:Bind ViewModel.ConvertModel.SetupFFMpegPathCommand, Mode=OneWay}"/>
+        <TextBlock Text="Resolution"/>
+        <TextBox 
+            InputScope="Number" 
+            Text="{x:Bind ViewModel.ConvertModel.MaxLengthInPixel.Value, Mode=TwoWay}"/>
+        <TextBlock Text="Max Frame Rate"/>
+        <TextBox 
+            InputScope="Number" 
+            Text="{x:Bind ViewModel.ConvertModel.MaxFrameRate.Value, Mode=TwoWay}"/>
+        <TextBlock 
+            Text="Max Bitrate"
+            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource NegBoolVisibilityConverter}}"
+            />
+        <TextBox 
+            InputScope="Number" 
+            Text="{x:Bind ViewModel.ConvertModel.MaxBitRate.Value, Mode=TwoWay}" 
+            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource NegBoolVisibilityConverter}}"
+            />
+        <TextBlock 
+            Text="CRF"
+            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource BoolVisibilityConverter}}"
+            />
+        <TextBox 
+            InputScope="Number" 
+            Text="{x:Bind ViewModel.ConvertModel.CRF.Value, Mode=TwoWay}" 
+            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource BoolVisibilityConverter}}"
+            />
+        <TextBlock Text="Codec"/>
+        <TextBox
+            Text="{x:Bind ViewModel.ConvertModel.CodecOption.Value, Mode=OneWay}"/>
 
-    </Grid>
+        <Button
+            Content="Convert"
+            Command="{x:Bind ViewModel.ConvertModel.SaveAsCommand, Mode=OneWay}"/>
+    </StackPanel>
 </UserControl>

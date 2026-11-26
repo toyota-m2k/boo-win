@@ -324,7 +324,7 @@ public class PlayerPageViewModel
         var name = $"{hash}-{item.Id}.{item.Type}";
         var path = Path.Combine(_appConfigService.AppDataPath, name);
         var chapters = await _clientService.LoadChapterAsync(item);
-        var result = await DownloadProgressDialog.Show(_dialogService, "Download", item.Name,
+        var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", item.Name,
             (token, progress) => _clientService.DownloadItemAsync(item, path, token, progress));
         if (result) {
             App.OpenEditorWindow(CacheMediaItem.Create(path, item), chapters);
