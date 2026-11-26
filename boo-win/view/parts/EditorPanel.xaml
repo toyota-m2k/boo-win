@@ -11,45 +11,60 @@
         <ResourceDictionary Source="../Converters.xaml"/>
     </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical">
-        <CheckBox
-            Content="Use FFMpeg"
-            IsChecked="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=TwoWay}"
-            />
-        <Button Content="Setup FFMpeg Path"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <Button 
+                Content="Hide" 
+                VerticalAlignment="Top"
+                HorizontalAlignment="Right"
+                Command="{x:Bind ViewModel.ConvertModel.HideEditorPanelCommand, Mode=OneWay}"/>
+            <CheckBox
+                Content="Use FFMpeg"
+                IsChecked="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=TwoWay}"
+                />
+            <Button Content="Setup FFMpeg Path"
                 Command="{x:Bind ViewModel.ConvertModel.SetupFFMpegPathCommand, Mode=OneWay}"/>
-        <TextBlock Text="Resolution"/>
-        <TextBox 
-            InputScope="Number" 
-            Text="{x:Bind ViewModel.ConvertModel.MaxLengthInPixel.Value, Mode=TwoWay}"/>
-        <TextBlock Text="Max Frame Rate"/>
-        <TextBox 
-            InputScope="Number" 
-            Text="{x:Bind ViewModel.ConvertModel.MaxFrameRate.Value, Mode=TwoWay}"/>
-        <TextBlock 
-            Text="Max Bitrate"
-            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource NegBoolVisibilityConverter}}"
-            />
-        <TextBox 
-            InputScope="Number" 
-            Text="{x:Bind ViewModel.ConvertModel.MaxBitRate.Value, Mode=TwoWay}" 
-            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource NegBoolVisibilityConverter}}"
-            />
-        <TextBlock 
-            Text="CRF"
-            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource BoolVisibilityConverter}}"
-            />
-        <TextBox 
-            InputScope="Number" 
-            Text="{x:Bind ViewModel.ConvertModel.CRF.Value, Mode=TwoWay}" 
-            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Converter={StaticResource BoolVisibilityConverter}}"
-            />
-        <TextBlock Text="Codec"/>
-        <TextBox
-            Text="{x:Bind ViewModel.ConvertModel.CodecOption.Value, Mode=OneWay}"/>
+            <TextBlock Text="Max Resolution"/>
+            <ComboBox
+                ItemsSource="{x:Bind ViewModel.ConvertModel.ResolutionList, Mode=OneTime}"
+                SelectedItem="{x:Bind ViewModel.ConvertModel.Resolution.Value, Mode=TwoWay}"/>
+            <TextBlock Text="Max Frame Rate"/>
+            <TextBox 
+                InputScope="Number" 
+                Text="{x:Bind ViewModel.ConvertModel.MaxFrameRate.Value, Mode=TwoWay}"/>
+            <TextBlock 
+                Text="Max Bitrate"
+                Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
+                />
+            <ComboBox
+                ItemsSource="{x:Bind ViewModel.ConvertModel.BitRateList, Mode=OneTime}"
+                IsEditable="True"
+                TextSubmitted="OnBitRateTextSubmitted"
+                SelectedItem="{x:Bind ViewModel.ConvertModel.SelectedBitRate.Value, Mode=TwoWay}"
+                Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
+                />
+            <TextBlock 
+                Text="CRF"
+                Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource BoolVisibilityConverter}}"
+                />
+            <TextBox 
+                InputScope="Number" 
+                Text="{x:Bind ViewModel.ConvertModel.CRF.Value, Mode=TwoWay}" 
+                Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource BoolVisibilityConverter}}"
+                />
+            <TextBlock Text="Codec"/>
+            <ComboBox
+                ItemsSource="{x:Bind ViewModel.ConvertModel.CodecOptionList, Mode=OneTime}"
+                SelectedItem="{x:Bind ViewModel.ConvertModel.CodecOption.Value, Mode=TwoWay}"/>
 
+        </StackPanel>
         <Button
+            Grid.Row="1"
             Content="Convert"
             Command="{x:Bind ViewModel.ConvertModel.SaveAsCommand, Mode=OneWay}"/>
-    </StackPanel>
+    </Grid>
 </UserControl>

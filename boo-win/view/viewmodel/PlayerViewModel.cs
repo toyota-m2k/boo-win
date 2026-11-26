@@ -241,7 +241,7 @@ public class PlayerViewModel {
         });
 
         IsControlPanelVisible = Observable.CombineLatest(
-            PlayerState, ControlPanelPinned, ControlPanelActivatedByMouse, (state, pinned, activated) => state!=MediaPlayerState.NONE && (state== MediaPlayerState.PAUSED || pinned || activated)
+            PlayerState, ControlPanelPinned, ControlPanelActivatedByMouse, (state, pinned, activated) => ForEditor || state!=MediaPlayerState.NONE && (state== MediaPlayerState.PAUSED || pinned || activated)
         ).ToReadOnlyReactiveProperty();
 
         mControlPanelTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };

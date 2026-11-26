@@ -84,6 +84,9 @@ namespace BooWin {
 
         private static void OnAllWindowsClosed() {
             GetService<ISettingsService>().Save();
+            // Win2D(CanvasControl) は XAML 終了処理中に CoreApplication.Suspending の解除に失敗し、
+            // 0xC000027B (stowed exception) でクラッシュするため、保存後に即座にプロセスを終了する。
+            Environment.Exit(0);
         }
 
         //public static MainWindow MainWindow => (App.Current as App)!._window!;

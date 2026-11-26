@@ -59,7 +59,7 @@ public class SettingsService : ISettingsService {
 
     private readonly string KEY_CRF = "CRF";
     public int CRF {
-        get => JsonStore.Get<int>(KEY_CRF, 0);
+        get => JsonStore.Get<int>(KEY_CRF, 23);
         set => JsonStore.Set(KEY_CRF, value);
     }
     private readonly string KEY_OUTPUT_VIDEO_CODEC = "OutputVideoCodec";

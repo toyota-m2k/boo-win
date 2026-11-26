@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BooWin;
 
@@ -55,23 +56,32 @@ public sealed partial class EditorWindow : Window {
 
     private bool _closeConfirmed = false;
     private async void ConfirmClose() {
-        var r = await GetService<IDialogService>()
-            .ShowYesNo("Discard Changes", "Chapters are modified. \r\nAre you sure you want to exit?", yesAsDefault: true);
-        if (r == true) {
-            _closeConfirmed = true;
-            Close();
+        if (ViewModel.PlayerModel.ChapterModel.IsDirty) {
+            var r = await GetService<IDialogService>()
+                .ShowYesNo("Discard Changes", "Chapters are modified. \r\nAre you sure you want to exit?", yesAsDefault: true);
+            if (r!=true) {
+                return;
+            }
         }
+        _closeConfirmed = true;
+        // ウィンドウ破棄前にビジュアルツリーを外し、Win2D(CanvasControl) 等の Unloaded を
+        // ウィンドウが有効なうちに走らせる（最後のウィンドウ終了時のネイティブ例外対策）
+        _rootFrame.Content = null;
+        await Task.Delay(500);
+        Close();
     }
 
     private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
-        if (ViewModel.PlayerModel.ChapterModel.IsDirty) {
+        if (!_closeConfirmed) {
             args.Cancel = true;
             ConfirmClose();
+            return;
         }
     }
 
     private void OnClosed(object sender, WindowEventArgs args) {
         Closed -= OnClosed;
+        _rootFrame.Content = null;
         _scope.Dispose();
     }
 }

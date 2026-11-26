@@ -99,6 +99,7 @@ public sealed partial class ChapterRangeView : UserControl {
         if (null != mCanvas) {
             mCanvas.RemoveFromVisualTree();
             mCanvas = null;
+            ViewModel?.Logger.Debug("ChapterRangeView: RemoveFromVisualTree");
         }
     }
 

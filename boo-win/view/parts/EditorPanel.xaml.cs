@@ -41,4 +41,18 @@ public sealed partial class EditorPanel : UserControl {
     public EditorPanel() {
         InitializeComponent();
     }
+
+    private void OnBitRateTextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args) {
+        args.Handled = true;
+        var model = ViewModel?.ConvertModel;
+        if (model == null) return;
+        var text = args.Text.Trim().ToLowerInvariant().Replace("mbps", "").Replace("m", "").Trim();
+        if (double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v > 0) {
+            // 1000未満はMbps、それ以上はbpsとみなす
+            var bps = v < 1000 ? (int)Math.Round(v * 1_000_000) : (int)Math.Round(v);
+            model.MaxBitRate.Value = bps;
+        }
+        sender.SelectedItem = model.SelectedBitRate.Value;
+        sender.Text = model.SelectedBitRate.Value?.Label ?? string.Empty;
+    }
 }
