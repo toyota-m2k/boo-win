@@ -55,7 +55,7 @@ public class MediaConvertViewModel {
     }
     public ReactiveProperty<bool> AutoBitRate = new(true);
     public ReactiveProperty<PresetQuality> AutoQuality = new(PresetQuality.Std);
-
+    public BitrateDirective MaxBitRateDirective => new BitrateDirective(AutoBitRate.Value, AutoQuality.Value, MaxBitRate.Value);
     public ReactiveProperty<BitRateItem?> SelectedBitRate = new();
     public ReactiveProperty<VideoCodecOption> CodecOption = new(VideoCodecOption.NoChange);
     public VideoCodecOption[] CodecOptionList { get; } = Enum.GetValues<VideoCodecOption>();

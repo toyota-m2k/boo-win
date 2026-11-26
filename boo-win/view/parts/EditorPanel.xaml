@@ -12,6 +12,63 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Converters.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ToggleRadioButtonStyle" TargetType="RadioButton">
+                <Setter Property="MinWidth" Value="64"/>
+                <Setter Property="Padding" Value="10,4"/>
+                <Setter Property="Margin" Value="0,0,4,0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Grid x:Name="RootGrid"
+                                  Background="{ThemeResource ToggleButtonBackground}"
+                                  BorderBrush="{ThemeResource ToggleButtonBorderBrush}"
+                                  BorderThickness="1"
+                                  CornerRadius="4">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="PointerOver">
+                                            <VisualState.Setters>
+                                                <Setter Target="StateOverlay.Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <VisualState.Setters>
+                                                <Setter Target="StateOverlay.Background" Value="{ThemeResource SubtleFillColorTertiaryBrush}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootGrid.Opacity" Value="0.5"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="CheckStates">
+                                        <VisualState x:Name="Checked">
+                                            <VisualState.Setters>
+                                                <Setter Target="RootGrid.Background" Value="{ThemeResource ToggleButtonBackgroundChecked}"/>
+                                                <Setter Target="RootGrid.BorderBrush" Value="{ThemeResource ToggleButtonBackgroundChecked}"/>
+                                                <Setter Target="ContentArea.Foreground" Value="{ThemeResource ToggleButtonForegroundChecked}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Unchecked"/>
+                                        <VisualState x:Name="Indeterminate"/>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" CornerRadius="3"/>
+                                <ContentPresenter x:Name="ContentArea"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  Foreground="{ThemeResource ToggleButtonForeground}"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="Center"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <Style x:Key="SectionHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <Setter Property="Margin" Value="0,0,0,4"/>
@@ -83,14 +140,29 @@
                             Header="Max Frame Rate"
                             InputScope="Number" 
                             Text="{x:Bind ViewModel.ConvertModel.MaxFrameRate.Value, Mode=TwoWay}"/>
-                        <ComboBox
-                            Header="Max Bitrate"
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{x:Bind ViewModel.ConvertModel.BitRateList, Mode=OneTime}"
-                            IsEditable="True"
-                            TextSubmitted="OnBitRateTextSubmitted"
-                            SelectedItem="{x:Bind ViewModel.ConvertModel.SelectedBitRate.Value, Mode=TwoWay}"
-                            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"/>
+                        <StackPanel
+                            Spacing="8"
+                            Visibility="{x:Bind ViewModel.ConvertModel.UseFFMpeg.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}">
+                            <ComboBox
+                                Header="Max Bitrate"
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{x:Bind ViewModel.ConvertModel.BitRateList, Mode=OneTime}"
+                                IsEditable="True"
+                                TextSubmitted="OnBitRateTextSubmitted"
+                                SelectedItem="{x:Bind ViewModel.ConvertModel.SelectedBitRate.Value, Mode=TwoWay}"
+                                IsEnabled="{x:Bind ViewModel.ConvertModel.AutoBitRate.Value, Mode=OneWay, Converter={StaticResource NegBoolConverter}}"/>
+                            <CheckBox
+                                Content="Auto Bitrate"
+                                IsChecked="{x:Bind ViewModel.ConvertModel.AutoBitRate.Value, Mode=TwoWay}"/>
+                            <RadioButtons
+                                MaxColumns="3"
+                                IsEnabled="{x:Bind ViewModel.ConvertModel.AutoBitRate.Value, Mode=OneWay}"
+                                SelectedIndex="{x:Bind ViewModel.ConvertModel.AutoQuality.Value, Mode=TwoWay, Converter={StaticResource EnumIndexConverter}}">
+                                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" Content="Low"/>
+                                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" Content="Std"/>
+                                <RadioButton Style="{StaticResource ToggleRadioButtonStyle}" Content="High"/>
+                            </RadioButtons>
+                        </StackPanel>
                         <TextBox 
                             Header="CRF"
                             InputScope="Number" 

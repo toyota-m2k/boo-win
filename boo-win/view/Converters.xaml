@@ -7,6 +7,7 @@
     <common:NegBoolVisibilityConverter x:Key="NegBoolVisibilityConverter"/>
     <common:NegBoolConverter x:Key="NegBoolConverter"/>
     <common:IntIndexConverter x:Key="IntIndexConverter"/>
+    <common:EnumIndexConverter x:Key="EnumIndexConverter"/>
     <common:EnumBooleanConverter x:Key="EnumBooleanConverter"/>
     <common:NegEnumBooleanConverter x:Key="NegEnumBooleanConverter"/>
     <common:EnumVisibilityConverter x:Key="EnumVisibilityConverter"/>
