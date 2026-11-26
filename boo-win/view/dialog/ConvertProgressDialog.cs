@@ -71,7 +71,7 @@ public sealed partial class ConvertProgressDialog : ContentDialog {
                 Progress.Id.COMBINING => "Combining...",
                 _ => "Preparing...",
             };
-            if (progress.TotalDuration == TimeSpan.Zero) {
+            if (progress.TotalDuration != TimeSpan.Zero) {
                 _progressBar.IsIndeterminate = false;
                 _progressBar.Value = Math.Min(100.0, progress.PercentOfTime);
                 _statusText.Text = progress.ComposeDurationMessage();

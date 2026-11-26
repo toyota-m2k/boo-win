@@ -96,7 +96,7 @@ public class EditorWindowViewModel : IItemService {
             var processor = new MediaProcessor(ConvertModel.UseFFMpeg.Value) {
                 MaxFrameRate = ConvertModel.MaxFrameRate.Value,
                 MaxLengthInPixel = ConvertModel.MaxLengthInPixel,
-                
+                MaxBitRate = ConvertModel.MaxBitRate.Value,
                 CRF = ConvertModel.CRF.Value,
                 PreferCodec = ConvertModel.CodecOption.Value
             };  
