@@ -164,12 +164,11 @@ public class ChapterListEditor {
         } else if (current < markers[s]) {
             next = s;
             return -1;
-        } else if (e==0) {
-            // 要素が１つだけ
-            // この場合 while(s<e) のループに入らないので、ここでチェックする。
-            if (markers[e] == current) {
-                return 0;   // hit
-            }
+        }
+
+        // markers[e] にヒットするケースを特別扱い
+        if (markers[e] == current) {
+            return e;   // hit
         }
 
         while (s < e) {
