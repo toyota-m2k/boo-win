@@ -46,6 +46,7 @@ public class EditorWindowViewModel : IItemService {
         PlayerModel = new PlayerViewModel(this, dialogService, pageService, settingsService, forEditor: true);
         ConvertModel = new MediaConvertViewModel(settingsService, dialogService);
         ConvertModel.SaveAsCommand.Subscribe(SaveAsAsync);
+        ConvertModel.SetupFFMpegPathCommand.Subscribe(SetupFFMpegPath);
         WindowTitle = TargetItem.Select(item => {
             var name = item?.Name;
             return string.IsNullOrEmpty(name) ? "Boo Editor" : name;
@@ -113,6 +114,13 @@ public class EditorWindowViewModel : IItemService {
                 Logger.Info(r.ToString()!);
                 await _dialogService.ShowMessage("Saved", $"Video saved to:\n{outputFilePath}");
             }
+        }
+    }
+
+    private async void SetupFFMpegPath() {
+        var path = await FFMpegPathDialog.ShowAsync(_dialogService, _pageService.Window, _settingsService.FFMpegPath);
+        if (path != null) {
+            _settingsService.FFMpegPath = path;
         }
     }
 }

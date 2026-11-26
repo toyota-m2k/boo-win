@@ -60,6 +60,18 @@ public class IntIndexConverter : IValueConverter {
 }
 
 /// <summary>
+/// int ⇔ double の変換（Slider.Value 用）
+/// </summary>
+public class IntDoubleConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, string language) {
+        return System.Convert.ToDouble(value);
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+        return (int)Math.Round(System.Convert.ToDouble(value));
+    }
+}
+
+/// <summary>
 /// enum値 ⇔ インデックス の変換（RadioButtons.SelectedIndex 用）
 /// </summary>
 public class EnumIndexConverter : IValueConverter {

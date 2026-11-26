@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="BooWin.view.dialog.FFMpegPathDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BooWin.view.dialog"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="FFMpeg Path"
+    >
+    <StackPanel Orientation="Vertical" Spacing="12" MinWidth="400">
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0"
+                     PlaceholderText="ffmpeg.exe"
+                     Text="{x:Bind FFMpegPath.Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{x:Bind IsNotUsePathEnv(UsePathEnv.Value), Mode=OneWay}"/>
+            <Button Grid.Column="1"
+                    Content="Browse..."
+                    Click="OnBrowseClick"
+                    IsEnabled="{x:Bind IsNotUsePathEnv(UsePathEnv.Value), Mode=OneWay}"/>
+        </Grid>
+        <CheckBox Content="Use PATH environment variable"
+                  IsChecked="{x:Bind UsePathEnv.Value, Mode=TwoWay}"/>
+    </StackPanel>
+</ContentDialog>

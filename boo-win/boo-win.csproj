@@ -83,6 +83,11 @@
     <ProjectReference Include="..\external\win-boo-lib\Utils\Utils.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Page Update="view\dialog\FFMpegPathDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="view\parts\EditorPanel.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

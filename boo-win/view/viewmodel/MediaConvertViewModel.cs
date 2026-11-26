@@ -1,10 +1,13 @@
 ﻿using BooWin.DI.contract;
 using io.github.toyota32k.BooLib.Media;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
 
 namespace BooWin.view.viewmodel;
@@ -34,6 +37,8 @@ public class MediaConvertViewModel {
     public VideoResolution[] ResolutionList { get; } = Enum.GetValues<VideoResolution>();
     public int MaxLengthInPixel => ResolutionToLength(Resolution.Value);
     public ReactiveProperty<int> CRF = new(23);
+    public ReadOnlyReactiveProperty<string> CRFHint { get; }
+    public ReadOnlyReactiveProperty<Brush> CRFHintBrush { get; }
     public ReactiveProperty<int> MaxFrameRate = new(30);
     public ReactiveProperty<int> MaxBitRate = new(2_000_000);
     public record BitRateItem(int Value) {
@@ -97,5 +102,20 @@ public class MediaConvertViewModel {
         HideEditorPanelCommand.Subscribe(() => ShowEditorPanel.Value = false);
         ShowEditorPanelCommand.Subscribe(() => ShowEditorPanel.Value = true);
 
+        CRFHint = CRF.Select(crf => crf switch { 
+            0 => "Lossless",
+            <18 => "Extreme",
+            <22 => "High",
+            <26 => "Practical",
+            <30 => "Compact",
+            _=> "Dreadful"
+        }).ToReadOnlyReactiveProperty<string>();
+        CRFHintBrush = CRF.Select(crf => crf switch {
+            < 18 => new SolidColorBrush(Colors.Red),
+            <22 => new SolidColorBrush(Colors.Blue),
+            <26 => new SolidColorBrush(Colors.Green),
+            <30 => new SolidColorBrush(Colors.Orange),
+            _ => new SolidColorBrush(Colors.Red)
+        }).ToReadOnlyReactiveProperty<Brush>();
     }
 }
