@@ -69,6 +69,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Animations" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Extensions" Version="8.2.251219" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.78.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
@@ -77,6 +78,20 @@
     <PackageReference Include="ReactiveProperty" Version="9.10.0" />
     <PackageReference Include="System.Reactive" Version="7.0.0" />
   </ItemGroup>
+  <Import Project="secrets.props" Condition="Exists('secrets.props')" />
+  <Target Name="GenerateSecrets" BeforeTargets="XamlPreCompile;CoreCompile">
+    <PropertyGroup>
+      <GoogleClientId Condition="'$(GoogleClientId)'==''">$(GOOGLE_CLIENT_ID)</GoogleClientId>
+      <GoogleClientSecret Condition="'$(GoogleClientSecret)'==''">$(GOOGLE_CLIENT_SECRET)</GoogleClientSecret>
+      <_SecretsFile>$(IntermediateOutputPath)Secrets.g.cs</_SecretsFile>
+    </PropertyGroup>
+    <Warning Condition="'$(GoogleClientId)'=='' Or '$(GoogleClientSecret)'==''" Text="Google OAuth client id/secret is not set. Create secrets.props (see secrets.props.sample) or set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET." />
+    <WriteLinesToFile File="$(_SecretsFile)" Overwrite="true" WriteOnlyWhenDifferent="true" Lines="namespace BooWin.model.google%3B;internal static class Secrets { public const string GoogleClientId = &quot;$(GoogleClientId)&quot;%3B public const string GoogleClientSecret = &quot;$(GoogleClientSecret)&quot;%3B }" />
+    <ItemGroup>
+      <Compile Include="$(_SecretsFile)" />
+      <FileWrites Include="$(_SecretsFile)" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\external\win-boo-lib\Media\Media.csproj" />
     <ProjectReference Include="..\external\win-boo-lib\Server\Server.csproj" />

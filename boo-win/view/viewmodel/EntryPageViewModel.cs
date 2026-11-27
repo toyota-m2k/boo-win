@@ -1,13 +1,17 @@
-﻿using BooWin.DI.contract;
+﻿using BooWin.client;
+using BooWin.DI.contract;
 using BooWin.model;
 using BooWin.model.editor;
+using BooWin.model.google;
 using BooWin.view.dialog;
 using io.github.toyota32k.BooLib.Utils;
 using Microsoft.Windows.Storage.Pickers;
 using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
@@ -22,6 +26,7 @@ public class EntryPageViewModel {
     private readonly IDialogService _dialogService;
     private readonly IPageService _pageService;
     private readonly IClientService _clientService;
+    private readonly IAppConfigService _appConfigService;
 
     public ObservableCollection<PeerHost> HostList { get; }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
@@ -37,6 +42,7 @@ public class EntryPageViewModel {
     public ReactiveCommand<PeerHost> EditHostCommand { get; } = new();
     public ReactiveCommand GotoPlayerPageCommand { get; } = new();
     public ReactiveCommand OpenEditorCommand { get; } = new();
+    public ReactiveCommand OpenGooglePhotoCommand { get; } = new();
 
     private bool HostListModified = false;
 
@@ -45,8 +51,10 @@ public class EntryPageViewModel {
         IMainThreadService mainThreadService,
         IDialogService dialogService,
         IPageService pageService,
-        IClientService clientService    
+        IClientService clientService,
+        IAppConfigService appConfigService
         ) {
+        _appConfigService = appConfigService;
         _settingsService = settingsService;
         _mainThreadService = mainThreadService;
         _dialogService = dialogService;
@@ -59,6 +67,7 @@ public class EntryPageViewModel {
         EditHostCommand.Subscribe(EditHost);
         GotoPlayerPageCommand.Subscribe(GotoPlayerPage);
         OpenEditorCommand.Subscribe(OpenEditor);
+        OpenGooglePhotoCommand.Subscribe(OpenGooglePhoto);
 
         CurrentHost.Value = _settingsService.CurrentHost;
         CanOpenPlayerPage = CurrentHost.CombineLatest(IsHostAvailable, (host,a) => host != null && a).ToReadOnlyReactiveProperty();
@@ -165,6 +174,72 @@ public class EntryPageViewModel {
                 return;
             }
             App.OpenEditorWindow(item);
+        }
+    }
+
+    private GooglePhotosPickerService? _googlePhotos;
+
+    private async void OpenGooglePhoto() {
+        _googlePhotos ??= new GooglePhotosPickerService(Path.Combine(_appConfigService.AppDataPath, "google"));
+        var service = _googlePhotos;
+
+        // 認証 → セッション作成 → ブラウザで Picker を開き、選択完了をポーリング
+        List<GooglePhotosPickerService.PickedMediaItem>? items = null;
+        string? sessionId = null;
+        Exception? error = null;
+        await DownloadProgressDialog.ShowAsync(_dialogService, "Google Photo", "Sign in and select a video in the browser.",
+            async (token, _) => {
+                try {
+                    await service.AuthorizeAsync(token);
+                    var session = await service.CreateSessionAsync(token);
+                    sessionId = session.Id;
+                    await Windows.System.Launcher.LaunchUriAsync(new Uri(session.PickerUri.TrimEnd('/') + "/autoclose"));
+                    await service.WaitForSelectionAsync(session, token);
+                    items = await service.ListMediaItemsAsync(session.Id, token);
+                    return true;
+                }
+                catch (OperationCanceledException) {
+                    throw;
+                }
+                catch (Exception ex) {
+                    Logger.Error(ex);
+                    error = ex;
+                    return false;
+                }
+            });
+        if (sessionId != null) {
+            _ = service.DeleteSessionAsync(sessionId);
+        }
+        if (error != null) {
+            await _dialogService.ShowMessage("Error", error.Message);
+            return;
+        }
+        if (items == null) {
+            return; // canceled
+        }
+        var picked = items.FirstOrDefault(it => it.IsVideo && it.MediaFile != null);
+        if (picked == null) {
+            await _dialogService.ShowMessage("Google Photo", "No video was selected.");
+            return;
+        }
+
+        var filename = picked.MediaFile!.Filename;
+        var ext = Path.GetExtension(filename).TrimStart('.').ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext)) ext = "mp4";
+        var hash = HashBuilder.MD5.Append("google-photo").Append(picked.Id).Build().AsHexString;
+        var path = Path.Combine(_appConfigService.CachePath, $"{hash}.{ext}");
+        var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", filename,
+            (token, progress) => service.DownloadAsync(picked, path, token, progress));
+        if (result) {
+            var mediaItem = new MediaItem {
+                Id = picked.Id,
+                Name = Path.GetFileNameWithoutExtension(filename),
+                Size = new FileInfo(path).Length,
+                Type = ext,
+                Media = "v",
+                DateInUnixTime = picked.CreateTime.ToUnixTimeMilliseconds(),
+            };
+            App.OpenEditorWindow(CacheMediaItem.Create(path, mediaItem));
         }
     }
 }
