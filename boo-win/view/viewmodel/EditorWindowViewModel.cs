@@ -53,6 +53,7 @@ public class EditorWindowViewModel : IItemService {
             var name = item?.Name;
             return string.IsNullOrEmpty(name) ? "Boo Editor" : name;
         }).ToReadOnlyReactivePropertySlim<string>();
+        HelpCommand.Subscribe(KeyCommandHelp);
         KeyCommand = new EditorKeyCommand(this);
     }
 
@@ -125,5 +126,9 @@ public class EditorWindowViewModel : IItemService {
         if (path != null) {
             _settingsService.FFMpegPath = path;
         }
+    }
+
+    private async void KeyCommandHelp() {
+        await _dialogService.ShowMessage("Key Map", KeyCommand.Help());
     }
 }

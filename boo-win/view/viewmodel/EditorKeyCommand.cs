@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Windows.Input;
 using Windows.System;
@@ -127,7 +128,7 @@ public class EditorKeyCommand {
         AssignSingleKeyCommand(ID.CONTINUOUS_SUPER_HIGH_SPEED, VirtualKey.F);
         AssignSingleKeyCommand(ID.TOGGLE_REPEAT_SEEK_FORWORD_1, VirtualKey.R);
         AssignShiftKeyCommand(ID.CONTINUOUS_HIGH_SPEED, VirtualKey.F);
-        AssignControlKeyCommand(ID.CONTINUOUS_SUPER_HIGH_SPEED, VirtualKey.F);
+        //AssignControlKeyCommand(ID.CONTINUOUS_SUPER_HIGH_SPEED, VirtualKey.F);
 
         //AssignSingleKeyCommand(ID.CHECKED_SET, VirtualKey.N);
         //AssignSingleKeyCommand(ID.MOVIE_NEXT, VirtualKey.PageDown);
@@ -183,6 +184,12 @@ public class EditorKeyCommand {
     }
     public void Disable() {
         Manager.Disable();
+    }
+
+    public string Help() {
+        return Manager.MakeHelpMessage().Aggregate(new StringBuilder(), (acc, item) => {
+            return acc.AppendLine($"{item.Key}: {item.Description}");
+        }).ToString();
     }
 
     #region Private

@@ -327,11 +327,12 @@ public class PlayerViewModel {
     private DispatcherTimer? mHighSpeedTimer = null;
     public void StartSuperHighSpeedPlay() {
         if (mHighSpeedTimer != null) return;
+        RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
         mHighSpeedTimer = new DispatcherTimer() {
             Interval = TimeSpan.FromMilliseconds(100),
         };
         mHighSpeedTimer.Tick += (s, e) => {
-                RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
+            RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
         };
         mHighSpeedTimer.Start();
     }
