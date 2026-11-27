@@ -31,6 +31,8 @@ public class EditorWindowViewModel : IItemService {
     public MediaConvertViewModel ConvertModel { get; private set; }
     public List<Chapter> OrgChapters { get; private set; } = new();
     public string? OutputFilePath { get; private set; }
+    public ReactiveCommand HelpCommand { get; } = new ReactiveCommand();
+    public EditorKeyCommand KeyCommand { get; }
 
 
     public string? SourceFilePath => (TargetItem.Value as IEditorItem)?.FilePath;
@@ -51,6 +53,7 @@ public class EditorWindowViewModel : IItemService {
             var name = item?.Name;
             return string.IsNullOrEmpty(name) ? "Boo Editor" : name;
         }).ToReadOnlyReactivePropertySlim<string>();
+        KeyCommand = new EditorKeyCommand(this);
     }
 
     public void SetTargetItem(IEditorItem item, List<Chapter>? initialChapters, string? outputFilePath=null) {

@@ -12,7 +12,7 @@
         <ResourceDictionary Source="../Converters.xaml"/>
     </Page.Resources>
 
-    <Grid>
+    <Grid x:Name="EditorRoot">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>

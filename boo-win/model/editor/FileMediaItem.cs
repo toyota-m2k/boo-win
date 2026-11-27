@@ -68,4 +68,8 @@ public class FileMediaItem : IEditorItem {
     public bool IsPhoto => this.MediaType == MediaType.PHOTO;
 
     public bool IsAV => !IsPhoto;
+
+    public void Dispose() {
+        // nothing to do
+    }
 }

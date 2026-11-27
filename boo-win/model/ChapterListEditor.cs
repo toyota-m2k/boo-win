@@ -257,6 +257,14 @@ public class ChapterListEditor {
         return null;
     }
 
+    public Chapter? GetJustChapterAt(long current) {
+        var hit = FindChapter(current, out var prev, out var next);
+        if (hit >= 0) {
+            return mChapters.Values[hit];
+        }
+        return null;
+    }
+
     //public long FirstEnabledPosition() {
     //    return (EnabledRanges.Count > 0) ? EnabledRanges.First().Start : 0L;
     //}

@@ -322,7 +322,7 @@ public class PlayerPageViewModel
         var host = _clientService.CurrentHost;
         var hash = HashBuilder.MD5.Append(host.Address).Build().AsHexString;
         var name = $"{hash}-{item.Id}.{item.Type}";
-        var path = Path.Combine(_appConfigService.AppDataPath, name);
+        var path = Path.Combine(_appConfigService.CachePath, name);
         var chapters = await _clientService.LoadChapterAsync(item);
         var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", item.Name,
             (token, progress) => _clientService.DownloadItemAsync(item, path, token, progress));

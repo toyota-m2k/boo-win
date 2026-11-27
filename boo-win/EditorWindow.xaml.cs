@@ -67,7 +67,8 @@ public sealed partial class EditorWindow : Window {
         // ウィンドウ破棄前にビジュアルツリーを外し、Win2D(CanvasControl) 等の Unloaded を
         // ウィンドウが有効なうちに走らせる（最後のウィンドウ終了時のネイティブ例外対策）
         _rootFrame.Content = null;
-        await Task.Delay(500);
+        ViewModel.TargetItem.Value?.Dispose();
+        ViewModel.TargetItem.Value = null;
         Close();
     }
 

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Management;
 using Windows.Media.Playback;
 
 namespace BooWin.view.viewmodel;
@@ -61,7 +62,7 @@ public class PlayerViewModel {
     #region Playing Status / Seek
 
     public ReactiveProperty<long> PlayerPosition { get; } = new(0);         // MediaPlayerのPosition
-    public ReactiveProperty<double> SliderPosition { get; } = new(0.0);     // PlayerSliderのPosition
+    //public ReactiveProperty<double> SliderPosition { get; } = new(0.0);     // PlayerSliderのPosition
     public ReadOnlyReactiveProperty<string> PositionString { get; }
     public ReadOnlyReactiveProperty<string> DurationString { get; }
 
@@ -99,6 +100,7 @@ public class PlayerViewModel {
     public ReactiveCommand NextItemCommand { get; } = new();
     public ReactiveCommand PrevItemCommand { get; } = new();
     public ReactiveCommand<long> PlayerSeekToCommand { get; } = new();
+    public ReactiveCommand<long> RelativePlayerSeekCommand { get; } = new();
 
     #endregion
 
@@ -302,5 +304,98 @@ public class PlayerViewModel {
             NextItemCommand.Execute();
         }
     }
+    #endregion
+
+    #region for Key Command
+
+    public void TogglePlay() {
+        if (IsPlaying.Value) {
+            PauseCommand.Execute();
+        }
+        else {
+            PlayCommand.Execute();
+        }
+    }
+    public void SeekRelative(long delta) {
+        RelativePlayerSeekCommand.Execute(delta);
+    }
+
+    public ReactiveCommand<double> PlaySpeedCommand { get; } = new();
+
+
+
+    private DispatcherTimer? mHighSpeedTimer = null;
+    public void StartSuperHighSpeedPlay() {
+        if (mHighSpeedTimer != null) return;
+        mHighSpeedTimer = new DispatcherTimer() {
+            Interval = TimeSpan.FromMilliseconds(100),
+        };
+        mHighSpeedTimer.Tick += (s, e) => {
+                RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
+        };
+        mHighSpeedTimer.Start();
+    }
+
+    public void StopSuperHighSpeedPlay() {
+        if (mHighSpeedTimer == null) return;
+        mHighSpeedTimer.Stop();
+        mHighSpeedTimer = null;
+    }
+
+    public void ToggleSuperHighSpeedMode() {
+        if (mHighSpeedTimer==null) {
+            StartSuperHighSpeedPlay();
+        } else {
+            StopSuperHighSpeedPlay();
+        }
+    }
+
+    #endregion
+
+    #region // Cutting Range by Chapter
+
+    private long mCuttingStartPosition = -1L;
+    private IDisposable? mCuttingObserver = null;
+
+    public void BeginCuttingRange() {
+        if (mCuttingObserver!=null) return;
+        mCuttingStartPosition = PlayerPosition.Value;
+        ChapterModel.CuttingRange.Value = TimeRange.Empty;
+        mCuttingObserver = PlayerPosition.Subscribe(pos => {
+            if (mCuttingStartPosition >= 0) {
+                var start = Math.Min(mCuttingStartPosition, pos);
+                var end = Math.Max(mCuttingStartPosition, pos);
+                ChapterModel.CuttingRange.Value = new TimeRange(start, end);
+            }
+        });
+    }
+
+    private void DisposeCuttingObserver() {
+        ChapterModel.CuttingRange.Value = TimeRange.Empty;
+        mCuttingStartPosition = -1L;
+        mCuttingObserver?.Dispose();
+        mCuttingObserver = null;
+    }
+
+    public void CancelCuttingRange() {
+        var pos = mCuttingStartPosition;
+        DisposeCuttingObserver();
+        PlayerSeekToCommand.Execute(pos);
+    }
+
+    public void CommitCuttingRange() {
+        var range = ChapterModel.CuttingRange.Value;
+        if (range.IsEmpty) return;
+        ChapterModel.CutRange(range.Start, range.End, NaturalDuration.Value);
+        DisposeCuttingObserver();
+    }
+
+    public void CutToStart() {
+        ChapterModel.CutToStart(PlayerPosition.Value);
+    }
+    public void CutToEnd() {
+        ChapterModel.CutToEnd(PlayerPosition.Value);
+    }
+
     #endregion
 }

@@ -45,6 +45,8 @@ internal class AppConfigService : IAppConfigService {
 
     public string SettingsName => "settings.json";
     public string SettingsPath => Path.Combine(AppDataPath, SettingsName);
+    public string CachePath => Path.Combine(AppDataPath, "cache");
+    public string TempPath => Path.Combine(AppDataPath, "temp");
 
 
     public AppConfigService() {
@@ -63,10 +65,17 @@ internal class AppConfigService : IAppConfigService {
         if (!Directory.Exists(appPath)) {
             Directory.CreateDirectory(appPath);
         }
+        if (!Directory.Exists(CachePath)) {
+            Directory.CreateDirectory(CachePath);
+        }
+        if (!Directory.Exists(TempPath)) {
+            Directory.CreateDirectory(TempPath);
+        }
         Debug.WriteLine(AppName + " " + AppVersion);
         var exePath = Process.GetCurrentProcess().MainModule!.FileName;
         Debug.WriteLine(exePath);
     }
+
 
     public bool NeedsConfirmOnExit { get; set; } = false;
 

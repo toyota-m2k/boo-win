@@ -39,6 +39,7 @@ public class ChapterListViewModel
     public ReactiveProperty<IList<Chapter>> ChapterList { get; } = new ReactiveProperty<IList<Chapter>>(new List<Chapter>());
     public ReactiveProperty<Chapter?> CurrentChapter { get; } = new();
     public ReadOnlyReactiveProperty<string> ChapterLabel { get; }
+    public ReactiveProperty<TimeRange> CuttingRange { get; } = new (TimeRange.Empty);
     //private SortedList<long, Chapter> mChapters = new SortedList<long, Chapter>();
     private ChapterListEditor mChapters = new ChapterListEditor();
     public ReadOnlyReactiveProperty<bool> CanUndo { get; }
@@ -124,6 +125,57 @@ public class ChapterListViewModel
             return false;
         }
     }
+
+    public void CutToStart(long pos) {
+        lock (mChapters) {
+            var all = mChapters.ToList();
+            var chapterAtHead = mChapters.GetJustChapterAt(0);
+            foreach (var c in all) {
+                if (c.Position<pos) {
+                    mChapters.RemoveChapter(c);
+                }
+            }
+            mChapters.AddChapter(new Chapter { Position = 0, Label= chapterAtHead?.Label ??"", Skip = true});
+            mChapters.AddChapter(new Chapter { Position = pos, Skip = false });
+            OnUpdateChapterList();
+        }
+    }
+    public void CutToEnd(long pos) {
+        lock (mChapters) {
+            var all = mChapters.ToList();
+            var chapterAtPos = mChapters.GetJustChapterAt(pos);
+            foreach (var c in all) {
+                if (c.Position >= pos) {
+                    mChapters.RemoveChapter(c);
+                }
+            }
+            mChapters.AddChapter(new Chapter { Position = pos, Label= chapterAtPos?.Label ?? "", Skip = true});
+            OnUpdateChapterList();
+        }
+    }
+
+    public void CutRange(long start, long end, long duration) {
+        if (start==0) {
+            CutToStart(end);
+        }
+        if (end>=duration-200) {
+            CutToEnd(start);
+        }
+        lock (mChapters) {
+            var all = mChapters.ToList();
+            var startChapter = mChapters.GetJustChapterAt(start);
+            var endChapter = mChapters.GetJustChapterAt(end);
+            foreach (var c in all) {
+                if (c.Position >= start && c.Position <= end) {
+                    mChapters.RemoveChapter(c);
+                }
+            }
+            mChapters.AddChapter(new Chapter { Position = start, Label = startChapter?.Label ?? "", Skip = true });
+            mChapters.AddChapter(new Chapter { Position = end, Label = endChapter?.Label ?? "", Skip = false });
+            OnUpdateChapterList();
+        }
+    }
+
 
     public bool UpdateChapter(long position, string? label, bool? skip) {
         return UpdateChapter(mChapters.GetChapterAt(position), label, skip);

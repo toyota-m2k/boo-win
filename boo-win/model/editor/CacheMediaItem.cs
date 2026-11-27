@@ -1,4 +1,5 @@
-﻿using System;
+﻿using io.github.toyota32k.BooLib.Utils;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -50,4 +51,7 @@ public class CacheMediaItem : IEditorItem {
         return new CacheMediaItem(path, src);
     }
 
+    public void Dispose() {
+        FileUtil.SafeDelete(FilePath);
+    }
 }

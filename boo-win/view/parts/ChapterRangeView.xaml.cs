@@ -59,6 +59,10 @@ public sealed partial class ChapterRangeView : UserControl {
             mPosition = pos;
             invalidate();
         });
+        viewModel.ChapterModel.CuttingRange.Subscribe(range => {
+            mCuttingRange = range;
+            invalidate();
+        });
     }
 
     public ChapterListViewModel? ChapterModel => ViewModel?.ChapterModel;
@@ -89,6 +93,7 @@ public sealed partial class ChapterRangeView : UserControl {
 
     private IList<Chapter>? mChapterList = null;
     private long mTotalRange = 0;
+    private TimeRange mCuttingRange = TimeRange.Empty;
     private double mPosition = 0;
     private void OnLoaded(object sender, RoutedEventArgs e) {
     }
@@ -137,6 +142,7 @@ public sealed partial class ChapterRangeView : UserControl {
         set { if (!value.Equals(mEnabledRightColor)) { mEnabledRightColor = value; invalidate(); } }
     }
     private Color mEnabledRightColor = Color.FromArgb(0xFF, 0x90, 0xCA, 0xF9);
+    private Color mCuttingRangeColor = Color.FromArgb(0xFF, 0xF9, 0xCA, 0x90);
 
     // 無効 × 左（再生済み）
     public Color DisabledLeftColor {
@@ -192,6 +198,10 @@ public sealed partial class ChapterRangeView : UserControl {
         // チャプター設定位置のスリット
         foreach (var r in mChapterList) {
             drawSlit(ds, r.Position, width, height, mEnabledHeight, 1.5, mSlitColor);
+        }
+        // カッティング範囲
+        if (!mCuttingRange.IsEmpty) {
+            drawRange(ds, mCuttingRange, width, height, posX, mEnabledHeight, mCuttingRangeColor, mCuttingRangeColor);
         }
         // スライダーカーソル
         drawSlit(ds, mPosition, width, height, mEnabledHeight, 1.0, mCursorColor);

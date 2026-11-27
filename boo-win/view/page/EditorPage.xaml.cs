@@ -33,6 +33,12 @@ public sealed partial class EditorPage : Page {
         base.OnNavigatedTo(e);
         if (e.Parameter is EditorWindow window) {
             OwnerWindow = window;
+            ViewModel?.KeyCommand.Attach(EditorRoot);
         }
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e) {
+        base.OnNavigatedFrom(e);
+        ViewModel?.KeyCommand.Disable();
     }
 }
