@@ -15,6 +15,8 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -56,4 +58,38 @@ public sealed partial class MainWindow : Window {
             ConfirmClose();
         }
     }
+
+    #region Drag & Drop
+
+    private void OnDragOver(object sender, DragEventArgs e) {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.Caption = "Open in Editor";
+        } else {
+            e.AcceptedOperation = DataPackageOperation.None;
+        }
+    }
+
+    private async void OnDrop(object sender, DragEventArgs e) {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
+        var deferral = e.GetDeferral();
+        List<string> paths;
+        try {
+            var items = await e.DataView.GetStorageItemsAsync();
+            paths = items
+                .OfType<IStorageFile>()
+                .Select(it => it.Path)
+                .Where(it => !string.IsNullOrEmpty(it) && App.IsEditableFile(it))
+                .ToList();
+        } finally {
+            deferral.Complete();
+        }
+        if (paths.Count == 0) {
+            await App.GetService<IDialogService>().ShowMessage("Open in Editor", "No supported media file was dropped.");
+            return;
+        }
+        await App.OpenMediaFilesAsync(paths);
+    }
+
+    #endregion
 }

@@ -206,15 +206,54 @@ namespace BooWin {
         private async void HandleActivation(AppActivationArguments args, bool isLaunch) {
             var paths = GetFilePaths(args, isLaunch);
             if (paths.Count > 0) {
-                foreach (var path in paths) {
-                    var item = await FileMediaItem.FromPath(path);
-                    if (item != null) {
-                        OpenEditorWindow(item);
-                    }
-                }
+                await OpenMediaFilesAsync(paths);
                 return;
             }
             ShowMainWindow();
+        }
+
+        /// <summary>
+        /// 編集対象として扱う拡張子
+        /// </summary>
+        public static readonly string[] EditableExtensions = [".mp4", ".mov", ".mkv", ".avi", ".mp3", ".m4a"];
+
+        public static bool IsEditableFile(string path) {
+            return EditableExtensions.Contains(Path.GetExtension(path).ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// 動画ファイルを編集用に開く。
+        /// １件なら EditorWindow を開き、２件以上なら編集中セッションとして登録して MainWindow の選択ダイアログを表示する。
+        /// </summary>
+        public static async Task OpenMediaFilesAsync(IList<string> paths) {
+            if (paths.Count == 1) {
+                var item = await FileMediaItem.FromPath(paths[0]);
+                if (item != null) {
+                    OpenEditorWindow(item);
+                } else {
+                    Logger.Error($"cannot open: {paths[0]}");
+                }
+                return;
+            }
+            var store = GetService<IEditSessionStore>();
+            foreach (var path in paths) {
+                var item = await FileMediaItem.FromPath(path);
+                if (item == null) {
+                    Logger.Error($"cannot open: {path}");
+                    continue;
+                }
+                // 有効な既存セッション（編集途中）があれば、それを残す
+                if (store.Find(item.SessionId)?.IsValid != true) {
+                    store.Save(EditSession.FromItem(item));
+                }
+            }
+            var app = (App)Current;
+            var created = app._window == null;
+            app.ShowMainWindow();
+            if (!created) {
+                // 新規作成時は EntryPage の起動処理で選択ダイアログが表示される
+                await GetService<EntryPageViewModel>().ShowEditSessionsAsync(onlyIfAny: true);
+            }
         }
 
         private void ShowMainWindow() {

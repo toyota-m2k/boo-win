@@ -13,7 +13,10 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Frame x:Name="_rootFrame">
+    <Frame x:Name="_rootFrame"
+           AllowDrop="True"
+           DragOver="OnDragOver"
+           Drop="OnDrop">
         <Frame.ContentTransitions>
             <TransitionCollection>
                 <NavigationThemeTransition/>
