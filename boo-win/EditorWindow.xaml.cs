@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace BooWin;
@@ -30,6 +31,7 @@ public sealed partial class EditorWindow : Window {
         _scope = App.CreateWindowScope();
         ViewModel = GetService<EditorWindowViewModel>();
         InitializeComponent();
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets/WindowIcon.ico"));
         AppWindow.Closing += AppWindow_Closing;
         Closed += OnClosed;
         GetService<IPageService>().Startup(this, RootFrame, typeof(EditorPage), this);

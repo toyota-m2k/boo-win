@@ -26,6 +26,9 @@
 	    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     </PropertyGroup>
     <ItemGroup>
+      <Content Remove="Assets\bd.svg" />
+    </ItemGroup>
+    <ItemGroup>
       <None Remove="view\AVControlPanel.xaml" />
       <None Remove="view\dialog\DiscoverPeerDialog.xaml" />
       <None Remove="view\dialog\EditHostDialog.xaml" />

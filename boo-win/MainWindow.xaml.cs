@@ -32,6 +32,7 @@ public sealed partial class MainWindow : Window {
     public MainWindow() {
         ViewModel = App.GetService<MainWindowViewModel>();
         InitializeComponent();
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets/WindowIcon.ico"));
         ViewModel.WindowTitle.Subscribe(title => {
             this.Title = title;
         });
