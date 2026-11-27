@@ -1,7 +1,8 @@
 {
   "profiles": {
     "boo-win (Package)": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "nativeDebugging": false
     },
     "boo-win (Unpackaged)": {
       "commandName": "Project"

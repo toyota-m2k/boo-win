@@ -8,21 +8,63 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Management;
 using Windows.Media.Playback;
 
 namespace BooWin.view.viewmodel;
 
 public class PlayerViewModel {
     public UtLog Logger = new UtLog("Player");
-    public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
 
+    #region DI
+
+    private IItemService _itemService;
+    private IDialogService _dialogService;
+    public IPageService _pageService;
+    public ISettingsService _settingsService;
+
+    #endregion
+
+    public SynchronizationContext UIContext => _pageService.UIContext;
+
+
+
+    #region Chapters
+
+    public ReactiveProperty<bool> ChapterEditable { get; set; } = new(true); // player: false / editor: true
     public ChapterListViewModel ChapterModel { get; }
 
-    public ReactiveProperty<long> PlayerPosition { get; } = new(0);
-    public ReactiveProperty<double> SliderPosition { get; } = new(0.0);
+    private void SaveChapter(IMediaItem? item) {
+        if (item == null) return;
+        if (!ChapterModel.IsDirty) return;
+        var chapters = ChapterModel.ChapterList.Value.ToList();
+        Task.Run(async () => {
+            await _itemService.SaveChapterAsync(item, chapters);
+        });
+    }
+
+    public async void LoadChapter(IMediaItem? item) {
+        ChapterModel.Clear(null);
+        if (item != null) {
+            var chapters = await _itemService.LoadChapterAsync(item);
+            if (SourceMediaItem.Value == item) {
+                ChapterModel.Clear(chapters);
+            }
+        }
+    }
+
+    public Uri? GetItemUrl(IMediaItem item) {
+        return _itemService.GetItemUrl(item);
+    }
+
+    #endregion
+
+    #region Playing Status / Seek
+
+    public ReactiveProperty<long> PlayerPosition { get; } = new(0);         // MediaPlayerのPosition
+    //public ReactiveProperty<double> SliderPosition { get; } = new(0.0);     // PlayerSliderのPosition
     public ReadOnlyReactiveProperty<string> PositionString { get; }
     public ReadOnlyReactiveProperty<string> DurationString { get; }
-
 
     /**
      * VideoPlayerの状態
@@ -40,16 +82,30 @@ public class PlayerViewModel {
     public ReadOnlyReactiveProperty<bool> Seekable { get; }
     public ReactiveProperty<bool> MediaEnded { get; } = new(false);
     public ReactiveProperty<bool> MediaError { get; } = new(false);
-    public ReactiveProperty<bool> ContinuousPlayback { get; } = new(true);
+
+    #endregion
+
+    #region Modes
+
+    public bool ForEditor { get; }
+
+    public ReactiveProperty<bool> ContinuousPlayback { get; } = new(true);      // 連続再生 (<-- PlayerPageViewModel.SlideShow)
+
+    #endregion
+
+    #region Commands
 
     public ReactiveCommand PlayCommand { get; } = new();
     public ReactiveCommand PauseCommand { get; } = new();
     public ReactiveCommand NextItemCommand { get; } = new();
     public ReactiveCommand PrevItemCommand { get; } = new();
     public ReactiveCommand<long> PlayerSeekToCommand { get; } = new();
+    public ReactiveCommand<long> RelativePlayerSeekCommand { get; } = new();
+
+    #endregion
 
     #region Show/Hide Control Panel
-    
+
     // ピン止め有効・無効
     public ReactiveProperty<bool> ControlPanelPinned { get; } = new(false);
     
@@ -82,11 +138,11 @@ public class PlayerViewModel {
     }
     #endregion
 
-    public (string? Id, long Position) ReservedPlayingItemPosition { get; set; } = (null,0);
+    #region Media Source
 
-    private ReactiveProperty<MediaItem?> mSourceMediaItem = new();
-    public IReadOnlyReactiveProperty<MediaItem?> SourceMediaItem => mSourceMediaItem;
-    public async void SetSource(MediaItem? item) {
+    private ReactiveProperty<IMediaItem?> mSourceMediaItem = new();
+    public IReadOnlyReactiveProperty<IMediaItem?> SourceMediaItem => mSourceMediaItem;
+    public async void SetSource(IMediaItem? item) {
         SaveChapter(mSourceMediaItem.Value);
 
         PlayerPosition.Value = 0;
@@ -102,46 +158,34 @@ public class PlayerViewModel {
         //}
     }
 
-    private void SaveChapter(MediaItem? item) {
-        if (item == null) return;
-        if (!ChapterModel.IsDirty) return;
-        var chapters = ChapterModel.ChapterList.Value.ToList();
-        Task.Run(async () => {
-            await _clientService.SaveChapterAsync(item, chapters);
-        });
+    public (string? Id, long Position) ReservedPlayingItemPosition { get; set; } = (null, 0);   // 再生位置復元予約用
+
+    public bool SaveCurrentStatus() {
+        var item = SourceMediaItem.Value;
+        if (item == null) return false;
+        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
+        return true;
     }
 
-    public async void LoadChapter(MediaItem? item) {
-        ChapterModel.Clear(null);
-        if (item != null) {
-            var chapters = await _clientService.LoadChapterAsync(item);
-            if (SourceMediaItem.Value == item) {
-                ChapterModel.Clear(chapters);
-            }
-        }
-    }
+    #endregion
 
-
-
-    private IClientService _clientService;
-    private IDialogService _dialogService;
-    public IPageService _pageService;
-    public ISettingsService _settingsService;
-
-    public SynchronizationContext UIContext => _pageService.UIContext;
+    #region Construction / Event Handling
 
     public PlayerViewModel(
-        IClientService clientService, 
+        IItemService chapterSource, 
         IDialogService dialogService, 
         IPageService pageService,
-        ISettingsService settingsService
+        ISettingsService settingsService,
+        bool forEditor
         ) {
-        _clientService = clientService;
+        ForEditor = forEditor;
+        _itemService = chapterSource;
         _dialogService = dialogService;
         _pageService = pageService;
         _settingsService = settingsService;
 
         ChapterModel = new ChapterListViewModel(dialogService);
+        ControlPanelPinned.Value = ForEditor;    // エディタでは常にピン止め表示
         IsPlaying = PlayerState.Select(s => s == MediaPlayerState.PLAYING).ToReadOnlyReactiveProperty();
         MediaReady = PlayerState.Select(s => s != MediaPlayerState.NONE).ToReadOnlyReactiveProperty();
         Seekable = PlayerState.CombineLatest(NaturalDuration, (state, duration) => (state != MediaPlayerState.NONE && duration > 0)).ToReadOnlyReactiveProperty();
@@ -199,7 +243,7 @@ public class PlayerViewModel {
         });
 
         IsControlPanelVisible = Observable.CombineLatest(
-            PlayerState, ControlPanelPinned, ControlPanelActivatedByMouse, (state, pinned, activated) => state!=MediaPlayerState.NONE && (state== MediaPlayerState.PAUSED || pinned || activated)
+            PlayerState, ControlPanelPinned, ControlPanelActivatedByMouse, (state, pinned, activated) => ForEditor || state!=MediaPlayerState.NONE && (state== MediaPlayerState.PAUSED || pinned || activated)
         ).ToReadOnlyReactiveProperty();
 
         mControlPanelTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
@@ -260,11 +304,99 @@ public class PlayerViewModel {
             NextItemCommand.Execute();
         }
     }
+    #endregion
 
-    public bool SaveCurrentStatus() {
-        var item = SourceMediaItem.Value;
-        if (item == null) return false;
-        _settingsService.UpdateCurrentHostStatus(item.Id, PlayerPosition.Value, save: true);
-        return true;
+    #region for Key Command
+
+    public void TogglePlay() {
+        if (IsPlaying.Value) {
+            PauseCommand.Execute();
+        }
+        else {
+            PlayCommand.Execute();
+        }
     }
+    public void SeekRelative(long delta) {
+        RelativePlayerSeekCommand.Execute(delta);
+    }
+
+    public ReactiveCommand<double> PlaySpeedCommand { get; } = new();
+
+
+
+    private DispatcherTimer? mHighSpeedTimer = null;
+    public void StartSuperHighSpeedPlay() {
+        if (mHighSpeedTimer != null) return;
+        RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
+        mHighSpeedTimer = new DispatcherTimer() {
+            Interval = TimeSpan.FromMilliseconds(100),
+        };
+        mHighSpeedTimer.Tick += (s, e) => {
+            RelativePlayerSeekCommand.Execute(1000);   // 1秒進める
+        };
+        mHighSpeedTimer.Start();
+    }
+
+    public void StopSuperHighSpeedPlay() {
+        if (mHighSpeedTimer == null) return;
+        mHighSpeedTimer.Stop();
+        mHighSpeedTimer = null;
+    }
+
+    public void ToggleSuperHighSpeedMode() {
+        if (mHighSpeedTimer==null) {
+            StartSuperHighSpeedPlay();
+        } else {
+            StopSuperHighSpeedPlay();
+        }
+    }
+
+    #endregion
+
+    #region // Cutting Range by Chapter
+
+    private long mCuttingStartPosition = -1L;
+    private IDisposable? mCuttingObserver = null;
+
+    public void BeginCuttingRange() {
+        if (mCuttingObserver!=null) return;
+        mCuttingStartPosition = PlayerPosition.Value;
+        ChapterModel.CuttingRange.Value = TimeRange.Empty;
+        mCuttingObserver = PlayerPosition.Subscribe(pos => {
+            if (mCuttingStartPosition >= 0) {
+                var start = Math.Min(mCuttingStartPosition, pos);
+                var end = Math.Max(mCuttingStartPosition, pos);
+                ChapterModel.CuttingRange.Value = new TimeRange(start, end);
+            }
+        });
+    }
+
+    private void DisposeCuttingObserver() {
+        ChapterModel.CuttingRange.Value = TimeRange.Empty;
+        mCuttingStartPosition = -1L;
+        mCuttingObserver?.Dispose();
+        mCuttingObserver = null;
+    }
+
+    public void CancelCuttingRange() {
+        var pos = mCuttingStartPosition;
+        DisposeCuttingObserver();
+        PlayerSeekToCommand.Execute(pos);
+    }
+
+    public void CommitCuttingRange() {
+        var range = ChapterModel.CuttingRange.Value;
+        if (range.IsEmpty) return;
+        ChapterModel.CutRange(range.Start, range.End, NaturalDuration.Value);
+        DisposeCuttingObserver();
+    }
+
+    public void CutToStart() {
+        ChapterModel.CutToStart(PlayerPosition.Value);
+    }
+    public void CutToEnd() {
+        ChapterModel.CutToEnd(PlayerPosition.Value);
+    }
+
+    #endregion
 }

@@ -120,6 +120,7 @@ public sealed partial class ChapterView : UserControl {
         if (null != mCanvas) {
             mCanvas.RemoveFromVisualTree();
             mCanvas = null;
+            ViewModel?.Logger.Debug("ChapterView: RemoveFromVisualTree");
         }
     }
 

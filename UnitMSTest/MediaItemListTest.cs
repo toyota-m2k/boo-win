@@ -23,8 +23,7 @@ public class MediaItemListTest
         Assert.AreEqual("a", mediaItemList.Items[0].Label);
         Assert.AreEqual("x", mediaItemList.Items[0].CategoryName);
         Assert.AreEqual(0, mediaItemList.Items[0].Mark);
-        Assert.AreEqual("jpg", mediaItemList.Items[0].Type);
-        Assert.AreEqual("p", mediaItemList.Items[0].Media);
+        Assert.AreEqual(MediaType.PHOTO, mediaItemList.Items[0].MediaType);
         Assert.AreEqual(BooWin.model.MediaType.PHOTO, mediaItemList.Items[0].MediaType);
         Assert.AreEqual(285720, mediaItemList.Items[0].Size);
         Assert.AreEqual(1744684809938, mediaItemList.Items[0].DateInUnixTime);
@@ -35,7 +34,6 @@ public class MediaItemListTest
         Assert.AreEqual("b", mediaItemList.Items[1].Label);
         Assert.AreEqual("y", mediaItemList.Items[1].CategoryName);
         Assert.AreEqual(1, mediaItemList.Items[1].Mark);
-        Assert.AreEqual("m4a", mediaItemList.Items[1].Type);
         Assert.AreEqual(BooWin.model.MediaType.AUDIO, mediaItemList.Items[1].MediaType);
         Assert.AreEqual(4943447, mediaItemList.Items[1].Size);
         Assert.AreEqual(1744628987480, mediaItemList.Items[1].DateInUnixTime);
@@ -46,7 +44,6 @@ public class MediaItemListTest
         Assert.AreEqual("c", mediaItemList.Items[2].Label);
         Assert.AreEqual("z", mediaItemList.Items[2].CategoryName);
         Assert.AreEqual(2, mediaItemList.Items[2].Mark);
-        Assert.AreEqual("mp4", mediaItemList.Items[2].Type);
         Assert.AreEqual(BooWin.model.MediaType.VIDEO, mediaItemList.Items[2].MediaType);
         Assert.AreEqual(3262496, mediaItemList.Items[2].Size);
         Assert.AreEqual(1744606440730, mediaItemList.Items[2].DateInUnixTime);

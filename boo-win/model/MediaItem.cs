@@ -11,7 +11,7 @@ public interface IMediaItem {
     long Start { get; }
     long End { get; }
     string Type { get; }
-    string Media { get; }
+    //string Media { get; }
     string Label { get; }
     long DateInUnixTime { get; }
     int Rating { get; }

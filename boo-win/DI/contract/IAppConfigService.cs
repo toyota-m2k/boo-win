@@ -23,7 +23,9 @@ public interface IAppConfigService {
      */
     Version AppVersion { get; }
     string AppDataPath { get; }
-    string DBName{ get; }
+    string CachePath { get; }
+    string TempPath { get; }
+    string DBName { get; }
     string DBPath { get; }
     string SettingsName { get; }
     string SettingsPath { get; }

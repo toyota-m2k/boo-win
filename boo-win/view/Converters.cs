@@ -59,6 +59,32 @@ public class IntIndexConverter : IValueConverter {
     }
 }
 
+/// <summary>
+/// int ⇔ double の変換（Slider.Value 用）
+/// </summary>
+public class IntDoubleConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, string language) {
+        return System.Convert.ToDouble(value);
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+        return (int)Math.Round(System.Convert.ToDouble(value));
+    }
+}
+
+/// <summary>
+/// enum値 ⇔ インデックス の変換（RadioButtons.SelectedIndex 用）
+/// </summary>
+public class EnumIndexConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, string language) {
+        return System.Convert.ToInt32(value);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) {
+        var index = Math.Max(0, (int)value);
+        return targetType.IsEnum ? Enum.ToObject(targetType, index) : index;
+    }
+}
+
 public class EnumBooleanConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, string language) {
         string? parameterString = parameter as string;

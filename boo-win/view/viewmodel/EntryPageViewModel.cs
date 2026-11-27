@@ -1,11 +1,17 @@
-﻿using BooWin.DI.contract;
+﻿using BooWin.client;
+using BooWin.DI.contract;
 using BooWin.model;
+using BooWin.model.editor;
+using BooWin.model.google;
 using BooWin.view.dialog;
 using io.github.toyota32k.BooLib.Utils;
+using Microsoft.Windows.Storage.Pickers;
 using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
@@ -20,6 +26,8 @@ public class EntryPageViewModel {
     private readonly IDialogService _dialogService;
     private readonly IPageService _pageService;
     private readonly IClientService _clientService;
+    private readonly IAppConfigService _appConfigService;
+    private readonly IEditSessionStore _sessionStore;
 
     public ObservableCollection<PeerHost> HostList { get; }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
@@ -34,6 +42,9 @@ public class EntryPageViewModel {
     public ReactiveCommand<PeerHost> DeleteHostCommand { get; } = new();
     public ReactiveCommand<PeerHost> EditHostCommand { get; } = new();
     public ReactiveCommand GotoPlayerPageCommand { get; } = new();
+    public ReactiveCommand OpenEditorCommand { get; } = new();
+    public ReactiveCommand OpenGooglePhotoCommand { get; } = new();
+    public ReactiveCommand ShowEditSessionsCommand { get; } = new();
 
     private bool HostListModified = false;
 
@@ -42,8 +53,12 @@ public class EntryPageViewModel {
         IMainThreadService mainThreadService,
         IDialogService dialogService,
         IPageService pageService,
-        IClientService clientService    
+        IClientService clientService,
+        IAppConfigService appConfigService,
+        IEditSessionStore sessionStore
         ) {
+        _appConfigService = appConfigService;
+        _sessionStore = sessionStore;
         _settingsService = settingsService;
         _mainThreadService = mainThreadService;
         _dialogService = dialogService;
@@ -55,6 +70,9 @@ public class EntryPageViewModel {
         DeleteHostCommand.Subscribe(DeleteHost);
         EditHostCommand.Subscribe(EditHost);
         GotoPlayerPageCommand.Subscribe(GotoPlayerPage);
+        OpenEditorCommand.Subscribe(OpenEditor);
+        OpenGooglePhotoCommand.Subscribe(OpenGooglePhoto);
+        ShowEditSessionsCommand.Subscribe(() => _ = ShowEditSessionsAsync(onlyIfAny: false));
 
         CurrentHost.Value = _settingsService.CurrentHost;
         CanOpenPlayerPage = CurrentHost.CombineLatest(IsHostAvailable, (host,a) => host != null && a).ToReadOnlyReactiveProperty();
@@ -140,5 +158,146 @@ public class EntryPageViewModel {
                 }
             }, tcs.Token);
         }
+    }
+
+    private async void OpenEditor() {
+        var win = _pageService.Window;
+        if (win==null) {
+            Logger.Error("Window is null");
+            return;
+        }
+        var path = await FileOpenPickerBuilder
+            .Create(win)
+            .AddFileType("Video", ".mp4", ".mov", "mkv")
+            .AddFileType("Audio", ".mp3", "m4a")
+            .SetIdentifier("OpenFileToEdit")
+            .PickAsync();
+        if (path != null) {
+            var item = await FileMediaItem.FromPath(path);
+            if (item == null) {
+                await _dialogService.ShowMessage("Error", "Failed to open file.");
+                return;
+            }
+            App.OpenEditorWindow(item);
+        }
+    }
+
+    /// <summary>
+    /// 編集中セッションの一覧を表示し、選択されたセッションを EditorWindow で開く
+    /// </summary>
+    public async Task ShowEditSessionsAsync(bool onlyIfAny) {
+        var sessions = await EditSessionListDialog.ShowAsync(_dialogService, _sessionStore, onlyIfAny);
+        var failed = new List<string>();
+        foreach (var session in sessions) {
+            if (!await App.OpenEditorSession(session)) {
+                failed.Add(session.Name);
+            }
+        }
+        if (failed.Count > 0) {
+            await _dialogService.ShowMessage("Error", "Failed to open:\n" + string.Join("\n", failed));
+        }
+    }
+
+    private GooglePhotosPickerService? _googlePhotos;
+
+    private async void OpenGooglePhoto() {
+        _googlePhotos ??= new GooglePhotosPickerService(Path.Combine(_appConfigService.AppDataPath, "google"));
+        var service = _googlePhotos;
+
+        // 認証 → セッション作成 → ブラウザで Picker を開き、選択完了をポーリング
+        List<GooglePhotosPickerService.PickedMediaItem>? items = null;
+        string? sessionId = null;
+        Exception? error = null;
+        await DownloadProgressDialog.ShowAsync(_dialogService, "Google Photo", "Sign in and select a video in the browser.",
+            async (token, _) => {
+                try {
+                    await service.AuthorizeAsync(token);
+                    var session = await service.CreateSessionAsync(token);
+                    sessionId = session.Id;
+                    await Windows.System.Launcher.LaunchUriAsync(new Uri(session.PickerUri.TrimEnd('/') + "/autoclose"));
+                    await service.WaitForSelectionAsync(session, token);
+                    items = await service.ListMediaItemsAsync(session.Id, token);
+                    return true;
+                }
+                catch (OperationCanceledException) {
+                    throw;
+                }
+                catch (Exception ex) {
+                    Logger.Error(ex);
+                    error = ex;
+                    return false;
+                }
+            });
+        if (sessionId != null) {
+            _ = service.DeleteSessionAsync(sessionId);
+        }
+        if (error != null) {
+            await _dialogService.ShowMessage("Error", error.Message);
+            return;
+        }
+        if (items == null) {
+            return; // canceled
+        }
+        var videos = items.Where(it => it.IsVideo && it.MediaFile != null).ToList();
+        if (videos.Count == 0) {
+            await _dialogService.ShowMessage("Google Photo", "No video was selected.");
+            return;
+        }
+
+        if (videos.Count == 1) {
+            var picked = videos[0];
+            var hash = GooglePhotoSessionId(picked);
+            // 編集中セッションがあれば、ダウンロードせずに復元する
+            var opened = App.FindEditorWindow(hash);
+            if (opened != null) {
+                opened.Activate();
+                return;
+            }
+            var session = _sessionStore.Find(hash);
+            if (session != null && session.IsValid) {
+                await App.OpenEditorSession(session);
+                return;
+            }
+            var item = await DownloadGooglePhotoAsync(service, picked);
+            if (item != null) {
+                App.OpenEditorWindow(item);
+            }
+            return;
+        }
+
+        // 複数選択：すべてダウンロードして編集中リストに登録し、一覧から１件ずつ編集する
+        foreach (var picked in videos) {
+            var hash = GooglePhotoSessionId(picked);
+            if (App.FindEditorWindow(hash) != null) continue;
+            var session = _sessionStore.Find(hash);
+            if (session != null && session.IsValid) continue;
+            var item = await DownloadGooglePhotoAsync(service, picked);
+            if (item == null) break;   // キャンセル or エラー
+            _sessionStore.Save(EditSession.FromItem(item));
+        }
+        await ShowEditSessionsAsync(onlyIfAny: true);
+    }
+
+    private static string GooglePhotoSessionId(GooglePhotosPickerService.PickedMediaItem picked) {
+        return HashBuilder.MD5.Append("google-photo").Append(picked.Id).Build().AsHexString;
+    }
+
+    private async Task<CacheMediaItem?> DownloadGooglePhotoAsync(GooglePhotosPickerService service, GooglePhotosPickerService.PickedMediaItem picked) {
+        var filename = picked.MediaFile!.Filename;
+        var ext = Path.GetExtension(filename).TrimStart('.').ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext)) ext = "mp4";
+        var path = Path.Combine(_appConfigService.CachePath, $"{GooglePhotoSessionId(picked)}.{ext}");
+        var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", filename,
+            (token, progress) => service.DownloadAsync(picked, path, token, progress));
+        if (!result) return null;
+        var mediaItem = new MediaItem {
+            Id = picked.Id,
+            Name = Path.GetFileNameWithoutExtension(filename),
+            Size = new FileInfo(path).Length,
+            Type = ext,
+            Media = "v",
+            DateInUnixTime = picked.CreateTime.ToUnixTimeMilliseconds(),
+        };
+        return CacheMediaItem.Create(path, mediaItem, EditSourceKind.Google);
     }
 }

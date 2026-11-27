@@ -104,9 +104,28 @@ public sealed partial class EntryPage : Page {
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e) {
-        if (ViewModel.AutoStartPlayer.Value && ViewModel.FirstTime) {
-            _ = SafeGotoPlayerPage();
+        if (ViewModel.FirstTime) {
+            ViewModel.FirstTime = false;
+            if (IsLoaded) {
+                _ = StartupAsync();
+            } else {
+                Loaded += OnFirstLoaded;
+            }
         }
-        ViewModel.FirstTime = false;
+    }
+
+    private void OnFirstLoaded(object sender, RoutedEventArgs e) {
+        Loaded -= OnFirstLoaded;
+        _ = StartupAsync();
+    }
+
+    /// <summary>
+    /// 起動直後の処理：編集中セッションがあれば一覧を表示し、その後 AutoStart を処理する
+    /// </summary>
+    private async Task StartupAsync() {
+        await ViewModel.ShowEditSessionsAsync(onlyIfAny: true);
+        if (ViewModel.AutoStartPlayer.Value) {
+            await SafeGotoPlayerPage();
+        }
     }
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="BooWin.view.dialog.EditSessionListDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:editor="using:BooWin.model.editor"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Editing Files"
+    >
+    <Grid RowSpacing="8" MinWidth="480">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ListView
+            x:Name="SessionListView"
+            Grid.Row="0"
+            MaxHeight="400"
+            SelectionMode="Extended"
+            ItemsSource="{x:Bind Sessions}"
+            SelectionChanged="OnSelectionChanged">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="editor:EditSession">
+                    <StackPanel Orientation="Vertical" Padding="0,4">
+                        <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{x:Bind Summary}" FontSize="12" Opacity="0.7"/>
+                        <TextBlock Text="{x:Bind StatusText}" FontSize="12" Foreground="Red"
+                                   Visibility="{x:Bind IsInvalid}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <Button
+            x:Name="DeleteButton"
+            Grid.Row="1"
+            HorizontalAlignment="Left"
+            IsEnabled="False"
+            Click="OnDeleteClick">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                <TextBlock Text="Delete"/>
+            </StackPanel>
+        </Button>
+    </Grid>
+</ContentDialog>

@@ -33,7 +33,7 @@ public sealed partial class PlayerView : UserControl {
     }
     #endregion
 
-    private readonly IClientService _clientService = App.GetService<IClientService>();
+    //private readonly IClientService _clientService = App.GetService<IClientService>();
 
     public PlayerView() {
         InitializeComponent();
@@ -55,8 +55,6 @@ public sealed partial class PlayerView : UserControl {
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e) {
-        ViewModel?.SaveCurrentStatus();
-
         Unbind();
         mPlayerElement.SetMediaPlayer(null);
         mInternalPlayer?.Dispose();
@@ -113,9 +111,10 @@ public sealed partial class PlayerView : UserControl {
             }),
 
             vm.SourceMediaItem.Subscribe(item => {
-                if (item != null) {
+                var url = item!=null ? vm.GetItemUrl(item) : null;
+                if (url != null) {
                     player.AutoPlay = true;
-                    player.SetUriSource(new Uri(_clientService.GetItemUrl(item)));
+                    player.SetUriSource(url);
                     vm.LoadChapter(item);
                 }
                 else {
@@ -139,13 +138,11 @@ public sealed partial class PlayerView : UserControl {
             vm.Logger.Debug("Paused by command.");
             player.Pause();
         }),
-        vm.PlayerSeekToCommand.Subscribe(pos => {
-            if (mSession != null) {
-                pos = Math.Max(0, Math.Min(pos, (long)Math.Round(mSession.NaturalDuration.TotalMilliseconds)));
-                mSession.Position = TimeSpan.FromMilliseconds(pos);
-                vm.PlayerPosition.Value = pos;
-                var chapter = vm.ChapterModel.GetChapterAt(pos);
-                vm.ChapterModel.CurrentChapter.Value = chapter;
+        vm.PlayerSeekToCommand.Subscribe(SeekTo),
+        vm.RelativePlayerSeekCommand.Subscribe(pos => {
+            if (mSession!=null) {
+                var newPos = (long)Math.Round(mSession.Position.TotalMilliseconds) + pos;
+                SeekTo(newPos);
             }
         }),
         vm.ChapterModel.ChapterList.Subscribe((_) => {
@@ -156,9 +153,22 @@ public sealed partial class PlayerView : UserControl {
                 vm.ChapterModel.CurrentChapter.Value = chapter;
             }
         }) );
-
+        vm.PlaySpeedCommand.Subscribe(speed => {
+            if (mSession != null && mSession.IsSupportedPlaybackRateRange(speed,speed)) {
+                mSession.PlaybackRate = speed;
+            }
+        });
     }
-
+    private void SeekTo(long pos) {
+        var vm = ViewModel;
+        if (mSession != null && vm!=null) {
+            pos = Math.Max(0, Math.Min(pos, (long)Math.Round(mSession.NaturalDuration.TotalMilliseconds)));
+            mSession.Position = TimeSpan.FromMilliseconds(pos);
+            vm.PlayerPosition.Value = pos;
+            var chapter = vm.ChapterModel.GetChapterAt(pos);
+            vm.ChapterModel.CurrentChapter.Value = chapter;
+        }
+    }
     private void UpdatePlayingPosition() {
         var viewModel = ViewModel;
         if (viewModel != null && mSession != null && mInternalPlayer != null) {
@@ -214,6 +224,26 @@ public sealed partial class PlayerView : UserControl {
 
     private void OnControlPanelMouseMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
         e.Handled = true;
+    }
+
+    #endregion
+
+    #region Super High Speed Play
+
+    private DispatcherTimer? mHighSpeedTimer = null;
+    private void StartSuperHighSpeedPlay() {
+        if (mHighSpeedTimer != null) return;
+        mHighSpeedTimer = new DispatcherTimer() {
+            Interval = TimeSpan.FromMilliseconds(100),
+        };
+        mHighSpeedTimer.Tick += (s, e) => {
+            var viewModel = ViewModel;
+            if (viewModel != null && mSession != null) {
+                var pos = (long)Math.Round(mSession.Position.TotalMilliseconds);
+                SeekTo(pos + 1000);   // 1秒進める
+            }
+        };
+        mHighSpeedTimer.Start();
     }
 
     #endregion

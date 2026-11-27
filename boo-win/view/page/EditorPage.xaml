@@ -1,14 +1,46 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="BooWin.view.page.EditorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BooWin.view.page"
+    xmlns:parts="using:BooWin.view.parts"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+    <Page.Resources>
+        <ResourceDictionary Source="../Converters.xaml"/>
+    </Page.Resources>
 
-    <Grid>
-
+    <Grid x:Name="EditorRoot">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <parts:PlayerView 
+            Grid.Column="0" 
+            ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+        <Button 
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Margin="0,12,12,0" Padding="10,8" CornerRadius="8" ToolTipService.ToolTip="Show editor panel"
+            VerticalAlignment="Top" HorizontalAlignment="Right"
+            Command="{x:Bind ViewModel.ConvertModel.ShowEditorPanelCommand, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.ConvertModel.ShowEditorPanel.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
+            >
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <FontIcon Glyph="&#xE70F;" FontSize="14"/>
+                <TextBlock Text="Edit"/>
+            </StackPanel>
+        </Button>
+        <parts:EditorPanel 
+            Grid.Column="1" 
+            Width="300"
+            BorderThickness="1,0,0,0"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.ConvertModel.ShowEditorPanel.Value, Mode=OneWay}"
+            />
     </Grid>
 </Page>

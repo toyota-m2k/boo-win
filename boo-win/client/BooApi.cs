@@ -14,6 +14,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BooWin.client;
@@ -327,7 +328,7 @@ public class BooApi : IDisposable {
         return MediaItemList.FromJson(json);
     }
 
-    public string GetItemUrl(MediaItem item, string cmdName="item") {
+    public string GetItemUrl(IMediaItem item, string cmdName="item") {
         var cap = _capability;
         if (cap == null) {
             throw new InvalidOperationException("no capability");
@@ -340,9 +341,46 @@ public class BooApi : IDisposable {
         }
         return $"{Host.BaseUrl}{cap.Root}{cmdName}{MakeQueryString(dic)}";
     }
+    
+    public async Task<bool> DownloadItemAsync(IMediaItem item, string destPath, CancellationToken token, Action<long,long>? progress = null) {
+        try {
+            var url = GetItemUrl(item, "download");
+            var res = await _httpClient.GetAsync(url, completionOption: HttpCompletionOption.ResponseHeadersRead, cancellationToken: token);
+            if (!res.IsSuccessStatusCode) {
+                Logger.Error($"Failed to download item {item.Id} from {Host.Address}. StatusCode: {res.StatusCode}");
+                return false;
+            }
+            using var inStream = await res.Content.ReadAsStreamAsync(cancellationToken: token);
+            var totalBytes = res.Content.Headers.ContentLength ?? -1L;
+            var buffer = new byte[8192];
+            long totalRead = 0;
+            using var outStream = File.Create(destPath);
+            while (true) {
+                var read = await inStream.ReadAsync(buffer, cancellationToken: token);
+                if (read <= 0) break;
+                await outStream.WriteAsync(buffer.AsMemory(0, read), cancellationToken: token);
+                totalRead += read;
+                progress?.Invoke(totalRead, totalBytes);
+                if (token.IsCancellationRequested) {
+                    throw new OperationCanceledException(token);
+                }
+            }
+            return true;
+        }
+        catch (Exception ex) {
+            if (ex is OperationCanceledException) {
+                Logger.Debug($"Download of item {item.Id} from {Host.Address} was cancelled.");
+            }
+            else {
+                Logger.Error(ex, $"Failed to download item {item.Id} from {Host.Address}");
+            }
+            FileUtil.SafeDelete(destPath);
+            return false;
+        }
+    }
 
 
-    public async Task<List<Chapter>> GetChapterAsync(MediaItem item) {
+    public async Task<List<Chapter>> GetChapterAsync(IMediaItem item) {
         var cap = _capability;
         if (cap == null) {
             throw new InvalidOperationException("no capability");
@@ -362,7 +400,7 @@ public class BooApi : IDisposable {
         return Chapter.ListFromJson(json);
     }
 
-    public async Task<bool> PutChapterAsync(MediaItem item, List<Chapter> chapters ) {
+    public async Task<bool> PutChapterAsync(IMediaItem item, List<Chapter> chapters ) {
         var dic = new Dictionary<string, object>() {
             { "id", item.Id },
             { "chapters", chapters }

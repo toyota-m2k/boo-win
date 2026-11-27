@@ -1,0 +1,60 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 256 256">
+
+  <defs>
+    <!-- Fluent風背景 -->
+    <linearGradient id="bg"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%">
+
+      <stop offset="0%" stop-color="#00D0FF"/>
+      <stop offset="55%" stop-color="#0090A0"/>
+      <stop offset="100%" stop-color="#002080"/>
+    </linearGradient>
+
+    <linearGradient id="obj"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%">
+
+      <stop offset="0%" stop-color="#202050"/>
+      <stop offset="100%" stop-color="#4040A0"/>
+
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" 
+        rx="12"
+      fill="url(#bg)"/>
+
+
+  <!-- Collar -->
+  <path d="M80 70 L128 120 L96 180 L40 90 Z"
+        fill="white"/>
+
+  <path d="M176 70 L216 90 L160 180 L128 120 Z"
+        fill="white"/>
+
+  <!-- Bow tie -->
+  <path d="M76 116
+           L112 96
+           L112 136
+           Z"
+        fill="url(#obj)"/>
+
+  <path d="M180 116
+           L144 96
+           L144 136
+           Z"
+        fill="url(#obj)"/>
+
+  <rect x="112" y="104"
+        width="32"
+        height="24"
+        rx="4"
+        fill="url(#obj)"/>
+
+</svg>

@@ -13,7 +13,8 @@ public interface INavigationAware {
 
 public interface IPageService {
     ReadOnlyReactivePropertySlim<bool> CanGoBack { get; }
-    void Startup(Frame rootFrame);
+    Window? Window { get; }
+    void Startup(Window window, Frame rootFrame, System.Type? homePageType = null, object? parameter = null);
     void GoBack();
     Page? CurrentPage { get; }
     XamlRoot XamlRoot { get; }

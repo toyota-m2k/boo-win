@@ -1,5 +1,6 @@
 ﻿using BooWin.DI.contract;
 using BooWin.model;
+using io.github.toyota32k.BooLib.Media;
 using io.github.toyota32k.BooLib.Utils;
 using System.Collections.Generic;
 
@@ -14,6 +15,7 @@ public class SettingsService : ISettingsService {
         AppConfigService = appConfigService;
         JsonStore = new JSONSettngStore(AppConfigService.SettingsPath);
         HostList = PeerHostStatusList.LoadFrom(store: JsonStore);
+        GGConfig.FFMpegPathResolver = () => FFMpegPath;
     }
 
     #region FFMpeg
@@ -34,6 +36,41 @@ public class SettingsService : ISettingsService {
         get => JsonStore.Get<string>(KEY_WORKING_PATH, string.Empty);
         set => JsonStore.Set(KEY_WORKING_PATH, value);
     }
+
+    #endregion
+
+    #region Converter
+
+    private readonly string KEY_MAX_LENGTH_IN_PIXEL = "MaxLengthInPixel";
+    public int MaxLengthInPixel { 
+        get => JsonStore.Get<int>(KEY_MAX_LENGTH_IN_PIXEL, 1440);
+        set => JsonStore.Set(KEY_MAX_LENGTH_IN_PIXEL, value);
+    }
+    private readonly string KEY_MAX_FRAME_RATE = "MaxFrameRate";
+    public int MaxFrameRate {
+        get => JsonStore.Get<int>(KEY_MAX_FRAME_RATE, 30);
+        set => JsonStore.Set(KEY_MAX_FRAME_RATE, value);
+    }
+    private readonly string KEY_MAX_BIT_RATE = "MaxBitRate";
+    public int MaxBitRate {
+        get => JsonStore.Get<int>(KEY_MAX_BIT_RATE, 2000_000);
+        set => JsonStore.Set(KEY_MAX_BIT_RATE, value);
+    }
+
+    private readonly string KEY_CRF = "CRF";
+    public int CRF {
+        get => JsonStore.Get<int>(KEY_CRF, 23);
+        set => JsonStore.Set(KEY_CRF, value);
+    }
+    private readonly string KEY_OUTPUT_VIDEO_CODEC = "OutputVideoCodec";
+    public VideoCodecOption OutputVideoCodec {
+        get => (VideoCodecOption)JsonStore.Get<int>(KEY_OUTPUT_VIDEO_CODEC, (int)VideoCodecOption.NoChange);
+        set => JsonStore.Set(KEY_OUTPUT_VIDEO_CODEC, (int)value);
+    }
+
+    #endregion
+
+    #region Player
 
     static readonly string KEY_AUTO_START_PLAYER= "AutoStart";
     public bool AutoStartPlayer {

@@ -115,6 +115,7 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                 <Button Style="{StaticResource PanelIconButtonStyle}"
                         Command="{x:Bind ViewModel.PrevItemCommand, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.ForEditor, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
                         ToolTipService.ToolTip="Previous Item" AutomationProperties.Name="Previous Item">
                     <FontIcon Glyph="&#xE892;" FontSize="16"/>
                 </Button>
@@ -144,6 +145,7 @@
                 </Button>
                 <Button Style="{StaticResource PanelIconButtonStyle}"
                         Command="{x:Bind ViewModel.NextItemCommand, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.ForEditor, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
                         ToolTipService.ToolTip="Next Item" AutomationProperties.Name="Next Item">
                     <FontIcon Glyph="&#xE893;" FontSize="16"/>
                 </Button>
@@ -186,9 +188,11 @@
                     </Button>
                     <AppBarSeparator Padding="2,0"/>
                 </StackPanel>
-                <ToggleButton Style="{StaticResource PanelIconToggleButtonStyle}"
-                              IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}"
-                              ToolTipService.ToolTip="Pin Control Panel" AutomationProperties.Name="Pin Control Panel">
+                <ToggleButton 
+                    Style="{StaticResource PanelIconToggleButtonStyle}"
+                    Visibility="{x:Bind ViewModel.ForEditor, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
+                    IsChecked="{x:Bind ViewModel.ControlPanelPinned.Value, Mode=TwoWay}"
+                    ToolTipService.ToolTip="Pin Control Panel" AutomationProperties.Name="Pin Control Panel">
                     <FontIcon Glyph="&#xE718;" FontSize="16"/>
                 </ToggleButton>
             </StackPanel>
