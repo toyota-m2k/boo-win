@@ -23,6 +23,17 @@ public class EditorWindowViewModel : IItemService {
     private IDialogService _dialogService;
     private IPageService _pageService;
     private ISettingsService _settingsService;
+    private IEditSessionStore _sessionStore;
+    private EditSession? _session;
+    private string? _host;
+    private List<Chapter>? _initialChapters;
+    private IDisposable? _autoSaveSubscription;
+    private bool _sessionClosed = false;
+
+    /// <summary>
+    /// 編集セッションが保存されているか
+    /// </summary>
+    public bool HasSession => _session != null;
 
 
     public ReactivePropertySlim<IEditorItem?> TargetItem { get; } = new ReactivePropertySlim<IEditorItem?>();
@@ -40,11 +51,13 @@ public class EditorWindowViewModel : IItemService {
     public EditorWindowViewModel(
         IDialogService dialogService,
         IPageService pageService,
-        ISettingsService settingsService
+        ISettingsService settingsService,
+        IEditSessionStore sessionStore
         ) {
         _dialogService = dialogService;
         _pageService = pageService;
         _settingsService = settingsService;
+        _sessionStore = sessionStore;
         PlayerModel = new PlayerViewModel(this, dialogService, pageService, settingsService, forEditor: true);
         ConvertModel = new MediaConvertViewModel(settingsService, dialogService);
         ConvertModel.SaveAsCommand.Subscribe(SaveAsAsync);
@@ -57,16 +70,71 @@ public class EditorWindowViewModel : IItemService {
         KeyCommand = new EditorKeyCommand(this);
     }
 
-    public void SetTargetItem(IEditorItem item, List<Chapter>? initialChapters, string? outputFilePath=null) {
+    public void SetTargetItem(IEditorItem item, List<Chapter>? initialChapters, EditSession? session = null, string? host = null) {
         TargetItem.Value = item;
-        OrgChapters = initialChapters ?? new List<Chapter>();
-        OutputFilePath = outputFilePath;
+        _session = session;
+        _host = session?.Host ?? host;
+        OrgChapters = session?.OrgChapters ?? initialChapters ?? new List<Chapter>();
+        _initialChapters = session?.Chapters ?? OrgChapters;
+        if (session?.Convert != null) {
+            ConvertModel.ApplySettings(session.Convert);
+        }
         PlayerModel.SetSource(item);
+        _autoSaveSubscription?.Dispose();
+        _autoSaveSubscription = Observable.Merge(
+                PlayerModel.ChapterModel.ChapterList.Select(_ => System.Reactive.Unit.Default),
+                ConvertModel.SettingsChanged)
+            .Throttle(TimeSpan.FromSeconds(1))
+            .Subscribe(_ => AutoSaveSession());
     }
 
     public Task<List<Chapter>> LoadChapterAsync(IMediaItem item) {
-        return Task.FromResult(OrgChapters);
+        return Task.FromResult(_initialChapters ?? OrgChapters);
     }
+
+    #region Edit Session
+
+    private void AutoSaveSession() {
+        if (_sessionClosed) return;
+        if (!PlayerModel.ChapterModel.IsDirty && _session == null) return;
+        SaveSession();
+    }
+
+    /// <summary>
+    /// 現在の編集状態をセッションファイルに保存する
+    /// </summary>
+    public void SaveSession() {
+        if (TargetItem.Value is not IEditorItem item) return;
+        lock (this) {
+            if (_sessionClosed) return;
+            var session = _session ?? EditSession.FromItem(item, _host);
+            session.OrgChapters = OrgChapters;
+            session.Chapters = PlayerModel.ChapterModel.ChapterList.Value.ToList();
+            session.Convert = ConvertModel.ToSettings();
+            _sessionStore.Save(session);
+            _session = session;
+        }
+    }
+
+    /// <summary>
+    /// ウィンドウを閉じるときに呼ぶ。keep=true ならセッションを残し、false ならセッションとキャッシュを破棄する。
+    /// </summary>
+    public void CloseSession(bool keep) {
+        _autoSaveSubscription?.Dispose();
+        _autoSaveSubscription = null;
+        if (keep) {
+            SaveSession();
+        }
+        lock (this) {
+            _sessionClosed = true;
+            if (!keep && TargetItem.Value is IEditorItem item) {
+                _sessionStore.DiscardItem(item);
+                _session = null;
+            }
+        }
+    }
+
+    #endregion
 
     public Task<bool> SaveChapterAsync(IMediaItem item, List<Chapter> chapters) {
         return Task.FromResult(true);

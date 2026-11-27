@@ -27,6 +27,7 @@ public class EntryPageViewModel {
     private readonly IPageService _pageService;
     private readonly IClientService _clientService;
     private readonly IAppConfigService _appConfigService;
+    private readonly IEditSessionStore _sessionStore;
 
     public ObservableCollection<PeerHost> HostList { get; }
     public ReactiveProperty<PeerHost?> CurrentHost { get; } = new();
@@ -43,6 +44,7 @@ public class EntryPageViewModel {
     public ReactiveCommand GotoPlayerPageCommand { get; } = new();
     public ReactiveCommand OpenEditorCommand { get; } = new();
     public ReactiveCommand OpenGooglePhotoCommand { get; } = new();
+    public ReactiveCommand ShowEditSessionsCommand { get; } = new();
 
     private bool HostListModified = false;
 
@@ -52,9 +54,11 @@ public class EntryPageViewModel {
         IDialogService dialogService,
         IPageService pageService,
         IClientService clientService,
-        IAppConfigService appConfigService
+        IAppConfigService appConfigService,
+        IEditSessionStore sessionStore
         ) {
         _appConfigService = appConfigService;
+        _sessionStore = sessionStore;
         _settingsService = settingsService;
         _mainThreadService = mainThreadService;
         _dialogService = dialogService;
@@ -68,6 +72,7 @@ public class EntryPageViewModel {
         GotoPlayerPageCommand.Subscribe(GotoPlayerPage);
         OpenEditorCommand.Subscribe(OpenEditor);
         OpenGooglePhotoCommand.Subscribe(OpenGooglePhoto);
+        ShowEditSessionsCommand.Subscribe(() => _ = ShowEditSessionsAsync(onlyIfAny: false));
 
         CurrentHost.Value = _settingsService.CurrentHost;
         CanOpenPlayerPage = CurrentHost.CombineLatest(IsHostAvailable, (host,a) => host != null && a).ToReadOnlyReactiveProperty();
@@ -177,6 +182,22 @@ public class EntryPageViewModel {
         }
     }
 
+    /// <summary>
+    /// 編集中セッションの一覧を表示し、選択されたセッションを EditorWindow で開く
+    /// </summary>
+    public async Task ShowEditSessionsAsync(bool onlyIfAny) {
+        var sessions = await EditSessionListDialog.ShowAsync(_dialogService, _sessionStore, onlyIfAny);
+        var failed = new List<string>();
+        foreach (var session in sessions) {
+            if (!await App.OpenEditorSession(session)) {
+                failed.Add(session.Name);
+            }
+        }
+        if (failed.Count > 0) {
+            await _dialogService.ShowMessage("Error", "Failed to open:\n" + string.Join("\n", failed));
+        }
+    }
+
     private GooglePhotosPickerService? _googlePhotos;
 
     private async void OpenGooglePhoto() {
@@ -228,6 +249,17 @@ public class EntryPageViewModel {
         if (string.IsNullOrEmpty(ext)) ext = "mp4";
         var hash = HashBuilder.MD5.Append("google-photo").Append(picked.Id).Build().AsHexString;
         var path = Path.Combine(_appConfigService.CachePath, $"{hash}.{ext}");
+        // 編集中セッションがあれば、ダウンロードせずに復元する
+        var opened = App.FindEditorWindow(hash);
+        if (opened != null) {
+            opened.Activate();
+            return;
+        }
+        var session = _sessionStore.Find(hash);
+        if (session != null && session.IsValid) {
+            await App.OpenEditorSession(session);
+            return;
+        }
         var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", filename,
             (token, progress) => service.DownloadAsync(picked, path, token, progress));
         if (result) {
@@ -239,7 +271,7 @@ public class EntryPageViewModel {
                 Media = "v",
                 DateInUnixTime = picked.CreateTime.ToUnixTimeMilliseconds(),
             };
-            App.OpenEditorWindow(CacheMediaItem.Create(path, mediaItem));
+            App.OpenEditorWindow(CacheMediaItem.Create(path, mediaItem, EditSourceKind.Google));
         }
     }
 }

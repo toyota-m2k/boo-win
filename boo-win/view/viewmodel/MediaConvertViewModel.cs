@@ -1,4 +1,5 @@
 ﻿using BooWin.DI.contract;
+using BooWin.model.editor;
 using io.github.toyota32k.BooLib.Media;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
@@ -119,5 +120,43 @@ public class MediaConvertViewModel {
             <30 => new SolidColorBrush(Colors.Orange),
             _ => new SolidColorBrush(Colors.Red)
         }).ToReadOnlyReactiveProperty<Brush>();
+    }
+
+    /// <summary>
+    /// 設定値の変更通知
+    /// </summary>
+    public IObservable<System.Reactive.Unit> SettingsChanged =>
+        Observable.Merge(
+            UseFFMpeg.Select(_ => System.Reactive.Unit.Default),
+            Resolution.Select(_ => System.Reactive.Unit.Default),
+            CRF.Select(_ => System.Reactive.Unit.Default),
+            MaxFrameRate.Select(_ => System.Reactive.Unit.Default),
+            MaxBitRate.Select(_ => System.Reactive.Unit.Default),
+            AutoBitRate.Select(_ => System.Reactive.Unit.Default),
+            AutoQuality.Select(_ => System.Reactive.Unit.Default),
+            CodecOption.Select(_ => System.Reactive.Unit.Default));
+
+    public EditConvertSettings ToSettings() {
+        return new EditConvertSettings {
+            UseFFMpeg = UseFFMpeg.Value,
+            MaxLengthInPixel = MaxLengthInPixel,
+            CRF = CRF.Value,
+            MaxFrameRate = MaxFrameRate.Value,
+            MaxBitRate = MaxBitRate.Value,
+            AutoBitRate = AutoBitRate.Value,
+            AutoQuality = AutoQuality.Value,
+            CodecOption = CodecOption.Value,
+        };
+    }
+
+    public void ApplySettings(EditConvertSettings settings) {
+        UseFFMpeg.Value = settings.UseFFMpeg;
+        Resolution.Value = LengthToResolution(settings.MaxLengthInPixel);
+        CRF.Value = settings.CRF;
+        MaxFrameRate.Value = settings.MaxFrameRate;
+        MaxBitRate.Value = settings.MaxBitRate;
+        AutoBitRate.Value = settings.AutoBitRate;
+        AutoQuality.Value = settings.AutoQuality;
+        CodecOption.Value = settings.CodecOption;
     }
 }

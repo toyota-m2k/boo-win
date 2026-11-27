@@ -26,7 +26,7 @@ public sealed partial class EditorWindow : Window {
     /// </summary>
     public EditorWindowViewModel ViewModel;
 
-    public EditorWindow(IEditorItem item, List<Chapter>? chapters) {
+    public EditorWindow(IEditorItem item, List<Chapter>? chapters, EditSession? session = null, string? host = null) {
         _scope = App.CreateWindowScope();
         ViewModel = GetService<EditorWindowViewModel>();
         InitializeComponent();
@@ -36,7 +36,7 @@ public sealed partial class EditorWindow : Window {
         ViewModel.WindowTitle.Subscribe(title => {
             this.Title = title;
         });
-        ViewModel.SetTargetItem(item, chapters);
+        ViewModel.SetTargetItem(item, chapters, session, host);
     }
 
 
@@ -56,13 +56,21 @@ public sealed partial class EditorWindow : Window {
 
     private bool _closeConfirmed = false;
     private async void ConfirmClose() {
-        if (ViewModel.PlayerModel.ChapterModel.IsDirty) {
-            var r = await GetService<IDialogService>()
-                .ShowYesNo("Discard Changes", "Chapters are modified. \r\nAre you sure you want to exit?", yesAsDefault: true);
-            if (r!=true) {
-                return;
-            }
+        var r = await GetService<IDialogService>()
+            .Builder()
+            .Title("Close Editor")
+            .Content(new TextBlock {
+                Text = "Do you want to keep the editing state to continue later?",
+                TextWrapping = TextWrapping.Wrap
+            })
+            .PrimaryButton("Keep for Later", true, null)
+            .SecondaryButton("Discard", false, null)
+            .CloseButton("Cancel", false, null)
+            .ShowAsync();
+        if (r == ContentDialogResult.None) {
+            return;
         }
+        ViewModel.CloseSession(keep: r == ContentDialogResult.Primary);
         _closeConfirmed = true;
         // ウィンドウ破棄前にビジュアルツリーを外し、Win2D(CanvasControl) 等の Unloaded を
         // ウィンドウが有効なうちに走らせる（最後のウィンドウ終了時のネイティブ例外対策）

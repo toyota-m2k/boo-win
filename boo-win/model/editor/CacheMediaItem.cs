@@ -41,17 +41,24 @@ public class CacheMediaItem : IEditorItem {
 
     public bool IsAV => SourceItem.IsAV;
 
-    private CacheMediaItem(string path, IMediaItem src) {
+    public string SessionId => System.IO.Path.GetFileNameWithoutExtension(FilePath);
+
+    public EditSourceKind SourceKind { get; }
+
+    private CacheMediaItem(string path, IMediaItem src, EditSourceKind kind) {
         FilePath = path;
         SourceItem = src;
+        SourceKind = kind;
     }
 
 
-    public static CacheMediaItem Create(string path, IMediaItem src) {
-        return new CacheMediaItem(path, src);
+    public static CacheMediaItem Create(string path, IMediaItem src, EditSourceKind kind) {
+        return new CacheMediaItem(path, src, kind);
     }
 
+    /// <summary>
+    /// キャッシュファイルの削除は IEditSessionStore が判断する（セッションを残す場合は削除しない）
+    /// </summary>
     public void Dispose() {
-        FileUtil.SafeDelete(FilePath);
     }
 }

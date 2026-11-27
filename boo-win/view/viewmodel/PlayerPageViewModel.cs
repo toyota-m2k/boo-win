@@ -323,11 +323,23 @@ public class PlayerPageViewModel
         var hash = HashBuilder.MD5.Append(host.Address).Build().AsHexString;
         var name = $"{hash}-{item.Id}.{item.Type}";
         var path = Path.Combine(_appConfigService.CachePath, name);
+        var sessionId = Path.GetFileNameWithoutExtension(name);
+        var opened = App.FindEditorWindow(sessionId);
+        if (opened != null) {
+            opened.Activate();
+            return;
+        }
+        // 編集中セッションがあれば、ダウンロードせずに復元する
+        var session = App.GetService<IEditSessionStore>().Find(sessionId);
+        if (session != null && session.IsValid) {
+            await App.OpenEditorSession(session);
+            return;
+        }
         var chapters = await _clientService.LoadChapterAsync(item);
         var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", item.Name,
             (token, progress) => _clientService.DownloadItemAsync(item, path, token, progress));
         if (result) {
-            App.OpenEditorWindow(CacheMediaItem.Create(path, item), chapters);
+            App.OpenEditorWindow(CacheMediaItem.Create(path, item, EditSourceKind.Boo), chapters, host.Address);
         }
     }
 }

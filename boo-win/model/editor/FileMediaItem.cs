@@ -19,7 +19,15 @@ public class FileMediaItem : IEditorItem {
     private FileMediaItem(string filePath, IAnalysis analysis) {
         FilePath = filePath;
         Analysis = analysis;
+        SessionId = SessionIdOf(filePath);
     }
+
+    public static string SessionIdOf(string filePath) {
+        return "file-" + BooWin.client.HashBuilder.MD5.Append(Path.GetFullPath(filePath).ToLowerInvariant()).Build().AsHexString;
+    }
+
+    public string SessionId { get; }
+    public EditSourceKind SourceKind => EditSourceKind.File;
 
     public string Id => FilePath;
 

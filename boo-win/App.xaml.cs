@@ -55,11 +55,47 @@ namespace BooWin {
         /// <summary>
         /// 動画編集ウィンドウを開く（複数起動可）
         /// </summary>
-        public static EditorWindow OpenEditorWindow(IEditorItem item, List<Chapter>? chapters=null) {
-            var window = new EditorWindow(item, chapters);
+        public static EditorWindow OpenEditorWindow(IEditorItem item, List<Chapter>? chapters=null, string? host=null) {
+            var opened = FindEditorWindow(item.SessionId);
+            if (opened != null) {
+                opened.Activate();
+                return opened;
+            }
+            // 編集中セッションがあれば復元する
+            var session = GetService<IEditSessionStore>().Find(item.SessionId);
+            if (session != null && !session.IsValid) {
+                session = null;
+            }
+            var window = new EditorWindow(item, chapters, session, host);
             RegisterWindow(window);
             window.Activate();
             return window;
+        }
+
+        /// <summary>
+        /// 編集中セッションから動画編集ウィンドウを開く
+        /// </summary>
+        public static async Task<bool> OpenEditorSession(EditSession session) {
+            var opened = FindEditorWindow(session.SessionId);
+            if (opened != null) {
+                opened.Activate();
+                return true;
+            }
+            if (!session.IsValid) return false;
+            IEditorItem? item = session.SourceKind == EditSourceKind.File
+                ? await FileMediaItem.FromPath(session.FilePath)
+                : CacheMediaItem.Create(session.FilePath, session.Item, session.SourceKind);
+            if (item == null) return false;
+            var window = new EditorWindow(item, null, session);
+            RegisterWindow(window);
+            window.Activate();
+            return true;
+        }
+
+        public static EditorWindow? FindEditorWindow(string sessionId) {
+            return _openWindows
+                .OfType<EditorWindow>()
+                .FirstOrDefault(w => w.ViewModel.TargetItem.Value?.SessionId == sessionId);
         }
 
         private static readonly List<Window> _openWindows = new();
@@ -108,6 +144,7 @@ namespace BooWin {
             services
                 .AddSingleton<IAppConfigService, AppConfigService>()
                 .AddSingleton<ISettingsService, SettingsService>()
+                .AddSingleton<IEditSessionStore, EditSessionStore>()
                 .AddSingleton<IMainThreadService, MainThreadService>()
                 // Windowごとに生成
                 .AddScoped<IPageService, PageService>()
@@ -148,6 +185,8 @@ namespace BooWin {
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
             UtLog.GlobalLoggerChain.AddLogger(GetService<LogViewModel>());
             _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            // どの編集セッションからも参照されていないキャッシュ動画を削除
+            GetService<IEditSessionStore>().CleanupOrphanCache();
             // 他プロセスからリダイレクトされたアクティベーションを受け取る
             AppInstance.GetCurrent().Activated += OnRedirectedActivated;
             HandleActivation(AppInstance.GetCurrent().GetActivatedEventArgs(), isLaunch: true);
