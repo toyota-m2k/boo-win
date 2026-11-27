@@ -238,40 +238,66 @@ public class EntryPageViewModel {
         if (items == null) {
             return; // canceled
         }
-        var picked = items.FirstOrDefault(it => it.IsVideo && it.MediaFile != null);
-        if (picked == null) {
+        var videos = items.Where(it => it.IsVideo && it.MediaFile != null).ToList();
+        if (videos.Count == 0) {
             await _dialogService.ShowMessage("Google Photo", "No video was selected.");
             return;
         }
 
+        if (videos.Count == 1) {
+            var picked = videos[0];
+            var hash = GooglePhotoSessionId(picked);
+            // 編集中セッションがあれば、ダウンロードせずに復元する
+            var opened = App.FindEditorWindow(hash);
+            if (opened != null) {
+                opened.Activate();
+                return;
+            }
+            var session = _sessionStore.Find(hash);
+            if (session != null && session.IsValid) {
+                await App.OpenEditorSession(session);
+                return;
+            }
+            var item = await DownloadGooglePhotoAsync(service, picked);
+            if (item != null) {
+                App.OpenEditorWindow(item);
+            }
+            return;
+        }
+
+        // 複数選択：すべてダウンロードして編集中リストに登録し、一覧から１件ずつ編集する
+        foreach (var picked in videos) {
+            var hash = GooglePhotoSessionId(picked);
+            if (App.FindEditorWindow(hash) != null) continue;
+            var session = _sessionStore.Find(hash);
+            if (session != null && session.IsValid) continue;
+            var item = await DownloadGooglePhotoAsync(service, picked);
+            if (item == null) break;   // キャンセル or エラー
+            _sessionStore.Save(EditSession.FromItem(item));
+        }
+        await ShowEditSessionsAsync(onlyIfAny: true);
+    }
+
+    private static string GooglePhotoSessionId(GooglePhotosPickerService.PickedMediaItem picked) {
+        return HashBuilder.MD5.Append("google-photo").Append(picked.Id).Build().AsHexString;
+    }
+
+    private async Task<CacheMediaItem?> DownloadGooglePhotoAsync(GooglePhotosPickerService service, GooglePhotosPickerService.PickedMediaItem picked) {
         var filename = picked.MediaFile!.Filename;
         var ext = Path.GetExtension(filename).TrimStart('.').ToLowerInvariant();
         if (string.IsNullOrEmpty(ext)) ext = "mp4";
-        var hash = HashBuilder.MD5.Append("google-photo").Append(picked.Id).Build().AsHexString;
-        var path = Path.Combine(_appConfigService.CachePath, $"{hash}.{ext}");
-        // 編集中セッションがあれば、ダウンロードせずに復元する
-        var opened = App.FindEditorWindow(hash);
-        if (opened != null) {
-            opened.Activate();
-            return;
-        }
-        var session = _sessionStore.Find(hash);
-        if (session != null && session.IsValid) {
-            await App.OpenEditorSession(session);
-            return;
-        }
+        var path = Path.Combine(_appConfigService.CachePath, $"{GooglePhotoSessionId(picked)}.{ext}");
         var result = await DownloadProgressDialog.ShowAsync(_dialogService, "Download", filename,
             (token, progress) => service.DownloadAsync(picked, path, token, progress));
-        if (result) {
-            var mediaItem = new MediaItem {
-                Id = picked.Id,
-                Name = Path.GetFileNameWithoutExtension(filename),
-                Size = new FileInfo(path).Length,
-                Type = ext,
-                Media = "v",
-                DateInUnixTime = picked.CreateTime.ToUnixTimeMilliseconds(),
-            };
-            App.OpenEditorWindow(CacheMediaItem.Create(path, mediaItem, EditSourceKind.Google));
-        }
+        if (!result) return null;
+        var mediaItem = new MediaItem {
+            Id = picked.Id,
+            Name = Path.GetFileNameWithoutExtension(filename),
+            Size = new FileInfo(path).Length,
+            Type = ext,
+            Media = "v",
+            DateInUnixTime = picked.CreateTime.ToUnixTimeMilliseconds(),
+        };
+        return CacheMediaItem.Create(path, mediaItem, EditSourceKind.Google);
     }
 }
