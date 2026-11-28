@@ -11,14 +11,14 @@
 
   <Identity
     Name="f345f5d7-d6a2-449e-8d2d-ae4f29b6d9fb"
-    Publisher="CN=mitsuki"
-    Version="1.0.0.0" />
+    Publisher="CN=io.github.toyota-m2k"
+    Version="0.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="f345f5d7-d6a2-449e-8d2d-ae4f29b6d9fb" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>ButlerDeck</DisplayName>
-    <PublisherDisplayName>mitsuki</PublisherDisplayName>
+    <PublisherDisplayName>toyota-m2k</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
