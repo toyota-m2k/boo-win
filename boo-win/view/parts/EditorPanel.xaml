@@ -96,7 +96,19 @@
                 <FontIcon Glyph="&#xE714;" FontSize="18"/>
                 <TextBlock Text="Convert Settings" Style="{StaticResource SubtitleTextBlockStyle}"/>
             </StackPanel>
+            <Button
+                x:Name="SaveAsDefaultButton"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Margin="0,0,40,0"
+                Style="{StaticResource SubtleButtonStyle}"
+                Padding="8"
+                ToolTipService.ToolTip="Save settings as default"
+                Command="{x:Bind ViewModel.ConvertModel.SaveSettingsAsDefaultCommand, Mode=OneWay}">
+                <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+            </Button>
             <Button 
+                x:Name="HideButton"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Style="{StaticResource SubtleButtonStyle}"

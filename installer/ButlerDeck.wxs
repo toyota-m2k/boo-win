@@ -16,6 +16,10 @@
 	<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 	<MediaTemplate EmbedCab="yes" />
 
+	<!-- 「設定 > アプリ」(プログラムと機能) に表示するアイコン -->
+	<Icon Id="AppIcon.ico" SourceFile="$(var.PublishDir)Assets\WindowIcon.ico" />
+	<Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
 	<StandardDirectory Id="ProgramFiles6432Folder">
 	  <Directory Id="INSTALLFOLDER" Name="ButlerDeck" />
 	</StandardDirectory>
