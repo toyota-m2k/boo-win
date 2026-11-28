@@ -23,10 +23,14 @@
     </PropertyGroup>
     <!-- Release: framework-dependent MSIX -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-	    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    </PropertyGroup>
-    <ItemGroup>
-      <Content Remove="Assets\bd.svg" />
+		<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+	</PropertyGroup>
+	<!-- Unpackaged (MSI 用): installer\build-msi.ps1 から -p:BooUnpackaged=true で指定 -->
+	<PropertyGroup Condition="'$(BooUnpackaged)' == 'true'">
+		<WindowsPackageType>None</WindowsPackageType>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Content Remove="Assets\bd.svg" />
     </ItemGroup>
     <ItemGroup>
       <None Remove="view\AVControlPanel.xaml" />

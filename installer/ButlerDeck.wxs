@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ButlerDeck (boo-win) Unpackaged MSI 定義 (WiX Toolset v5)
+  build-msi.ps1 から以下のプリプロセッサ変数を渡してビルドする。
+	Version    : 製品バージョン (例: 0.1.1)
+	PublishDir : dotnet publish (WindowsPackageType=None) の出力フォルダ (末尾 \ 付き)
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="ButlerDeck"
+		   Manufacturer="toyota-m2k"
+		   Version="$(var.Version)"
+		   UpgradeCode="6B1E7C2A-3F5D-4C8E-9A41-2D7B0E5F8C13"
+		   Scope="perMachine"
+		   Compressed="yes">
+
+	<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+	<MediaTemplate EmbedCab="yes" />
+
+	<StandardDirectory Id="ProgramFiles6432Folder">
+	  <Directory Id="INSTALLFOLDER" Name="ButlerDeck" />
+	</StandardDirectory>
+	<StandardDirectory Id="ProgramMenuFolder" />
+
+	<!-- アプリ本体 (publish フォルダ全体) -->
+	<ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+	  <Files Include="$(var.PublishDir)**" />
+	</ComponentGroup>
+
+	<!-- ファイル関連付け (「プログラムから開く」の候補に登録。既定アプリは変更しない) -->
+	<Component Id="FileAssociation" Directory="INSTALLFOLDER">
+	  <!-- ProgID -->
+	  <RegistryValue Root="HKLM" Key="Software\Classes\ButlerDeck.Video" Type="string" Value="boo-win Video" KeyPath="yes" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\ButlerDeck.Video\DefaultIcon" Type="string" Value="[INSTALLFOLDER]boo-win.exe,0" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\ButlerDeck.Video\shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]boo-win.exe&quot; &quot;%1&quot;" />
+
+	  <!-- Applications\boo-win.exe -->
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe" Name="FriendlyAppName" Type="string" Value="ButlerDeck" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]boo-win.exe&quot; &quot;%1&quot;" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".mp4" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".m4v" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".mov" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".wmv" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".avi" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\Applications\boo-win.exe\SupportedTypes" Name=".mkv" Type="string" Value="" />
+
+	  <!-- 拡張子 → OpenWithProgids -->
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.mp4\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.m4v\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.mov\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.wmv\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.avi\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+	  <RegistryValue Root="HKLM" Key="Software\Classes\.mkv\OpenWithProgids" Name="ButlerDeck.Video" Type="string" Value="" />
+
+	  <!-- 実行エイリアス (appExecutionAlias) の代替 -->
+	  <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\boo-win.exe" Type="string" Value="[INSTALLFOLDER]boo-win.exe" />
+	  <RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\App Paths\boo-win.exe" Name="Path" Type="string" Value="[INSTALLFOLDER]" />
+	</Component>
+
+	<!-- スタートメニュー -->
+	<Component Id="StartMenuShortcut" Directory="ProgramMenuFolder">
+	  <Shortcut Id="AppShortcut" Name="ButlerDeck" Target="[INSTALLFOLDER]boo-win.exe" WorkingDirectory="INSTALLFOLDER" />
+	  <RegistryValue Root="HKLM" Key="Software\toyota-m2k\ButlerDeck" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+	</Component>
+
+	<Feature Id="Main">
+	  <ComponentGroupRef Id="AppFiles" />
+	  <ComponentRef Id="FileAssociation" />
+	  <ComponentRef Id="StartMenuShortcut" />
+	</Feature>
+  </Package>
+</Wix>
