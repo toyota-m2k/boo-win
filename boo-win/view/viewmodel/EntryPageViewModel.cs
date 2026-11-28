@@ -46,7 +46,7 @@ public class EntryPageViewModel {
     public ReactiveCommand OpenGooglePhotoCommand { get; } = new();
     public ReactiveCommand ShowEditSessionsCommand { get; } = new();
 
-    private bool HostListModified = false;
+    //private bool HostListModified = false;
 
     public EntryPageViewModel(
         ISettingsService settingsService, 
@@ -92,7 +92,7 @@ public class EntryPageViewModel {
         if (peer != null) {
             if (!HostList.Any(it => it.Address == peer.Address)) {
                 HostList.Add(peer);
-                HostListModified = true;
+                //HostListModified = true;
             }
         }
     }
@@ -100,12 +100,12 @@ public class EntryPageViewModel {
     public void Save() {
         _settingsService.UpdateHostList(HostList, CurrentHost.Value);
         _settingsService.Save();
-        HostListModified = false;
+        //HostListModified = false;
     }
     
     private void DeleteHost(PeerHost host) {
         HostList.Remove(host);
-        HostListModified = true;
+        //HostListModified = true;
     }
 
     private async void EditHost(PeerHost host) {
@@ -114,7 +114,7 @@ public class EntryPageViewModel {
             var i = HostList.IndexOf(host);
             if (i >= 0) {
                 HostList[i] = modified;
-                HostListModified = true;
+                //HostListModified = true;
             }
         }
     }
@@ -123,7 +123,7 @@ public class EntryPageViewModel {
         var modified = await EditHostDialog.NewHost(_dialogService);
         if (modified != null) {
             HostList.Add(modified);
-            HostListModified = true;
+            //HostListModified = true;
         }
     }
 

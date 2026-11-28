@@ -20,17 +20,17 @@
         <TextBox 
             InputScope="Url" 
             Text="{x:Bind ViewModel.Address.Value, Mode=TwoWay}" 
-            IsReadOnly="{x:Bind ViewModel.ForEdit}"
+            IsReadOnly="{x:Bind ViewModel.ForEdit, Mode=OneTime}"
             BeforeTextChanging="CheckAddress"
             />
         <TextBlock Text="Port"/>
         <TextBox 
             InputScope="Number" 
             Text="{x:Bind ViewModel.Port.Value, Mode=TwoWay}" 
-            IsReadOnly="{x:Bind ViewModel.ForEdit}"/>
+            IsReadOnly="{x:Bind ViewModel.ForEdit, Mode=OneTime}"/>
         <CheckBox
             Content="Use SSL"
             IsChecked="{x:Bind ViewModel.IsHttps.Value, Mode=TwoWay}"
-            IsEnabled="{x:Bind ViewModel.ForEdit, Converter={StaticResource NegBoolConverter}, Mode=OneWay}"/>
+            IsEnabled="{x:Bind ViewModel.ForEdit, Converter={StaticResource NegBoolConverter}, Mode=OneTime}"/>
     </StackPanel>
 </ContentDialog>

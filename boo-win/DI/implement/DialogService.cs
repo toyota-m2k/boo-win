@@ -14,7 +14,7 @@ class DialogBuilder : IDialogBuilder {
         Custom, // Custom buttons
     }
 
-    DialogType _dialogType = DialogType.Custom;
+    //DialogType _dialogType = DialogType.Custom;
 
     ContentDialog Dialog;
     //public DialogBuilder(XamlRoot xamlRoot) {

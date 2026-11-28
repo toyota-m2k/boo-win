@@ -19,13 +19,13 @@
         </Grid.ColumnDefinitions>
         <parts:PlayerView 
             Grid.Column="0" 
-            ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+            ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneTime}"/>
         <Button 
             Grid.Column="0"
             Grid.ColumnSpan="2"
             Margin="0,12,12,0" Padding="10,8" CornerRadius="8" ToolTipService.ToolTip="Show editor panel"
             VerticalAlignment="Top" HorizontalAlignment="Right"
-            Command="{x:Bind ViewModel.ConvertModel.ShowEditorPanelCommand, Mode=OneWay}"
+            Command="{x:Bind ViewModel.ConvertModel.ShowEditorPanelCommand, Mode=OneTime}"
             Visibility="{x:Bind ViewModel.ConvertModel.ShowEditorPanel.Value, Mode=OneWay, Converter={StaticResource NegBoolVisibilityConverter}}"
             >
             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -39,7 +39,7 @@
             BorderThickness="1,0,0,0"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
-            ViewModel="{x:Bind ViewModel, Mode=OneWay}"
+            ViewModel="{x:Bind ViewModel, Mode=OneTime}"
             Visibility="{x:Bind ViewModel.ConvertModel.ShowEditorPanel.Value, Mode=OneWay}"
             />
     </Grid>

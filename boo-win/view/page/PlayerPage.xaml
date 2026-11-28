@@ -404,10 +404,10 @@
 
             <!-- Player -->
             <Grid x:Name="PlayerPanel" Grid.Column="2" Background="Black" Visibility="{x:Bind ViewModel.IsMediaPlayerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
-                <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneWay}"/>
+                <parts:PlayerView ViewModel="{x:Bind ViewModel.PlayerModel, Mode=OneTime}"/>
             </Grid>
             <Grid x:Name="PhotoViewer" Grid.Column="2" Background="Black" Visibility="{x:Bind ViewModel.IsPhotoViewerVisible(ViewModel.SelectedItem.Value), Mode=OneWay}">
-                <parts:PhotoViewer ViewModel="{x:Bind ViewModel.PhotoViewerModel, Mode=OneWay}"/>
+                <parts:PhotoViewer ViewModel="{x:Bind ViewModel.PhotoViewerModel, Mode=OneTime}"/>
             </Grid>
 
             <Border x:Name="PropertyPanel" Grid.Column="3" Width="300"
@@ -416,7 +416,7 @@
                     BorderThickness="1,0,0,0"
                     Visibility="{x:Bind ViewModel.IsPropertiesVisible.Value, Mode=OneWay}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <parts:ItemPropertyView ViewModel="{x:Bind ViewModel, Mode=OneWay}" Margin="16,12"/>
+                    <parts:ItemPropertyView ViewModel="{x:Bind ViewModel, Mode=OneTime}" Margin="16,12"/>
                 </ScrollViewer>
             </Border>
         </Grid>
