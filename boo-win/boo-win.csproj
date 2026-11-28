@@ -212,7 +212,8 @@
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
-    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+    <AppxPackageSigningEnabled Condition="'$(Configuration)' == 'Debug'">False</AppxPackageSigningEnabled>
+    <AppxPackageSigningEnabled Condition="'$(Configuration)' != 'Debug'">True</AppxPackageSigningEnabled>
     <PackageCertificateThumbprint>91A7A284B2A3A40E709CB01DEA97AFE5AA3E4EE5</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
